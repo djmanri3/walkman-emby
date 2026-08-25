@@ -506,7 +506,7 @@
     .extra-controls-right {
       position: absolute;
       right: 0;
-      bottom: 24px;
+      bottom: 60px;
       display: flex;
       gap: 12px;
       align-items: center;
@@ -582,6 +582,39 @@
       background: #fff;
       cursor: pointer;
       box-shadow: 0 0 5px rgba(255,255,255,0.8);
+    }
+
+    /* CONTROL DE VOLUMEN */
+    .volume-container {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 14px;
+      color: #aaaaaa53;
+    }
+
+    .volume-container span {
+      cursor: pointer;
+      font-size: 20px;
+      transition: color 0.2s;
+    }
+
+    .volume-container span:hover {
+      color: #fff;
+    }
+
+    .volume-bar {
+      width: 0;                   /* Ancho inicial a cero */
+      opacity: 0;                 /* Totalmente invisible */
+      visibility: hidden;         /* Evita interacciones mientras está oculta */
+      transition: width 0.3s ease, opacity 0.3s ease; /* Animación suave */
+    }
+
+    .volume-container:hover .volume-bar {
+      width: 100px;               /* Ajusta este ancho al tamaño que desees */
+      opacity: 1;                 /* Se vuelve visible */
+      visibility: visible;        /* Permite usar la barra */
     }
 
     /* TAB: MY MUSIC */
@@ -1399,6 +1432,12 @@
         <input type="range" id="progress-bar" class="progress-bar" value="0" max="100" onchange="seekTrack(this.value)">
         <span id="time-total">00:00</span>
       </div>
+
+            <!-- CONTROL DE VOLUMEN -->
+      <div class="volume-container">
+        <span class="material-icons" id="volume-icon" onclick="toggleMute()" title="Silenciar / Activar sonido">volume_up</span>
+        <input type="range" id="volume-bar" class="progress-bar volume-bar" value="100" min="0" max="100" oninput="setVolume(this.value)">
+      </div>
     </div>
   </div>
 
@@ -1483,6 +1522,7 @@
     let repeatMode = 0; // 0: Off, 1: All, 2: One
     let isShuffle = false;
     let originalPlaylist = [];
+    let lastVolume = 1;
 
     // Perfiles VPT
     let currentVptIndex = 0; // Por defecto "Estudio"
@@ -1558,6 +1598,54 @@
       vptWetGain.connect(audioCtx.destination);
 
       applySavedAudioSettings();
+    }
+
+    // --- FUNCIONES DE CONTROL DE VOLUMEN ---
+    function setVolume(value) {
+      const vol = value / 100;
+      audio.volume = vol;
+      updateVolumeIcon(vol);
+      localStorage.setItem('walkman_volume', vol);
+    }
+
+    function updateVolumeIcon(vol) {
+      const icon = document.getElementById('volume-icon');
+      if (!icon) return;
+      if (vol === 0) {
+        icon.textContent = 'volume_off';
+      } else if (vol < 0.5) {
+        icon.textContent = 'volume_down';
+      } else {
+        icon.textContent = 'volume_up';
+      }
+    }
+
+    function toggleMute() {
+      const volBar = document.getElementById('volume-bar');
+      if (audio.volume > 0) {
+        lastVolume = audio.volume;
+        setVolume(0);
+        if (volBar) volBar.value = 0;
+      } else {
+        const restored = lastVolume > 0 ? lastVolume : 1;
+        setVolume(restored * 100);
+        if (volBar) volBar.value = restored * 100;
+      }
+    }
+
+    function initVolume() {
+      const savedVol = localStorage.getItem('walkman_volume');
+      const volBar = document.getElementById('volume-bar');
+      if (savedVol !== null) {
+        const volVal = parseFloat(savedVol);
+        audio.volume = volVal;
+        if (volBar) volBar.value = volVal * 100;
+        updateVolumeIcon(volVal);
+      } else {
+        audio.volume = 1;
+        if (volBar) volBar.value = 100;
+        updateVolumeIcon(1);
+      }
     }
 
     // --- VISUALIZADOR DE PARTICULAS Y ANILLOS ESTILO XPERIA ---
@@ -2285,7 +2373,7 @@
           album: track.Album || 'Walkman Web',
           artwork: [
             { 
-              src: getEmbyImageUrl(track), // Usa tu función existente para obtener la imagen
+              src: getEmbyImageUrl(track),
               sizes: '512x512', 
               type: 'image/jpeg' 
             }
@@ -2396,6 +2484,7 @@
     }
 
     window.onload = async () => {
+      initVolume();
       setupMediaSession();
       renderVptCards();
       applySavedAudioSettings();
@@ -2407,7 +2496,7 @@
       }
     };
 
-    // --- NUEVO: Media Session API  Controles---
+    // --- NUEVO: Media Session API Controles ---
     function setupMediaSession() {
       if ('mediaSession' in navigator) {
         // Sincronizar los botones del widget con tus funciones existentes
