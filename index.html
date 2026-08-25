@@ -4,6 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>WALKMAN</title>
+
+  <!-- PWA Meta Tags -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#3a0007">
+  
+  <!-- Soporte para iOS (Apple Safari) -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="WALKMAN">
+  <link rel="apple-touch-icon" href="Walkman.png">
+
   <!-- ColorThief para el color dinámico -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
   <!-- Material Icons -->
@@ -2414,6 +2425,15 @@
           }
         });
       }
+    };
+
+    // Registrar el Service Worker para PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(reg => console.log('WALKMAN PWA Service Worker registrado con éxito:', reg.scope))
+          .catch(err => console.error('Error al registrar Service Worker:', err));
+      });
     };
 
   </script>

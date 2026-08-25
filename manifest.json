@@ -1,0 +1,21 @@
+{
+  "short_name": "WALKMAN",
+  "name": "WALKMAN Xperia Player",
+  "icons": [
+    {
+      "src": "Walkman.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "Walkman.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "./index.html",
+  "background_color": "#050505",
+  "theme_color": "#3a0007",
+  "display": "standalone",
+  "orientation": "portrait"
+}
