@@ -2266,6 +2266,22 @@
       const track = playlist[index];
 
       document.getElementById('track-title').textContent = track.Name;
+      // --- NUEVO: Actualizar Media Session API ---
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: track.Name,
+          artist: track.Artists ? track.Artists.join(', ') : 'Artista Desconocido',
+          album: track.Album || 'Walkman Web',
+          artwork: [
+            { 
+              src: getEmbyImageUrl(track), // Usa tu función existente para obtener la imagen
+              sizes: '512x512', 
+              type: 'image/jpeg' 
+            }
+          ]
+        });
+      }
+      // -------------------------------------------
       document.getElementById('track-artist').textContent = track.Artists ? track.Artists.join(', ') : 'Artista Desconocido';
       
       const imgCurrentEl = document.getElementById('img-current');
@@ -2369,6 +2385,7 @@
     }
 
     window.onload = async () => {
+      setupMediaSession();
       renderVptCards();
       applySavedAudioSettings();
       const connected = await restoreServerConfig();
@@ -2378,6 +2395,27 @@
         document.getElementById('emby-modal').style.display = 'none';
       }
     };
+
+    // --- NUEVO: Media Session API  Controles---
+    function setupMediaSession() {
+      if ('mediaSession' in navigator) {
+        // Sincronizar los botones del widget con tus funciones existentes
+        navigator.mediaSession.setActionHandler('play', togglePlay);
+        navigator.mediaSession.setActionHandler('pause', togglePlay);
+        navigator.mediaSession.setActionHandler('previoustrack', prevTrack);
+        navigator.mediaSession.setActionHandler('nexttrack', nextTrack);
+
+        // Permitir avanzar o retroceder desde la barra de progreso del widget
+        navigator.mediaSession.setActionHandler('seekto', (details) => {
+          if (details.fastSeek && 'fastSeek' in audio) {
+            audio.fastSeek(details.seekTime);
+          } else {
+            audio.currentTime = details.seekTime;
+          }
+        });
+      }
+    };
+
   </script>
 </body>
 </html>
