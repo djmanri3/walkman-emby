@@ -1,7 +1,7 @@
-# walkman-emby
+# walkman-server
 Small Emby music player with style Walkman app of Xpetia NXT series, only in this commment connect to Emby :)
 
-You can access in this link: https://djmanri3.github.io/walkman-emby/
+You can access in this link: https://djmanri3.github.io/walkman-server/
 
 # Features
 - Native equalizer with 5 bands
@@ -18,7 +18,8 @@ You can access in this link: https://djmanri3.github.io/walkman-emby/
 
 
 # Bugs
-- On albums menu, only show some covers
+- On albums menu, only show some covers only on Emby servers!!
+- When add album to queue no play :(
 
 # Screenshots
 
