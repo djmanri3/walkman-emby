@@ -731,6 +731,132 @@
       color: #aaa;
     }
 
+    .list-item-more {
+      flex-shrink: 0;
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: none;
+      color: #888;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: background 0.2s;
+    }
+
+    .list-item-more:hover {
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+    }
+
+    .list-item-more span {
+      font-size: 20px;
+    }
+
+    .context-menu-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.6);
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .context-menu-overlay.open {
+      display: flex;
+    }
+
+    .context-menu {
+      background: #1e1e1e;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 10px;
+      width: 90%;
+      max-width: 320px;
+      overflow: hidden;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.9);
+      animation: contextMenuIn 0.2s ease-out;
+    }
+
+    @keyframes contextMenuIn {
+      0% { transform: scale(0.9); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .context-menu-header {
+      padding: 16px 18px 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .context-menu-header-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .context-menu-header-sub {
+      font-size: 12px;
+      color: #aaa;
+      margin-top: 3px;
+    }
+
+    .context-menu-option {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 18px;
+      cursor: pointer;
+      transition: background 0.15s;
+      color: #ddd;
+      font-size: 14px;
+    }
+
+    .context-menu-option:hover {
+      background: rgba(255,255,255,0.07);
+    }
+
+    .context-menu-option span.material-icons {
+      font-size: 20px;
+      color: #aaa;
+    }
+
+    .context-menu-info {
+      padding: 14px 18px;
+      color: #aaa;
+      font-size: 12px;
+      line-height: 1.7;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .context-menu-info strong {
+      color: #ddd;
+    }
+
+    .context-menu-toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(40,40,40,0.95);
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 13px;
+      z-index: 300;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+
+    .context-menu-toast.show {
+      opacity: 1;
+    }
+
     /* BARRA DE BÚSQUEDA FLOTANTE DESPLEGABLE */
     .search-overlay {
       position: absolute;
@@ -1631,6 +1757,31 @@
     </div>
   </div>
 
+  <!-- MENÚ CONTEXTUAL -->
+  <div id="context-menu-overlay" class="context-menu-overlay" onclick="closeContextMenu()">
+    <div class="context-menu" onclick="event.stopPropagation()">
+      <div class="context-menu-header">
+        <div id="ctx-menu-title" class="context-menu-header-title"></div>
+        <div id="ctx-menu-sub" class="context-menu-header-sub"></div>
+      </div>
+      <div class="context-menu-option" onclick="ctxPlayNext()">
+        <span class="material-icons">skip_next</span>
+        <span>Reproducir siguiente</span>
+      </div>
+      <div class="context-menu-option" onclick="ctxAddToQueue()">
+        <span class="material-icons">queue_music</span>
+        <span>Añadir a la cola</span>
+      </div>
+      <div class="context-menu-option" onclick="ctxShowInfo()">
+        <span class="material-icons">info_outline</span>
+        <span>Información de la música</span>
+      </div>
+      <div id="ctx-menu-info" class="context-menu-info" style="display:none;"></div>
+    </div>
+  </div>
+
+  <div id="context-toast" class="context-menu-toast"></div>
+
   <audio id="audio-player" crossorigin="anonymous"></audio>
 
   <script>
@@ -2448,6 +2599,7 @@
                 <div class="list-item-title">${item.Name}</div>
                 <div class="list-item-sub">${item.Type} • ${item.AlbumArtist || item.Artists ? (item.Artists || []).join(', ') : ''}</div>
               </div>
+              <button class="list-item-more" onclick="event.stopPropagation(); openContextMenu(event, ${JSON.stringify(item).replace(/"/g, '&quot;')})"><span class="material-icons">more_vert</span></button>
             `;
 
             div.onclick = () => {
@@ -2564,6 +2716,7 @@
             <div class="list-item-title">${item.Name}</div>
             <div class="list-item-sub">${item.AlbumArtist || (item.Artists ? item.Artists.join(', ') : category)}</div>
           </div>
+          <button class="list-item-more" onclick="event.stopPropagation(); openContextMenu(event, ${JSON.stringify(item).replace(/"/g, '&quot;')})"><span class="material-icons">more_vert</span></button>
         `;
 
         div.onclick = () => {
@@ -2606,6 +2759,7 @@
             <div class="list-item-title">${track.Name}</div>
             <div class="list-item-sub">${track.Artists ? track.Artists.join(', ') : 'Desconocido'}</div>
           </div>
+          <button class="list-item-more" onclick="event.stopPropagation(); openContextMenu(event, ${JSON.stringify(track).replace(/"/g, '&quot;')})"><span class="material-icons">more_vert</span></button>
         `;
 
         div.onclick = () => {
@@ -2620,6 +2774,88 @@
     function backToCategories() {
       document.getElementById('category-view').style.display = 'block';
       document.getElementById('list-view').style.display = 'none';
+    }
+
+    // --- MENÚ CONTEXTUAL ---
+    let ctxMenuItem = null;
+
+    function openContextMenu(event, item) {
+      ctxMenuItem = item;
+      const overlay = document.getElementById('context-menu-overlay');
+      const title = document.getElementById('ctx-menu-title');
+      const sub = document.getElementById('ctx-menu-sub');
+      const info = document.getElementById('ctx-menu-info');
+
+      title.textContent = item.Name || 'Sin nombre';
+      sub.textContent = item.Artists ? item.Artists.join(', ') : (item.AlbumArtist || '');
+      info.style.display = 'none';
+      overlay.classList.add('open');
+    }
+
+    function closeContextMenu() {
+      document.getElementById('context-menu-overlay').classList.remove('open');
+      ctxMenuItem = null;
+    }
+
+    function ctxPlayNext() {
+      if (!ctxMenuItem) return;
+      const idx = currentTrackIndex + 1;
+      playlist.splice(idx, 0, ctxMenuItem);
+      originalPlaylist.splice(idx, 0, ctxMenuItem);
+      renderQueueList();
+      refreshCarouselImages();
+      showToast('Reproducirá después de la actual');
+      closeContextMenu();
+    }
+
+    function ctxAddToQueue() {
+      if (!ctxMenuItem) return;
+      playlist.push(ctxMenuItem);
+      originalPlaylist.push(ctxMenuItem);
+      renderQueueList();
+      refreshCarouselImages();
+      showToast('Añadida a la cola');
+      closeContextMenu();
+    }
+
+    function ctxShowInfo() {
+      if (!ctxMenuItem) return;
+      const info = document.getElementById('ctx-menu-info');
+      const item = ctxMenuItem;
+      const fileName = item.Path ? item.Path.split(/[/\\]/).pop() : 'No disponible';
+      const artist = item.Artists ? item.Artists.join(', ') : (item.AlbumArtist || 'Desconocido');
+      const album = item.Album || 'Desconocido';
+      info.innerHTML = `<strong>Nombre:</strong> ${item.Name}<br><strong>Artista:</strong> ${artist}<br><strong>Álbum:</strong> ${album}<br><strong>Fichero:</strong> ${fileName}`;
+      info.style.display = 'block';
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('context-toast');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+
+    function refreshCarouselImages() {
+      const imgCurrentEl = document.getElementById('img-current');
+      const imgPrevEl = document.getElementById('img-prev');
+      const imgNextEl = document.getElementById('img-next');
+      const cardPrev = document.getElementById('card-prev');
+      const cardNext = document.getElementById('card-next');
+
+      if (currentTrackIndex > 0 && playlist[currentTrackIndex - 1]) {
+        setCardImg(imgPrevEl, getEmbyImageUrl(playlist[currentTrackIndex - 1]));
+        cardPrev.style.display = '';
+      } else {
+        cardPrev.style.display = 'none';
+      }
+
+      if (currentTrackIndex < playlist.length - 1 && playlist[currentTrackIndex + 1]) {
+        setCardImg(imgNextEl, getEmbyImageUrl(playlist[currentTrackIndex + 1]));
+        cardNext.style.display = '';
+      } else {
+        cardNext.style.display = 'none';
+      }
     }
 
     function toggleQueueDrawer() {
@@ -2649,7 +2885,8 @@
         `;
 
         div.onclick = () => {
-          playTrack(idx);
+          playTrack(idx, true);
+          renderQueueList();
         };
 
         container.appendChild(div);
@@ -2663,7 +2900,7 @@
 
     let trackHasLoaded = false;
 
-    function playTrack(index) {
+    function playTrack(index, skipAnimation = false) {
       if (playlist.length === 0) return;
       
       const prevIndex = currentTrackIndex;
@@ -2718,7 +2955,7 @@
         lastSeenPlaylistVersion = playlistVersion;
       }
 
-      const canAnimate = trackHasLoaded && prevIndex !== index;
+      const canAnimate = !skipAnimation && trackHasLoaded && prevIndex !== index;
 
       if (canAnimate) {
         const goingForward = index > prevIndex;
@@ -2765,27 +3002,7 @@
           if (cleaned) return;
           cleaned = true;
 
-          if (goingForward) {
-            imgPrevEl.src = oldCurrentSrc;
-            imgCurrentEl.src = oldNextSrc;
-            if (nextUrl) {
-              imgNextEl.src = nextUrl;
-              cardNext.style.display = '';
-            } else {
-              cardNext.style.display = 'none';
-            }
-            cardPrev.style.display = '';
-          } else {
-            imgNextEl.src = oldCurrentSrc;
-            imgCurrentEl.src = oldPrevSrc;
-            if (prevUrl) {
-              imgPrevEl.src = prevUrl;
-              cardPrev.style.display = '';
-            } else {
-              cardPrev.style.display = 'none';
-            }
-            cardNext.style.display = '';
-          }
+          applyImages();
 
           // Sin transición, volver a base CSS y limpiar inline
           allCards.forEach(c => { c.style.transition = 'none'; });
