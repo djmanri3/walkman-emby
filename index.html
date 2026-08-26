@@ -23,9 +23,9 @@
   
   <style>
     :root {
-      --bg-color-1: #000000;
+      --bg-color-1: #3a0007;
       --bg-color-2: #050505;
-      --accent-color: #00ffff;
+      --accent-color: #aa00ff;
       --walkman-green: #76c02a;
     }
 
@@ -1161,6 +1161,88 @@
       margin-bottom: 12px;
       cursor: pointer;
     }
+
+    /* Server Type Tabs */
+    .server-tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 16px;
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid #444;
+    }
+
+    .server-tab {
+      flex: 1;
+      padding: 10px 0;
+      text-align: center;
+      cursor: pointer;
+      background: #2a2a2a;
+      color: #888;
+      font-size: 13px;
+      font-weight: 500;
+      border: none;
+      transition: all 0.3s;
+      border-right: 1px solid #444;
+    }
+
+    .server-tab:last-child {
+      border-right: none;
+    }
+
+    .server-tab.active {
+      background: var(--accent-color);
+      color: #fff;
+    }
+
+    .server-tab[data-type="emby"].active {
+      background: #4CAF50;
+    }
+
+    .server-tab[data-type="jellyfin"].active {
+      background: #9b59b6;
+    }
+
+    .server-tab[data-type="plex"].active {
+      background: #e5a00d;
+    }
+
+    .server-form {
+      display: none;
+    }
+
+    .server-form.active {
+      display: block;
+    }
+
+    .plex-status {
+      text-align: center;
+      padding: 16px;
+      color: #aaa;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .plex-status a {
+      color: var(--accent-color);
+      text-decoration: underline;
+      word-break: break-all;
+    }
+
+    .plex-spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid #444;
+      border-top-color: var(--accent-color);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 8px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body>
@@ -1482,27 +1564,43 @@
     </div>
   </div>
 
-  <!-- MODAL CONEXIÓN EMBY -->
+  <!-- MODAL CONEXIÓN SERVIDOR -->
   <div id="emby-modal" class="modal">
     <div class="modal-content">
-      <h3>Conectarse a Emby</h3>
-      
-      <div class="input-group">
-        <label>URL del Servidor</label>
-        <input type="text" id="emby-host" placeholder="http://192.168.1.50:8096">
-      </div>
-      
-      <div class="input-group">
-        <label>Usuario</label>
-        <input type="text" id="emby-user">
+      <h3>Conectarse al Servidor</h3>
+
+      <div class="server-tabs">
+        <button class="server-tab active" data-type="emby" onclick="switchServerType('emby')">Emby</button>
+        <button class="server-tab" data-type="jellyfin" onclick="switchServerType('jellyfin')">Jellyfin</button>
+        <button class="server-tab" data-type="plex" onclick="switchServerType('plex')">Plex</button>
       </div>
 
-      <div class="input-group">
-        <label>Contraseña</label>
-        <input type="password" id="emby-pass">
+      <!-- Emby / Jellyfin -->
+      <div id="form-emby" class="server-form active">
+        <div class="input-group">
+          <label>URL del Servidor</label>
+          <input type="text" id="emby-host" placeholder="http://192.168.1.50:8096">
+        </div>
+        <div class="input-group">
+          <label>Usuario</label>
+          <input type="text" id="emby-user">
+        </div>
+        <div class="input-group">
+          <label>Contraseña</label>
+          <input type="password" id="emby-pass">
+        </div>
+        <button class="btn" onclick="connectServer()">Conectar</button>
       </div>
 
-      <button class="btn" onclick="connectEmby()">Conectar</button>
+      <!-- Plex -->
+      <div id="form-plex" class="server-form">
+        <div class="input-group">
+          <label>URL del Servidor</label>
+          <input type="text" id="plex-host" placeholder="http://192.168.1.50:32400">
+        </div>
+        <button class="btn" onclick="connectServer()">Conectar</button>
+        <div id="plex-status" class="plex-status" style="display:none;"></div>
+      </div>
 
       <div id="library-selector" class="input-group" style="display:none; margin-top: 15px;">
         <label>Selecciona la Biblioteca Musical</label>
@@ -1514,7 +1612,14 @@
   <audio id="audio-player" crossorigin="anonymous"></audio>
 
   <script>
-    let embyConfig = { host: '', token: '', userId: '', libraryId: '', user: '' };
+    let embyConfig = { host: '', token: '', userId: '', libraryId: '', user: '', serverType: 'emby' };
+
+    // Mapeo de tipos por servidor
+    const SERVER_TYPES = {
+      emby:    { Audio: 'Audio', Album: 'MusicAlbum', Artist: 'MusicArtist', Playlist: 'Playlist' },
+      jellyfin: { Audio: 'Audio', Album: 'MusicAlbum', Artist: 'MusicArtist', Playlist: 'Playlist' },
+      plex:    { Audio: 10, Album: 9, Artist: 4, Playlist: 15 }
+    };
     let playlist = [];
     let currentTrackIndex = 0;
     
@@ -1528,9 +1633,217 @@
     let currentVptIndex = 0; // Por defecto "Estudio"
     const vptProfiles = ['Desactivado', 'Estudio', 'Club', 'Auditorio'];
 
+    // ---- Server Adapter ----
+    function switchServerType(type) {
+      embyConfig.serverType = type;
+      document.querySelectorAll('.server-tab').forEach(t => t.classList.toggle('active', t.dataset.type === type));
+      document.getElementById('form-emby').classList.toggle('active', type !== 'plex');
+      document.getElementById('form-plex').classList.toggle('active', type === 'plex');
+      document.getElementById('library-selector').style.display = 'none';
+    }
+
+    async function connectServer() {
+      const type = embyConfig.serverType;
+      if (type === 'plex') return connectPlex();
+      return connectEmbyJellyfin(type);
+    }
+
+    async function connectEmbyJellyfin(type) {
+      const host = document.getElementById('emby-host').value.replace(/\/$/, '');
+      const user = document.getElementById('emby-user').value;
+      const pass = document.getElementById('emby-pass').value;
+
+      try {
+        const authRes = await fetch(`${host}/Users/AuthenticateByName`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Emby-Authorization': 'MediaBrowser Client="Walkman Web", Device="Xperia", DeviceId="X1", Version="1.0.0"'
+          },
+          body: JSON.stringify({ Username: user, Pw: pass })
+        });
+        if (!authRes.ok) throw new Error('Credenciales incorrectas');
+
+        const authData = await authRes.json();
+        embyConfig.host = host;
+        embyConfig.token = authData.AccessToken;
+        embyConfig.userId = authData.User.Id;
+        embyConfig.user = user;
+        embyConfig.serverType = type;
+        saveServerSettings();
+
+        const viewsRes = await fetch(`${host}/Users/${embyConfig.userId}/Views?api_key=${embyConfig.token}`);
+        const viewsData = await viewsRes.json();
+        populateLibrarySelect(viewsData.Items);
+      } catch (err) {
+        alert('Error de conexión: ' + err.message);
+      }
+    }
+
+    async function connectPlex() {
+      const host = document.getElementById('plex-host').value.replace(/\/$/, '');
+      const statusEl = document.getElementById('plex-status');
+      statusEl.style.display = 'block';
+
+      try {
+        // Paso 1: Registrar dispositivo y obtener PIN
+        const pinRes = await fetch('https://plex.tv/api/v2/pins?X-Plex-Client-Identifier=walkman-web', {
+          method: 'POST'
+        });
+        const pinData = await pinRes.json();
+        const pinId = pinData.id;
+        const authUrl = `https://app.plex.tv/auth#?forward=https%3A%2F%2Fwww.plex.tv%2F%3Fcode%3D${pinData.code}&code=${pinData.code}`;
+
+        statusEl.innerHTML = `
+          <div class="plex-spinner"></div>
+          <div>Abre el enlace para autenticar:</div>
+          <a href="${authUrl}" target="_blank" rel="noopener">${authUrl}</a>
+          <div style="margin-top:8px;color:#888;">Esperando autorización...</div>
+        `;
+
+        // Paso 2: Polling del PIN (máx 120s)
+        let plexToken = null;
+        for (let i = 0; i < 40; i++) {
+          await new Promise(r => setTimeout(r, 3000));
+          const pollRes = await fetch(`https://plex.tv/api/v2/pins/${pinId}?X-Plex-Client-Identifier=walkman-web`);
+          const pollData = await pollRes.json();
+          if (pollData.authToken) {
+            plexToken = pollData.authToken;
+            break;
+          }
+        }
+
+        if (!plexToken) throw new Error('Tiempo de espera agotado. Inténtalo de nuevo.');
+
+        // Paso 3: Obtener bibliotecas del servidor
+        const sectRes = await fetch(`${host}/library/sections?X-Plex-Token=${plexToken}`);
+        const sectData = await sectRes.json();
+        const musicSections = (sectData.MediaContainer.Directory || []).filter(s => s.type === 'artist');
+
+        if (musicSections.length === 0) throw new Error('No se encontraron bibliotecas de música en Plex.');
+
+        embyConfig.host = host;
+        embyConfig.token = plexToken;
+        embyConfig.userId = '';
+        embyConfig.user = 'Plex';
+        embyConfig.serverType = 'plex';
+        saveServerSettings();
+
+        populateLibrarySelect(musicSections.map(s => ({ Id: s.key, Name: s.title })));
+      } catch (err) {
+        statusEl.innerHTML = `<div style="color:#ff5555;">Error: ${err.message}</div>`;
+      }
+    }
+
+    function populateLibrarySelect(items) {
+      const select = document.getElementById('emby-libraries');
+      select.innerHTML = '<option value="">-- Seleccionar --</option>';
+      items.forEach(item => {
+        const opt = document.createElement('option');
+        opt.value = item.Id;
+        opt.textContent = item.Name;
+        if (embyConfig.libraryId && String(embyConfig.libraryId) === String(item.Id)) opt.selected = true;
+        select.appendChild(opt);
+      });
+      document.getElementById('library-selector').style.display = 'block';
+    }
+
+    async function fetchItems(type, parentId) {
+      const st = embyConfig.serverType;
+      if (st === 'plex') return fetchPlexItems(type, parentId);
+      return fetchEmbyItems(type, parentId);
+    }
+
+    async function fetchPlexItems(type, sectionKey) {
+      const sk = sectionKey || embyConfig.libraryId;
+      let items = [];
+
+      if (type === 'Playlist') {
+        // Listar todas las playlists de audio
+        const res = await fetch(`${embyConfig.host}/playlists?X-Plex-Token=${embyConfig.token}`);
+        const data = await res.json();
+        items = (data.MediaContainer.Metadata || []).filter(i => i.playlistType === 'audio');
+      } else if (type === 10 && sectionKey && sectionKey !== embyConfig.libraryId) {
+        // Sub-items de un álbum o playlist específica
+        // Detectar si es una playlist (key numérico alto) o un álbum
+        const isPlaylist = !String(sectionKey).startsWith(embyConfig.libraryId);
+        if (isPlaylist) {
+          const res = await fetch(`${embyConfig.host}/playlists/${sectionKey}/contents?X-Plex-Token=${embyConfig.token}`);
+          const data = await res.json();
+          items = data.MediaContainer.Metadata || [];
+        } else {
+          const res = await fetch(`${embyConfig.host}/library/metadata/${sectionKey}/children?type=10&X-Plex-Token=${embyConfig.token}`);
+          const data = await res.json();
+          items = data.MediaContainer.Metadata || [];
+        }
+      } else {
+        // Listado principal de una sección
+        const res = await fetch(`${embyConfig.host}/library/sections/${sk}/all?type=${type}&X-Plex-Token=${embyConfig.token}`);
+        const data = await res.json();
+        items = data.MediaContainer.Metadata || [];
+      }
+
+      return { Items: items.map(normalizePlexItem), TotalRecordCount: items.length };
+    }
+
+    function normalizePlexItem(item) {
+      const st = embyConfig.serverType;
+      const typeMap = { 10: 'Audio', 9: 'MusicAlbum', 4: 'MusicArtist', 15: 'Playlist' };
+      return {
+        Id: item.ratingKey,
+        Name: item.title || item.grandparentTitle,
+        Type: typeMap[item.type] || 'Audio',
+        Artists: item.type === 10 ? [item.grandparentTitle] : [],
+        AlbumArtist: item.grandparentTitle || '',
+        Album: item.parentTitle || '',
+        Duration: item.duration ? Math.round(item.duration / 1000) : 0,
+        Path: item.Media?.[0]?.Part?.[0]?.file || '',
+        ImageTags: item.thumb ? { Primary: item.thumb } : {},
+        AlbumId: item.parentRatingKey || '',
+        AlbumPrimaryImageTag: '',
+        // Plex specifics
+        _plexKey: item.ratingKey,
+        _plexThumb: item.thumb || '',
+        _plexParentThumb: item.parentThumb || '',
+        _plexGrandparentThumb: item.grandparentThumb || '',
+        _plexPartId: item.Media?.[0]?.Part?.[0]?.id || '',
+        _plexSectionKey: item.librarySectionID || ''
+      };
+    }
+
+    function getImageUrl(item) {
+      if (embyConfig.serverType === 'plex') return getPlexImageUrl(item);
+      return getEmbyImageUrl(item);
+    }
+
+    function getPlexImageUrl(item) {
+      if (!item) return defaultPlaceholder;
+      const host = embyConfig.host;
+      const token = embyConfig.token;
+
+      if (item.Type === 'MusicArtist') {
+        const thumb = item._plexThumb || item._plexGrandparentThumb;
+        if (thumb) return `${host}${thumb}?X-Plex-Token=${token}`;
+        return defaultPlaceholder;
+      }
+
+      if (item.Type === 'Audio') {
+        const trackThumb = item._plexThumb;
+        if (trackThumb) return `${host}${trackThumb}?X-Plex-Token=${token}`;
+        const albumThumb = item._plexParentThumb || item._plexGrandparentThumb;
+        if (albumThumb) return `${host}${albumThumb}?X-Plex-Token=${token}`;
+        return defaultPlaceholder;
+      }
+
+      const thumb = item._plexThumb || item._plexGrandparentThumb;
+      if (thumb) return `${host}${thumb}?X-Plex-Token=${token}`;
+      return defaultPlaceholder;
+    }
+
     const audio = document.getElementById('audio-player');
     const colorThief = new ColorThief();
-    const defaultPlaceholder = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24' fill='%23666666'><rect width='24' height='24' fill='%23222222'/><path d='M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z' fill='%23888888'/></svg>";
+    const defaultPlaceholder = "data:image/svg+xml;base64," + btoa(`<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="#282828"/><circle cx="150" cy="130" r="60" fill="none" stroke="#535353" stroke-width="4"/><circle cx="150" cy="130" r="20" fill="#535353"/><path d="M165 130 L165 70 Q165 55 180 50 L180 60 Q170 65 170 70 L170 125" fill="#535353"/><rect x="130" y="210" width="40" height="6" rx="3" fill="#535353"/><rect x="110" y="222" width="80" height="6" rx="3" fill="#404040"/></svg>`);
+
 
     // WEB AUDIO API - ECUALIZADOR, CLEAR BASS, VPT REVERB Y ANALYZER DE VISUALIZADOR
     let audioCtx = null;
@@ -2018,84 +2331,40 @@
       }
     }
 
-    // Función auxiliar para transformar RGB a componentes HSL individuales
-    function rgbToHsl(r, g, b) {
-      r /= 255; g /= 255; b /= 255;
-      const max = Math.max(r, g, b), min = Math.min(r, g, b);
-      let h, s, l = (max + min) / 2;
-    
-      if (max === min) {
-        h = s = 0; 
-      } else {
-        const d = max - min;
-        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-        switch (max) {
-          case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-          case g: h = (b - r) / d + 2; break;
-          case b: h = (r - g) / d + 4; break;
-        }
-        h /= 6;
-      }
-      return [h * 360, s * 100, l * 100];
-    }
-
-    // Color Thief con procesamiento de Saturación
+    // Color Thief
     const imgCurrent = document.getElementById('img-current');
     imgCurrent.addEventListener('load', function() {
       try {
         if (imgCurrent.complete && imgCurrent.naturalWidth !== 0) {
           const rgb = colorThief.getColor(imgCurrent);
-          const hsl = rgbToHsl(rgb[0], rgb[1], rgb[2]);
-
-          let h = hsl[0];
-          // Multiplicamos la saturación por 1.5 para avivar el color sin aclararlo
-          let s = Math.min(100, hsl[1] * 5); 
-          let l = hsl[2]; 
-        
-          const colorSaturadoHex = `hsl(${Math.round(h)}, ${Math.round(s)}%, ${Math.round(l)}%)`;
-
+          const colorHex = `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
+          
           document.getElementById('bg-container').style.background = 
-            `radial-gradient(circle at 50% 60%, ${colorSaturadoHex} 0%, #050505 85%)`;
-
-          document.documentElement.style.setProperty('--accent-color', colorSaturadoHex);
+            `radial-gradient(circle at 50% 60%, ${colorHex} 0%, #050505 85%)`;
+          
+          document.documentElement.style.setProperty('--accent-color', colorHex);
         }
       } catch (e) {}
     });
 
-
-
     function showServerModal() {
       document.getElementById('emby-modal').style.display = 'flex';
+      // Restaurar tab activa según config guardada
+      switchServerType(embyConfig.serverType || 'emby');
     }
 
     function getEmbyImageUrl(item) {
-        if (!item) return defaultPlaceholder;
-        
-        // 1. Si es un artista y tiene tag primario
-        if (item.Type === 'MusicArtist' && item.ImageTags && item.ImageTags.Primary) {
-            return `${embyConfig.host}/Items/${item.Id}/Images/Primary?maxWidth=350&api_key=${embyConfig.token}`;
-        }
-    
-        // 2. Si es una canción (Audio) sin imagen directa, pero pertenece a un álbum con imagen
-        if (item.Type === 'Audio') {
-            if (item.ImageTags && item.ImageTags.Primary) {
-                return `${embyConfig.host}/Items/${item.Id}/Images/Primary?maxWidth=350&api_key=${embyConfig.token}`;
-            }
-            if (item.AlbumId && item.AlbumPrimaryImageTag) {
-                return `${embyConfig.host}/Items/${item.AlbumId}/Images/Primary?maxWidth=350&tag=${item.AlbumPrimaryImageTag}&api_key=${embyConfig.token}`;
-            }
-            if (item.AlbumId) {
-                return `${embyConfig.host}/Items/${item.AlbumId}/Images/Primary?maxWidth=350&api_key=${embyConfig.token}`;
-            }
-        }
-    
-        // 3. Para Álbumes, Playlists o cualquier elemento con ImageTags.Primary explícito
-        if (item.ImageTags && item.ImageTags.Primary) {
-            return `${embyConfig.host}/Items/${item.Id}/Images/Primary?maxWidth=350&tag=${item.ImageTags.Primary}&api_key=${embyConfig.token}`;
-        }
-    
-        // 4. Si no cuenta con ningún tag de imagen válido, devolver la imagen por defecto directamente sin hacer fetch
-        return defaultPlaceholder;
+      if (!item) return defaultPlaceholder;
+      if (embyConfig.serverType === 'plex') return getPlexImageUrl(item);
+
+      const host = embyConfig.host;
+      const token = embyConfig.token;
+
+      if (item.Type === 'Audio' && !item.ImageTags?.Primary && !item.PrimaryImageTag && item.AlbumId) {
+        return `${host}/Items/${item.AlbumId}/Images/Primary?maxWidth=350&api_key=${token}`;
+      }
+
+      return `${host}/Items/${item.Id}/Images/Primary?maxWidth=350&api_key=${token}`;
     }
 
     // BÚSQUEDA EN EMBY EN TIEMPO REAL
@@ -2122,16 +2391,27 @@
         container.innerHTML = '<div style="color: #aaa; font-size: 13px; text-align: center;">Buscando...</div>';
 
         try {
-          const res = await fetch(`${embyConfig.host}/Users/${embyConfig.userId}/Items?SearchTerm=${encodeURIComponent(query)}&Recursive=true&IncludeItemTypes=Audio,MusicAlbum,MusicArtist&Limit=20&api_key=${embyConfig.token}`);
-          const data = await res.json();
+          let items = [];
+          const st = embyConfig.serverType;
+
+          if (st === 'plex') {
+            const res = await fetch(`${embyConfig.host}/search?query=${encodeURIComponent(query)}&X-Plex-Token=${embyConfig.token}`);
+            const data = await res.json();
+            const metadata = data.MediaContainer.Metadata || [];
+            items = metadata.filter(m => [10, 9, 4].includes(m.type)).map(normalizePlexItem);
+          } else {
+            const res = await fetch(`${embyConfig.host}/Users/${embyConfig.userId}/Items?SearchTerm=${encodeURIComponent(query)}&Recursive=true&IncludeItemTypes=Audio,MusicAlbum,MusicArtist&Fields=AlbumId&Limit=20&api_key=${embyConfig.token}`);
+            const data = await res.json();
+            items = data.Items || [];
+          }
 
           container.innerHTML = '';
-          if (!data.Items || data.Items.length === 0) {
+          if (items.length === 0) {
             container.innerHTML = '<div style="color: #888; font-size: 13px; text-align: center;">No se encontraron resultados</div>';
             return;
           }
 
-          data.Items.forEach(item => {
+          items.forEach(item => {
             const div = document.createElement('div');
             div.className = 'list-item';
             const imgUrl = getEmbyImageUrl(item);
@@ -2165,54 +2445,6 @@
       }, 300);
     }
 
-    async function connectEmby() {
-      const host = document.getElementById('emby-host').value.replace(/\/$/, "");
-      const user = document.getElementById('emby-user').value;
-      const pass = document.getElementById('emby-pass').value;
-
-      try {
-        const authRes = await fetch(`${host}/Users/AuthenticateByName`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Emby-Authorization': 'MediaBrowser Client="Walkman Web", Device="Xperia", DeviceId="X1", Version="1.0.0"'
-          },
-          body: JSON.stringify({ Username: user, Pw: pass })
-        });
-
-        if (!authRes.ok) throw new Error("Credenciales incorrectas");
-
-        const authData = await authRes.json();
-        embyConfig.host = host;
-        embyConfig.token = authData.AccessToken;
-        embyConfig.userId = authData.User.Id;
-        embyConfig.user = user;
-
-        saveServerSettings();
-
-        const viewsRes = await fetch(`${host}/Users/${embyConfig.userId}/Views?api_key=${embyConfig.token}`);
-        const viewsData = await viewsRes.json();
-
-        const librarySelect = document.getElementById('emby-libraries');
-        librarySelect.innerHTML = '<option value="">-- Seleccionar --</option>';
-
-        viewsData.Items.forEach(item => {
-          const opt = document.createElement('option');
-          opt.value = item.Id;
-          opt.textContent = `${item.Name}`;
-          if (embyConfig.libraryId && embyConfig.libraryId === item.Id) {
-            opt.selected = true;
-          }
-          librarySelect.appendChild(opt);
-        });
-
-        document.getElementById('library-selector').style.display = 'block';
-
-      } catch (err) {
-        alert("Error de conexión: " + err.message);
-      }
-    }
-
     function saveServerSettings() {
       localStorage.setItem('walkman_server_config', JSON.stringify(embyConfig));
     }
@@ -2234,11 +2466,12 @@
 
       try {
         const parsed = JSON.parse(saved);
-        if (parsed.host && parsed.token && parsed.userId && parsed.libraryId) {
-          embyConfig = parsed;
-          
+        if (parsed.host && parsed.token && parsed.libraryId) {
+          embyConfig = { ...embyConfig, ...parsed };
+
           document.getElementById('emby-host').value = embyConfig.host || '';
           document.getElementById('emby-user').value = embyConfig.user || '';
+          document.getElementById('plex-host').value = embyConfig.host || '';
 
           await updateCategoryCounts();
           return true;
@@ -2249,21 +2482,24 @@
     }
 
     async function updateCategoryCounts() {
-      const songs = await fetchEmbyItems('Audio');
+      const st = embyConfig.serverType;
+      const types = SERVER_TYPES[st];
+
+      const songs = await fetchItems(types.Audio);
       document.getElementById('count-songs').textContent = songs.TotalRecordCount || songs.Items.length;
 
-      const albums = await fetchEmbyItems('MusicAlbum');
+      const albums = await fetchItems(types.Album);
       document.getElementById('count-albums').textContent = albums.TotalRecordCount || albums.Items.length;
 
-      const artists = await fetchEmbyItems('MusicArtist');
+      const artists = await fetchItems(types.Artist);
       document.getElementById('count-artists').textContent = artists.TotalRecordCount || artists.Items.length;
 
-      const playlists = await fetchEmbyItems('Playlist');
+      const playlists = await fetchItems(types.Playlist);
       document.getElementById('count-playlists').textContent = playlists.TotalRecordCount || playlists.Items.length;
     }
 
     async function fetchEmbyItems(type, parentId = embyConfig.libraryId) {
-      const fields = "PrimaryImageAspectRatio,BasicSyncInfo,ImageTags,AlbumPrimaryImageTag";
+      const fields = "PrimaryImageAspectRatio,BasicSyncInfo,ImageTags,PrimaryImageTag,AlbumPrimaryImageTag,AlbumId";
       const res = await fetch(`${embyConfig.host}/Users/${embyConfig.userId}/Items?ParentId=${parentId}&IncludeItemTypes=${type}&Recursive=true&Fields=${fields}&api_key=${embyConfig.token}`);
       return await res.json();
     }
@@ -2276,8 +2512,10 @@
       const container = document.getElementById('items-container');
       container.innerHTML = '<div style="color:#aaa;">Cargando...</div>';
 
-      let typeMap = { 'Songs': 'Audio', 'Albums': 'MusicAlbum', 'Artists': 'MusicArtist', 'Playlists': 'Playlist' };
-      const data = await fetchEmbyItems(typeMap[category]);
+      const st = embyConfig.serverType;
+      const types = SERVER_TYPES[st];
+      const typeMap = { 'Songs': types.Audio, 'Albums': types.Album, 'Artists': types.Artist, 'Playlists': types.Playlist };
+      const data = await fetchItems(typeMap[category]);
 
       container.innerHTML = '';
 
@@ -2290,7 +2528,6 @@
       data.Items.forEach((item, index) => {
         const div = document.createElement('div');
         div.className = 'list-item';
-        
         const imgUrl = getEmbyImageUrl(item);
         
         div.innerHTML = `
@@ -2321,7 +2558,9 @@
       const container = document.getElementById('items-container');
       container.innerHTML = '<div style="color:#aaa;">Cargando canciones...</div>';
 
-      const data = await fetchEmbyItems('Audio', parentId);
+      const st = embyConfig.serverType;
+      const types = SERVER_TYPES[st];
+      const data = await fetchItems(types.Audio, parentId);
       playlist = data.Items;
       originalPlaylist = [...playlist];
       renderQueueList();
@@ -2370,7 +2609,6 @@
       playlist.forEach((item, idx) => {
         const div = document.createElement('div');
         div.className = `queue-item ${idx === currentTrackIndex ? 'active' : ''}`;
-        
         const imgUrl = getEmbyImageUrl(item);
         
         div.innerHTML = `
@@ -2444,7 +2682,9 @@
         audioCtx.resume();
       }
 
-      const streamUrl = `${embyConfig.host}/Audio/${track.Id}/stream?static=true&api_key=${embyConfig.token}`;
+      const streamUrl = embyConfig.serverType === 'plex'
+        ? `${embyConfig.host}/library/parts/${track._plexPartId}/stream?X-Plex-Token=${embyConfig.token}`
+        : `${embyConfig.host}/Audio/${track.Id}/stream?static=true&api_key=${embyConfig.token}`;
       audio.src = streamUrl;
       audio.play();
 
@@ -2523,6 +2763,7 @@
         showServerModal();
       } else {
         document.getElementById('emby-modal').style.display = 'none';
+        switchServerType(embyConfig.serverType || 'emby');
       }
     };
 

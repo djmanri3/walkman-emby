@@ -1,4 +1,4 @@
-const CACHE_NAME = 'walkman-v1';
+const CACHE_NAME = 'walkman-v2';
 const ASSETS = [
   './',
   './index.html',
@@ -34,8 +34,20 @@ self.addEventListener('activate', (e) => {
 
 // Estrategia de red/caché
 self.addEventListener('fetch', (e) => {
-  // Para streaming de Emby o API, ir siempre a la red
-  if (e.request.url.includes('/Audio/') || e.request.url.includes('/Items/')) {
+  const url = e.request.url;
+
+  // Emby / Jellyfin: streaming y API
+  if (url.includes('/Audio/') || url.includes('/Items/') || url.includes('/Users/') || url.includes('/Views')) {
+    return;
+  }
+
+  // Plex: streaming, library y search
+  if (url.includes('/library/parts/') || url.includes('/library/sections/') || url.includes('/search?')) {
+    return;
+  }
+
+  // Plex TV auth
+  if (url.includes('plex.tv/api/')) {
     return;
   }
 
