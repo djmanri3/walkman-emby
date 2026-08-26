@@ -232,6 +232,7 @@
       transform: translateX(0) scale(1);
       z-index: 3;
       opacity: 1;
+      transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
     }
 
     .art-card.next {
@@ -240,6 +241,7 @@
       opacity: 0.5;
       cursor: pointer;
       filter: brightness(0.7);
+      transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
     }
 
     .art-card.prev {
@@ -248,6 +250,26 @@
       opacity: 0.5;
       cursor: pointer;
       filter: brightness(0.7);
+      transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+
+    .track-info.transitioning {
+      animation: trackInfoTransition 0.4s ease-out;
+    }
+
+    @keyframes trackInfoTransition {
+      0% { transform: translateY(10px); opacity: 0; }
+      100% { transform: translateY(0); opacity: 1; }
+    }
+
+    .track-title.transitioning,
+    .track-artist.transitioning {
+      animation: textFadeIn 0.3s ease-out 0.1s both;
+    }
+
+    @keyframes textFadeIn {
+      0% { opacity: 0; }
+      100% { opacity: 1; }
     }
 
     /* VISTA DE VISUALIZADOR DE AUDIO ESTILO XPERIA (IMÁGENES) */
@@ -1622,6 +1644,8 @@
     };
     let playlist = [];
     let currentTrackIndex = 0;
+    let playlistVersion = 0;
+    let lastSeenPlaylistVersion = -1;
     
     // Estados de reproducción
     let repeatMode = 0; // 0: Off, 1: All, 2: One
@@ -2302,6 +2326,7 @@
             [rest[i], rest[j]] = [rest[j], rest[i]];
           }
           playlist = [currentTrack, ...rest];
+          playlistVersion++;
           currentTrackIndex = 0;
           renderQueueList();
         }
@@ -2310,6 +2335,7 @@
         if (originalPlaylist.length > 0) {
           const currentTrack = playlist[currentTrackIndex];
           playlist = [...originalPlaylist];
+          playlistVersion++;
           currentTrackIndex = playlist.findIndex(t => t.Id === currentTrack.Id);
           if (currentTrackIndex === -1) currentTrackIndex = 0;
           renderQueueList();
@@ -2429,6 +2455,7 @@
               if (item.Type === 'Audio') {
                 playlist = [item];
                 originalPlaylist = [item];
+                playlistVersion++;
                 playTrack(0);
                 switchTab('playing');
               } else {
@@ -2522,6 +2549,7 @@
       if (category === 'Songs') {
         playlist = data.Items;
         originalPlaylist = [...playlist];
+        playlistVersion++;
         renderQueueList();
       }
 
@@ -2563,6 +2591,7 @@
       const data = await fetchItems(types.Audio, parentId);
       playlist = data.Items;
       originalPlaylist = [...playlist];
+      playlistVersion++;
       renderQueueList();
       container.innerHTML = '';
 
@@ -2627,54 +2656,177 @@
       });
     }
 
+    function setCardImg(imgEl, src) {
+      imgEl.onerror = () => { imgEl.src = defaultPlaceholder; };
+      imgEl.src = src;
+    }
+
+    let trackHasLoaded = false;
+
     function playTrack(index) {
       if (playlist.length === 0) return;
+      
+      const prevIndex = currentTrackIndex;
       currentTrackIndex = index;
       const track = playlist[index];
 
+      const cardCurrent = document.getElementById('card-current');
+      const cardPrev = document.getElementById('card-prev');
+      const cardNext = document.getElementById('card-next');
+      const imgCurrentEl = document.getElementById('img-current');
+      const imgPrevEl = document.getElementById('img-prev');
+      const imgNextEl = document.getElementById('img-next');
+      const trackInfo = document.querySelector('.track-info');
+      const trackTitle = document.getElementById('track-title');
+      const trackArtist = document.getElementById('track-artist');
+
+      const allCards = [cardPrev, cardCurrent, cardNext];
+
+      const newUrl = getEmbyImageUrl(track);
+      const prevUrl = index > 0 ? getEmbyImageUrl(playlist[index - 1]) : null;
+      const nextUrl = index < playlist.length - 1 ? getEmbyImageUrl(playlist[index + 1]) : null;
+      const nextAfterUrl = index < playlist.length - 2 ? getEmbyImageUrl(playlist[index + 2]) : null;
+      const prevBeforeUrl = index > 1 ? getEmbyImageUrl(playlist[index - 2]) : null;
+
+      function setBaseStyles() {
+        allCards.forEach(c => {
+          c.style.transform = '';
+          c.style.opacity = '';
+          c.style.filter = '';
+          c.style.zIndex = '';
+        });
+      }
+
+      function applyImages() {
+        setCardImg(imgCurrentEl, newUrl);
+        if (prevUrl) {
+          setCardImg(imgPrevEl, prevUrl);
+          cardPrev.style.display = '';
+        } else {
+          cardPrev.style.display = 'none';
+        }
+        if (nextUrl) {
+          setCardImg(imgNextEl, nextUrl);
+          cardNext.style.display = '';
+        } else {
+          cardNext.style.display = 'none';
+        }
+      }
+
+      if (playlistVersion !== lastSeenPlaylistVersion) {
+        trackHasLoaded = false;
+        lastSeenPlaylistVersion = playlistVersion;
+      }
+
+      const canAnimate = trackHasLoaded && prevIndex !== index;
+
+      if (canAnimate) {
+        const goingForward = index > prevIndex;
+
+        const oldCurrentSrc = imgCurrentEl.src;
+        const oldNextSrc = imgNextEl.src;
+        const oldPrevSrc = imgPrevEl.src;
+
+        // Paso 1: Sin transición, posicionar en base CSS (sin cambio visual)
+        allCards.forEach(c => { c.style.transition = 'none'; });
+        setBaseStyles();
+        void cardCurrent.offsetWidth;
+
+        // Paso 2: Activar transiciones + poner destino → la animación arranca
+        allCards.forEach(c => { c.style.transition = ''; });
+
+        if (goingForward) {
+          cardPrev.style.transform = 'translateX(-350px) scale(0.6)';
+          cardPrev.style.opacity = '0';
+          cardCurrent.style.transform = 'translateX(-190px) scale(0.82)';
+          cardCurrent.style.opacity = '0.5';
+          cardCurrent.style.filter = 'brightness(0.7)';
+          cardCurrent.style.zIndex = '2';
+          cardNext.style.transform = 'translateX(0) scale(1)';
+          cardNext.style.opacity = '1';
+          cardNext.style.filter = '';
+          cardNext.style.zIndex = '3';
+        } else {
+          cardNext.style.transform = 'translateX(350px) scale(0.6)';
+          cardNext.style.opacity = '0';
+          cardCurrent.style.transform = 'translateX(190px) scale(0.82)';
+          cardCurrent.style.opacity = '0.5';
+          cardCurrent.style.filter = 'brightness(0.7)';
+          cardCurrent.style.zIndex = '2';
+          cardPrev.style.transform = 'translateX(0) scale(1)';
+          cardPrev.style.opacity = '1';
+          cardPrev.style.filter = '';
+          cardPrev.style.zIndex = '3';
+        }
+
+        // Paso 3: Al terminar la transición, intercambiar y limpiar
+        let cleaned = false;
+        const cleanup = () => {
+          if (cleaned) return;
+          cleaned = true;
+
+          if (goingForward) {
+            imgPrevEl.src = oldCurrentSrc;
+            imgCurrentEl.src = oldNextSrc;
+            if (nextUrl) {
+              imgNextEl.src = nextUrl;
+              cardNext.style.display = '';
+            } else {
+              cardNext.style.display = 'none';
+            }
+            cardPrev.style.display = '';
+          } else {
+            imgNextEl.src = oldCurrentSrc;
+            imgCurrentEl.src = oldPrevSrc;
+            if (prevUrl) {
+              imgPrevEl.src = prevUrl;
+              cardPrev.style.display = '';
+            } else {
+              cardPrev.style.display = 'none';
+            }
+            cardNext.style.display = '';
+          }
+
+          // Sin transición, volver a base CSS y limpiar inline
+          allCards.forEach(c => { c.style.transition = 'none'; });
+          setBaseStyles();
+          void cardCurrent.offsetWidth;
+          allCards.forEach(c => { c.style.transition = ''; });
+        };
+
+        cardCurrent.addEventListener('transitionend', cleanup, { once: true });
+        setTimeout(cleanup, 600);
+      } else {
+        applyImages();
+      }
+
+      trackHasLoaded = true;
+
+      // Animación del texto
+      trackInfo.classList.remove('transitioning');
+      trackTitle.classList.remove('transitioning');
+      trackArtist.classList.remove('transitioning');
+      void trackInfo.offsetWidth;
+      trackInfo.classList.add('transitioning');
+      trackTitle.classList.add('transitioning');
+      trackArtist.classList.add('transitioning');
+      
+      setTimeout(() => {
+        trackInfo.classList.remove('transitioning');
+        trackTitle.classList.remove('transitioning');
+        trackArtist.classList.remove('transitioning');
+      }, 400);
+
       document.getElementById('track-title').textContent = track.Name;
-      // --- NUEVO: Actualizar Media Session API ---
+      document.getElementById('track-artist').textContent = track.Artists ? track.Artists.join(', ') : 'Artista Desconocido';
+
       if ('mediaSession' in navigator) {
         navigator.mediaSession.metadata = new MediaMetadata({
           title: track.Name,
           artist: track.Artists ? track.Artists.join(', ') : 'Artista Desconocido',
           album: track.Album || 'Walkman Web',
-          artwork: [
-            { 
-              src: getEmbyImageUrl(track),
-              sizes: '512x512', 
-              type: 'image/jpeg' 
-            }
-          ]
+          artwork: [{ src: newUrl, sizes: '512x512', type: 'image/jpeg' }]
         });
-      }
-      // -------------------------------------------
-      document.getElementById('track-artist').textContent = track.Artists ? track.Artists.join(', ') : 'Artista Desconocido';
-      
-      const imgCurrentEl = document.getElementById('img-current');
-      imgCurrentEl.onerror = () => { imgCurrentEl.src = defaultPlaceholder; };
-      imgCurrentEl.src = getEmbyImageUrl(track);
-
-      const cardPrev = document.getElementById('card-prev');
-      const imgPrevEl = document.getElementById('img-prev');
-      if (index > 0) {
-        const prevTrackObj = playlist[index - 1];
-        imgPrevEl.onerror = () => { imgPrevEl.src = defaultPlaceholder; };
-        imgPrevEl.src = getEmbyImageUrl(prevTrackObj);
-        cardPrev.style.display = 'block';
-      } else {
-        cardPrev.style.display = 'none';
-      }
-
-      const cardNext = document.getElementById('card-next');
-      const imgNextEl = document.getElementById('img-next');
-      if (index < playlist.length - 1) {
-        const nextTrackObj = playlist[index + 1];
-        imgNextEl.onerror = () => { imgNextEl.src = defaultPlaceholder; };
-        imgNextEl.src = getEmbyImageUrl(nextTrackObj);
-        cardNext.style.display = 'block';
-      } else {
-        cardNext.style.display = 'none';
       }
 
       initAudioContext();
