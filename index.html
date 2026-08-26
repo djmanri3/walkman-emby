@@ -2698,13 +2698,6 @@
 
       container.innerHTML = '';
 
-      if (category === 'Songs') {
-        playlist = data.Items;
-        originalPlaylist = [...playlist];
-        playlistVersion++;
-        renderQueueList();
-      }
-
       data.Items.forEach((item, index) => {
         const div = document.createElement('div');
         div.className = 'list-item';
@@ -2721,6 +2714,11 @@
 
         div.onclick = () => {
           if (category === 'Songs') {
+            playlist = [...data.Items];
+            originalPlaylist = [...data.Items];
+            playlistVersion++;
+            renderQueueList();
+            refreshCarouselImages();
             playTrack(index);
             switchTab('playing');
           } else {
@@ -2742,13 +2740,10 @@
       const st = embyConfig.serverType;
       const types = SERVER_TYPES[st];
       const data = await fetchItems(types.Audio, parentId);
-      playlist = data.Items;
-      originalPlaylist = [...playlist];
-      playlistVersion++;
-      renderQueueList();
+      const albumTracks = data.Items;
       container.innerHTML = '';
 
-      playlist.forEach((track, index) => {
+      albumTracks.forEach((track, index) => {
         const div = document.createElement('div');
         div.className = 'list-item';
         const imgUrl = getEmbyImageUrl(track);
@@ -2763,6 +2758,11 @@
         `;
 
         div.onclick = () => {
+          playlist = [...albumTracks];
+          originalPlaylist = [...albumTracks];
+          playlistVersion++;
+          renderQueueList();
+          refreshCarouselImages();
           playTrack(index);
           switchTab('playing');
         };
