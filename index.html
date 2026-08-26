@@ -253,6 +253,38 @@
       transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
     }
 
+    @media (max-width: 400px) {
+      .carousel-container {
+        height: 260px;
+      }
+      .art-card {
+        width: 230px;
+        height: 230px;
+      }
+      .art-card.next {
+        transform: translateX(140px) scale(0.82);
+      }
+      .art-card.prev {
+        transform: translateX(-140px) scale(0.82);
+      }
+    }
+
+    @media (min-width: 401px) and (max-width: 500px) {
+      .carousel-container {
+        height: 300px;
+      }
+      .art-card {
+        width: 280px;
+        height: 280px;
+      }
+      .art-card.next {
+        transform: translateX(160px) scale(0.82);
+      }
+      .art-card.prev {
+        transform: translateX(-160px) scale(0.82);
+      }
+    }
+
     .track-info.transitioning {
       animation: trackInfoTransition 0.4s ease-out;
     }
@@ -1399,7 +1431,7 @@
 
   <!-- Header Xperia -->
   <header>
-    <div style="font-weight: bold; letter-spacing: 1px;">WALKMAN</div>
+    <div style="font-weight: bold; letter-spacing: 1px; cursor: default;" onclick="walkmanTap()">WALKMAN</div>
     <div class="top-nav">
       <div id="nav-playing" class="active" onclick="switchTab('playing')">Playing</div>
       <div id="nav-music" onclick="switchTab('music')">My music</div>
@@ -1754,6 +1786,16 @@
         <label>Selecciona la Biblioteca Musical</label>
         <select id="emby-libraries" onchange="selectLibrary()"></select>
       </div>
+    </div>
+  </div>
+
+  <!-- POPUP GITHUB -->
+  <div id="github-popup-overlay" class="context-menu-overlay" onclick="closeGithubPopup()" style="display:none;">
+    <div class="context-menu" onclick="event.stopPropagation()" style="text-align:center; padding: 24px 18px;">
+      <div style="font-size: 36px; margin-bottom: 8px;">🎵</div>
+      <div style="font-size: 16px; font-weight: 600; color: #fff; margin-bottom: 4px;">Walkman Server</div>
+      <div style="font-size: 12px; color: #aaa; margin-bottom: 18px;">by djmanri3</div>
+      <a href="https://github.com/djmanri3/walkman-server/tree/main" target="_blank" rel="noopener" style="display: inline-block; background: #fff; color: #000; padding: 10px 24px; border-radius: 20px; text-decoration: none; font-size: 14px; font-weight: 500;">Ver en GitHub</a>
     </div>
   </div>
 
@@ -2836,6 +2878,27 @@
       setTimeout(() => toast.classList.remove('show'), 2000);
     }
 
+    // --- EASTER EGG WALKMAN ---
+    let walkmanTaps = 0;
+    let walkmanTapTimer = null;
+
+    function walkmanTap() {
+      walkmanTaps++;
+      clearTimeout(walkmanTapTimer);
+      walkmanTapTimer = setTimeout(() => { walkmanTaps = 0; }, 800);
+      if (walkmanTaps >= 3) {
+        walkmanTaps = 0;
+        document.getElementById('github-popup-overlay').classList.add('open');
+        document.getElementById('github-popup-overlay').style.display = 'flex';
+      }
+    }
+
+    function closeGithubPopup() {
+      const el = document.getElementById('github-popup-overlay');
+      el.classList.remove('open');
+      el.style.display = 'none';
+    }
+
     function refreshCarouselImages() {
       const imgCurrentEl = document.getElementById('img-current');
       const imgPrevEl = document.getElementById('img-prev');
@@ -2960,6 +3023,10 @@
       if (canAnimate) {
         const goingForward = index > prevIndex;
 
+        const cardW = cardCurrent.offsetWidth;
+        const sideOffset = Math.round(cardW * 0.57);
+        const farOffset = Math.round(cardW * 1.06);
+
         const oldCurrentSrc = imgCurrentEl.src;
         const oldNextSrc = imgNextEl.src;
         const oldPrevSrc = imgPrevEl.src;
@@ -2973,9 +3040,9 @@
         allCards.forEach(c => { c.style.transition = ''; });
 
         if (goingForward) {
-          cardPrev.style.transform = 'translateX(-350px) scale(0.6)';
+          cardPrev.style.transform = `translateX(-${farOffset}px) scale(0.6)`;
           cardPrev.style.opacity = '0';
-          cardCurrent.style.transform = 'translateX(-190px) scale(0.82)';
+          cardCurrent.style.transform = `translateX(-${sideOffset}px) scale(0.82)`;
           cardCurrent.style.opacity = '0.5';
           cardCurrent.style.filter = 'brightness(0.7)';
           cardCurrent.style.zIndex = '2';
@@ -2984,9 +3051,9 @@
           cardNext.style.filter = '';
           cardNext.style.zIndex = '3';
         } else {
-          cardNext.style.transform = 'translateX(350px) scale(0.6)';
+          cardNext.style.transform = `translateX(${farOffset}px) scale(0.6)`;
           cardNext.style.opacity = '0';
-          cardCurrent.style.transform = 'translateX(190px) scale(0.82)';
+          cardCurrent.style.transform = `translateX(${sideOffset}px) scale(0.82)`;
           cardCurrent.style.opacity = '0.5';
           cardCurrent.style.filter = 'brightness(0.7)';
           cardCurrent.style.zIndex = '2';
