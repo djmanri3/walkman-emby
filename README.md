@@ -12,6 +12,13 @@ You can access in this link: https://djmanri3.github.io/walkman-emby/
 - Add botons of playlist, repeat, repeat playlist and shuffle
 - View on carrusel mode
 - Background color adpat to album cover
+- Add install on smarthphone with web app
+- Compatible with meida widget browser 
+- Add connection with Emby, Jellyfin and Plex
+
+
+# Bugs
+- On albums menu, only show some covers
 
 # Screenshots
 
