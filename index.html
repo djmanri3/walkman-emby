@@ -942,6 +942,21 @@
       animation: contextMenuIn 0.2s ease-out;
     }
 
+    /* Easter Egg (3 toques a WALKMAN): efecto cristal glass exagerado estilo iOS */
+    .context-menu.github-popup-card {
+      background: rgba(255, 255, 255, 0.10);
+      -webkit-backdrop-filter: blur(40px) saturate(220%) brightness(1.15);
+      backdrop-filter: blur(40px) saturate(220%) brightness(1.15);
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      border-radius: 24px;
+      padding: 28px 20px;
+      text-align: center;
+      box-shadow:
+        0 20px 60px rgba(0,0,0,0.6),
+        inset 0 1px 1px rgba(255,255,255,0.55),
+        inset 0 -1px 1px rgba(255,255,255,0.12);
+    }
+
     @keyframes contextMenuIn {
       0% { transform: scale(0.9); opacity: 0; }
       100% { transform: scale(1); opacity: 1; }
@@ -2215,7 +2230,7 @@
 
   <!-- POPUP GITHUB -->
   <div id="github-popup-overlay" class="context-menu-overlay" onclick="closeGithubPopup()" style="display:none;">
-    <div class="context-menu" onclick="event.stopPropagation()" style="text-align:center; padding: 24px 18px;">
+    <div class="context-menu github-popup-card" onclick="event.stopPropagation()">
       <div style="font-size: 36px; margin-bottom: 8px;">🎵</div>
       <div style="font-size: 16px; font-weight: 600; color: #fff; margin-bottom: 4px;">Walkman Server</div>
       <div style="font-size: 12px; color: #aaa; margin-bottom: 18px;">by djmanri3</div>
