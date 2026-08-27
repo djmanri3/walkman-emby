@@ -7,18 +7,25 @@ You can access in this link: https://djmanri3.github.io/walkman-server/
 - Native equalizer with 5 bands
 - Add Clear bass feature
 - Add equalizer space (VPT) with 3 profiles
-- Add song visualizer, in this moment only one mode
+- Add song visualizer
+  - Anillos pulsantes
+  - Barras de frecuencia
+  - Onda estéreo
+  - Ondas PS3
+  - Cosmic Flow
+  - Particulas del álbum
+  - Bloques ritmicos
 - Fix search
 - Add botons of playlist, repeat, repeat playlist and shuffle
 - View on carrusel mode
 - Background color adpat to album cover
 - Add install on smarthphone with web app
-- Compatible with meida widget browser 
-- Add connection with Emby, Jellyfin and Plex
+- Compatible with medIa widget browser 
+- Add connection with Emby, Jellyfin, Plex AND LOCAL!!!
+- FIX LIST ALBUM COVERS ON EMBY SERVERS!!!!!
 
 
 # Bugs
-- On albums menu, only show some covers only on Emby servers!!
 - When add album to queue no play :(
 
 # Screenshots
