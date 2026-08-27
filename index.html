@@ -1860,6 +1860,8 @@
     let currentTrackIndex = 0;
     let playlistVersion = 0;
     let lastSeenPlaylistVersion = -1;
+    // Pila de navegación para el botón Volver
+    let navStack = [];
     
     // Estados de reproducción
     let repeatMode = 0; // 0: Off, 1: All, 2: One
@@ -3168,6 +3170,9 @@
       document.getElementById('list-view').style.display = 'block';
       document.getElementById('selected-category-title').textContent = category;
 
+      // Nivel actual = categoría; desde aquí se accede a sub-elementos
+      navStack = [{ type: 'category', category: category }];
+
       const container = document.getElementById('items-container');
       container.innerHTML = '<div style="color:#aaa;">Cargando...</div>';
 
@@ -3214,6 +3219,10 @@
       document.getElementById('category-view').style.display = 'none';
       document.getElementById('list-view').style.display = 'block';
       document.getElementById('selected-category-title').textContent = title;
+
+      // Guardar hacia dónde volver (la categoría en la que estábamos)
+      navStack.push({ type: 'subitems', category: navStack.length ? navStack[navStack.length - 1].category : '' });
+
       const container = document.getElementById('items-container');
       container.innerHTML = '<div style="color:#aaa;">Cargando canciones...</div>';
 
@@ -3252,6 +3261,17 @@
     }
 
     function backToCategories() {
+      // Si venimos de un sub-elemento (álbum/artista/playlist), volvemos a la lista de esa categoría
+      if (navStack.length > 1) {
+        const previous = navStack[navStack.length - 2] || navStack[0];
+        navStack.pop();
+        if (previous && previous.type === 'category' && previous.category) {
+          loadCategory(previous.category);
+          return;
+        }
+      }
+      // Si no hay historial, volvemos al menú principal de My music
+      navStack = [];
       document.getElementById('category-view').style.display = 'block';
       document.getElementById('list-view').style.display = 'none';
     }
