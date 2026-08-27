@@ -3242,10 +3242,12 @@
           const rgb = colorThief.getColor(imgCurrent);
           const colorHex = `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
           
-          // Solo aplicar el color dinámico si el modo está en "dinámico"
+          // El fondo SIEMPRE se adapta al color de la carátula, independientemente del modo
+          document.getElementById('bg-container').style.background = 
+            `radial-gradient(circle at 50% 60%, ${colorHex} 0%, #050505 85%)`;
+          
+          // Solo el color de acento depende del modo
           if (accentMode === 'dynamic') {
-            document.getElementById('bg-container').style.background = 
-              `radial-gradient(circle at 50% 60%, ${colorHex} 0%, #050505 85%)`;
             document.documentElement.style.setProperty('--accent-color', colorHex);
           }
         }
