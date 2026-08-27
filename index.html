@@ -1344,6 +1344,200 @@
       cursor: pointer;
     }
 
+    /* Settings Menu */
+    .settings-menu {
+      position: absolute;
+      top: 56px; right: 12px;
+      width: 280px;
+      background: rgba(18, 18, 18, 0.96);
+      backdrop-filter: blur(15px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.85);
+      z-index: 55;
+      display: none;
+      flex-direction: column;
+      padding: 14px 16px;
+      gap: 12px;
+    }
+
+    .settings-menu.open {
+      display: flex;
+    }
+
+    .settings-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent-color);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: color 0.5s;
+    }
+
+    .settings-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .settings-group-label {
+      font-size: 11px;
+      color: #aaa;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+    }
+
+    .accent-options {
+      display: flex;
+      gap: 8px;
+    }
+
+    .accent-option {
+      flex: 1;
+      text-align: center;
+      padding: 6px 0;
+      font-size: 12px;
+      border-radius: 5px;
+      border: 1px solid rgba(255,255,255,0.25);
+      background: rgba(255,255,255,0.03);
+      color: #ddd;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .accent-option.active {
+      background: var(--accent-color);
+      border-color: var(--accent-color);
+      color: #fff;
+      transition: all 0.5s;
+    }
+
+    .accent-color-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .accent-color-row input[type="color"] {
+      width: 40px;
+      height: 30px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .accent-color-row span {
+      font-size: 12px;
+      color: #aaa;
+    }
+
+    .settings-btn {
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.25);
+      background: rgba(255,255,255,0.03);
+      color: #fff;
+      font-size: 13px;
+      cursor: pointer;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: background 0.2s;
+    }
+
+    .settings-btn:hover {
+      background: rgba(255,255,255,0.08);
+    }
+
+    .settings-btn .material-icons {
+      font-size: 18px;
+      color: var(--accent-color);
+      transition: color 0.5s;
+    }
+
+    .settings-link {
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.25);
+      background: rgba(255,255,255,0.03);
+      color: #fff;
+      font-size: 13px;
+      cursor: pointer;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+
+    .settings-link:hover {
+      background: rgba(255,255,255,0.08);
+    }
+
+    .settings-link .material-icons {
+      font-size: 18px;
+      color: var(--accent-color);
+      transition: color 0.5s;
+    }
+
+    .settings-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.01);
+      z-index: 54;
+      display: none;
+    }
+
+    .settings-overlay.open {
+      display: block;
+    }
+
+    /* Cambiar Biblioteca (desplegable independiente) */
+    .library-picker {
+      position: absolute;
+      top: 56px; right: 12px;
+      width: 280px;
+      background: rgba(18, 18, 18, 0.96);
+      backdrop-filter: blur(15px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.85);
+      z-index: 56;
+      display: none;
+      flex-direction: column;
+      padding: 14px 16px;
+      gap: 12px;
+    }
+
+    .library-picker.open {
+      display: flex;
+    }
+
+    .library-picker select {
+      width: 100%;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.25);
+      background: #1e1e1e;
+      color: #fff;
+      font-size: 13px;
+      outline: none;
+    }
+
+    .library-picker option {
+      background: #1e1e1e;
+      color: #fff;
+    }
+
     /* Server Type Tabs */
     .server-tabs {
       display: flex;
@@ -1447,8 +1641,57 @@
       <span class="material-icons" onclick="toggleSearchOverlay()" title="Buscar">search</span>
       <span class="material-icons" id="eq-btn" onclick="toggleEqualizer()" title="Mejoras de Sonido / Ecualizador">equalizer</span>
       <span class="material-icons" onclick="showServerModal()" title="Ajustes de Servidor">storage</span>
+      <span class="material-icons" id="settings-btn" onclick="toggleSettingsMenu()" title="Ajustes">settings</span>
     </div>
   </header>
+
+  <!-- MENÚ DE AJUSTES DERECHO -->
+  <div id="settings-overlay" class="settings-overlay" onclick="closeSettingsMenu()"></div>
+  <div id="settings-menu" class="settings-menu">
+    <div class="settings-title">
+      <span class="material-icons" style="font-size:15px;">settings</span>
+      Ajustes
+    </div>
+
+    <div class="settings-group">
+      <div class="settings-group-label">Color de acento</div>
+      <div class="accent-options">
+        <div class="accent-option" id="accent-opt-dynamic" onclick="setAccentMode('dynamic')">Dinámico</div>
+        <div class="accent-option" id="accent-opt-custom" onclick="setAccentMode('custom')">Personalizado</div>
+      </div>
+      <div class="accent-color-row" id="accent-custom-row" style="display:none;">
+        <input type="color" id="accent-color-input" value="#aa00ff" oninput="setCustomAccent(this.value)">
+        <span>Elige un color</span>
+      </div>
+    </div>
+
+    <div class="settings-group">
+      <div class="settings-btn" onclick="changeLibrary()">
+        <span class="material-icons">library_music</span>
+        Cambiar biblioteca de música
+      </div>
+      <div class="settings-btn" onclick="clearCache()">
+        <span class="material-icons">delete_sweep</span>
+        Borrar caché
+      </div>
+    </div>
+
+    <a class="settings-link" href="https://github.com/djmanri3/walkman-server" target="_blank" rel="noopener">
+      <span class="material-icons">code</span>
+      GitHub: djmanri3/walkman-server
+    </a>
+  </div>
+
+  <!-- CAMBIAR BIBLIOTECA (desplegable independiente) -->
+  <div id="library-overlay" class="settings-overlay" onclick="closeLibraryPicker()"></div>
+  <div id="library-picker" class="library-picker">
+    <div class="settings-title">
+      <span class="material-icons" style="font-size:15px;">library_music</span>
+      Cambiar biblioteca
+    </div>
+    <div class="settings-group-label">Bibliotecas disponibles</div>
+    <select id="lib-picker-select" onchange="applyLibraryChange(this.value)"></select>
+  </div>
 
   <!-- MEJORAS DE SONIDO (ECUALIZADOR + VPT) DERECHO -->
   <div id="eq-dropdown" class="audio-enhancements-menu">
@@ -1862,6 +2105,8 @@
     let lastSeenPlaylistVersion = -1;
     // Pila de navegación para el botón Volver
     let navStack = [];
+    // Lista de bibliotecas musicales disponibles del servidor conectado
+    let availableLibraries = [];
     
     // Estados de reproducción
     let repeatMode = 0; // 0: Off, 1: All, 2: One
@@ -2337,6 +2582,8 @@
     }
 
     function populateLibrarySelect(items) {
+      availableLibraries = items;
+      try { localStorage.setItem('walkman_libraries', JSON.stringify(items)); } catch (e) {}
       const select = document.getElementById('emby-libraries');
       select.innerHTML = '<option value="">-- Seleccionar --</option>';
       items.forEach(item => {
@@ -2882,6 +3129,8 @@
 
       if (dropdown.classList.contains('open')) {
         document.getElementById('search-overlay').classList.remove('open');
+        // Cerrar el menú de ajustes si está abierto
+        closeSettingsMenu();
         renderVptCards();
       }
     }
@@ -2989,18 +3238,187 @@
           const rgb = colorThief.getColor(imgCurrent);
           const colorHex = `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
           
-          document.getElementById('bg-container').style.background = 
-            `radial-gradient(circle at 50% 60%, ${colorHex} 0%, #050505 85%)`;
-          
-          document.documentElement.style.setProperty('--accent-color', colorHex);
+          // Solo aplicar el color dinámico si el modo está en "dinámico"
+          if (accentMode === 'dynamic') {
+            document.getElementById('bg-container').style.background = 
+              `radial-gradient(circle at 50% 60%, ${colorHex} 0%, #050505 85%)`;
+            document.documentElement.style.setProperty('--accent-color', colorHex);
+          }
         }
       } catch (e) {}
     });
+
+    // ---- Menú de Ajustes ----
+    let accentMode = 'dynamic'; // 'dynamic' | 'custom'
+    let customAccentHex = '#aa00ff';
+
+    function toggleSettingsMenu() {
+      document.getElementById('settings-overlay').classList.toggle('open');
+      document.getElementById('settings-menu').classList.toggle('open');
+      // Cerrar el menú EQ si está abierto
+      document.getElementById('eq-dropdown').classList.remove('open');
+      document.getElementById('eq-btn').classList.remove('active');
+    }
+
+    function closeSettingsMenu() {
+      document.getElementById('settings-overlay').classList.remove('open');
+      document.getElementById('settings-menu').classList.remove('open');
+    }
+
+    function applyAccent() {
+      const isDynamic = accentMode === 'dynamic';
+      document.getElementById('accent-opt-dynamic').classList.toggle('active', isDynamic);
+      document.getElementById('accent-opt-custom').classList.toggle('active', !isDynamic);
+      document.getElementById('accent-custom-row').style.display = isDynamic ? 'none' : 'flex';
+
+      if (!isDynamic) {
+        document.documentElement.style.setProperty('--accent-color', customAccentHex);
+      } else {
+        // Restaurar dinámico: el próximo load de imgCurrent lo recalculará
+        try {
+          if (imgCurrent.complete && imgCurrent.naturalWidth !== 0) {
+            const rgb = colorThief.getColor(imgCurrent);
+            document.documentElement.style.setProperty('--accent-color', `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`);
+          }
+        } catch (e) {}
+      }
+      saveAccentSettings();
+    }
+
+    function setAccentMode(mode) {
+      accentMode = mode;
+      applyAccent();
+    }
+
+    function setCustomAccent(hex) {
+      customAccentHex = hex;
+      accentMode = 'custom';
+      applyAccent();
+    }
+
+    function saveAccentSettings() {
+      try {
+        localStorage.setItem('walkman_accent', JSON.stringify({ mode: accentMode, custom: customAccentHex }));
+      } catch (e) {}
+    }
+
+    function restoreAccentSettings() {
+      try {
+        const saved = localStorage.getItem('walkman_accent');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed.mode) accentMode = parsed.mode;
+          if (parsed.custom) customAccentHex = parsed.custom;
+        }
+      } catch (e) {}
+      document.getElementById('accent-color-input').value = customAccentHex;
+      applyAccent();
+    }
+
+    function changeLibrary() {
+      closeSettingsMenu();
+
+      // Si hay bibliotecas guardadas del servidor conectado, mostrar el desplegable directo
+      if (availableLibraries.length > 0) {
+        showLibraryPicker();
+      } else {
+        // Intentar recargarlas desde el servidor conectado
+        loadAvailableLibraries().then(ok => {
+          if (ok) {
+            showLibraryPicker();
+          } else {
+            // Sin bibliotecas recuperables: ir al modal de conexión
+            showServerModal();
+          }
+        });
+      }
+    }
+
+    async function loadAvailableLibraries() {
+      const st = embyConfig.serverType;
+      try {
+        if (st === 'emby' || st === 'jellyfin') {
+          if (!embyConfig.host || !embyConfig.token || !embyConfig.userId) return false;
+          const res = await fetch(`${embyConfig.host}/Users/${embyConfig.userId}/Views?api_key=${embyConfig.token}`);
+          const data = await res.json();
+          if (data.Items && data.Items.length) {
+            availableLibraries = data.Items;
+            try { localStorage.setItem('walkman_libraries', JSON.stringify(data.Items)); } catch (e) {}
+            return true;
+          }
+        } else if (st === 'plex') {
+          if (!embyConfig.host || !embyConfig.token) return false;
+          const res = await fetch(`${embyConfig.host}/library/sections?X-Plex-Token=${embyConfig.token}`);
+          const data = await res.json();
+          const sections = (data.MediaContainer.Directory || []).filter(s => s.type === 'artist')
+            .map(s => ({ Id: s.key, Name: s.title }));
+          if (sections.length) {
+            availableLibraries = sections;
+            try { localStorage.setItem('walkman_libraries', JSON.stringify(sections)); } catch (e) {}
+            return true;
+          }
+        }
+      } catch (e) {}
+      return false;
+    }
+
+    function showLibraryPicker() {
+      const select = document.getElementById('lib-picker-select');
+      select.innerHTML = '';
+      availableLibraries.forEach(item => {
+        const opt = document.createElement('option');
+        opt.value = item.Id;
+        opt.textContent = item.Name;
+        if (embyConfig.libraryId && String(embyConfig.libraryId) === String(item.Id)) opt.selected = true;
+        select.appendChild(opt);
+      });
+      document.getElementById('library-overlay').classList.add('open');
+      document.getElementById('library-picker').classList.add('open');
+    }
+
+    function closeLibraryPicker() {
+      document.getElementById('library-overlay').classList.remove('open');
+      document.getElementById('library-picker').classList.remove('open');
+    }
+
+    async function applyLibraryChange(libId) {
+      if (!libId) return;
+      embyConfig.libraryId = libId;
+      saveServerSettings();
+      closeLibraryPicker();
+      await updateCategoryCounts();
+      showToast('Biblioteca cambiada');
+    }
+
+    async function clearCache() {
+      try {
+        // Limpiar cachés del service worker
+        if ('caches' in window) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map(key => caches.delete(key)));
+        }
+        // Limpiar object URLs locales de canciones
+        localTracks.forEach(t => { if (t.objUrl) try { URL.revokeObjectURL(t.objUrl); } catch(e) {} });
+        localTracks.forEach(t => { if (t.coverUrl && t.coverUrl.startsWith('blob:')) try { URL.revokeObjectURL(t.coverUrl); } catch(e) {} });
+        localTracks = [];
+        // Recargar
+        alert('Caché borrada. La app se recargará.');
+        window.location.reload();
+      } catch (e) {
+        alert('Error al borrar la caché: ' + e.message);
+      }
+    }
 
     function showServerModal() {
       document.getElementById('emby-modal').style.display = 'flex';
       // Restaurar tab activa según config guardada
       switchServerType(embyConfig.serverType || 'emby');
+
+      // Si ya hay bibliotecas guardadas del servidor conectado, mostrar el selector
+      // para poder cambiar de biblioteca sin reconectar
+      if (availableLibraries.length > 0) {
+        populateLibrarySelect(availableLibraries);
+      }
     }
 
     function getEmbyImageUrl(item) {
@@ -3120,6 +3538,9 @@
       if (!saved) return false;
 
       try {
+        const savedLibs = localStorage.getItem('walkman_libraries');
+        if (savedLibs) availableLibraries = JSON.parse(savedLibs);
+
         const parsed = JSON.parse(saved);
         if (parsed.serverType === 'local') {
           // La biblioteca local necesita volver a seleccionar la carpeta
@@ -3654,6 +4075,7 @@
       setupMediaSession();
       renderVptCards();
       applySavedAudioSettings();
+      restoreAccentSettings();
       const connected = await restoreServerConfig();
       if (!connected) {
         showServerModal();
