@@ -4183,8 +4183,17 @@
       const host = embyConfig.host;
       const token = embyConfig.token;
 
+      // Canciones: si no tienen imagen propia, usar la del álbum que las contiene
       if (item.Type === 'Audio' && !item.ImageTags?.Primary && !item.PrimaryImageTag && item.AlbumId) {
         return `${host}/Items/${item.AlbumId}/Images/Primary?maxWidth=350&api_key=${token}`;
+      }
+
+      // Álbumes de música (Emby/Jellyfin): el Id listado a veces reporta imagen
+      // pero 404 al pedirla; solo es fiable el AlbumId real de sus canciones.
+      if (item.Type === 'MusicAlbum') {
+        if (item.AlbumId && item.AlbumId !== item.Id) {
+          return `${host}/Items/${item.AlbumId}/Images/Primary?maxWidth=350&api_key=${token}`;
+        }
       }
 
       return `${host}/Items/${item.Id}/Images/Primary?maxWidth=350&api_key=${token}`;
@@ -4353,6 +4362,36 @@
       const types = SERVER_TYPES[st];
       const typeMap = { 'Songs': types.Audio, 'Albums': types.Album, 'Artists': types.Artist, 'Playlists': types.Playlist };
       const data = await fetchItems(typeMap[category]);
+
+      // Fix carátulas de álbumes (Emby/Jellyfin): el Id del álbum listado a
+      // veces da 404 aunque reporte imagen; el fiable es el Id de la canción,
+      // que es el álbum físico que sí tiene la portada.
+      if (category === 'Albums' && (st === 'emby' || st === 'jellyfin')) {
+        try {
+          const songsData = await fetchItems(types.Audio);
+          // Mapear álbum (por nombre) -> Id de una de sus canciones
+          const idByTrackAlbum = {};
+          (songsData.Items || []).forEach(s => {
+            if (s.Id && s.Album && !idByTrackAlbum[s.Album]) {
+              idByTrackAlbum[s.Album] = s.Id;
+            }
+          });
+          (data.Items || []).forEach(item => {
+            if (idByTrackAlbum[item.Name]) {
+              item.AlbumId = idByTrackAlbum[item.Name];
+            }
+          });
+          // Para los que sigan sin resolver, consultar sus canciones (paralelo)
+          const pending = (data.Items || []).filter(item => !item.AlbumId || item.AlbumId === item.Id);
+          await Promise.all(pending.map(async (item) => {
+            try {
+              const sub = await fetchItems(types.Audio, item.Id);
+              const first = (sub.Items || []).find(s => s.Id);
+              if (first && first.Id) item.AlbumId = first.Id;
+            } catch (e) {}
+          }));
+        } catch (e) {}
+      }
 
       container.innerHTML = '';
 
