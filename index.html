@@ -2077,6 +2077,10 @@
         <span class="material-icons">queue_music</span>
         <span>Añadir a la cola</span>
       </div>
+      <div class="context-menu-option" id="ctx-remove-option" onclick="ctxRemoveFromQueue()" style="color:#ff5555; display:none;">
+        <span class="material-icons">delete</span>
+        <span>Eliminar de la cola</span>
+      </div>
       <div class="context-menu-option" onclick="ctxShowInfo()">
         <span class="material-icons">info_outline</span>
         <span>Información de la música</span>
@@ -3699,23 +3703,29 @@
 
     // --- MENÚ CONTEXTUAL ---
     let ctxMenuItem = null;
+    let ctxQueueIdx = -1;
 
-    function openContextMenu(event, item) {
+    function openContextMenu(event, item, queueIdx = -1) {
       ctxMenuItem = item;
+      ctxQueueIdx = queueIdx;
       const overlay = document.getElementById('context-menu-overlay');
       const title = document.getElementById('ctx-menu-title');
       const sub = document.getElementById('ctx-menu-sub');
       const info = document.getElementById('ctx-menu-info');
+      const removeOpt = document.getElementById('ctx-remove-option');
 
       title.textContent = item.Name || 'Sin nombre';
       sub.textContent = item.Artists ? item.Artists.join(', ') : (item.AlbumArtist || '');
       info.style.display = 'none';
+      // Solo mostrar "Eliminar de la cola" cuando el menú sale de la Play Queue
+      removeOpt.style.display = queueIdx >= 0 ? 'flex' : 'none';
       overlay.classList.add('open');
     }
 
     function closeContextMenu() {
       document.getElementById('context-menu-overlay').classList.remove('open');
       ctxMenuItem = null;
+      ctxQueueIdx = -1;
     }
 
     function ctxPlayNext() {
@@ -3736,6 +3746,43 @@
       renderQueueList();
       refreshCarouselImages();
       showToast('Añadida a la cola');
+      closeContextMenu();
+    }
+
+    function ctxRemoveFromQueue() {
+      if (!ctxMenuItem) return;
+      // Al venir de la Play Queue, ctxQueueIdx es el índice real en playlist
+      let idx = ctxQueueIdx;
+      if (idx < 0 || idx >= playlist.length) {
+        // Retroceso: buscar por coincidencia de Id/Name
+        idx = playlist.findIndex(t => t && (t.Id === ctxMenuItem.Id || t.Name === ctxMenuItem.Name));
+      }
+      if (idx < 0) {
+        showToast('No está en la cola');
+        closeContextMenu();
+        return;
+      }
+      playlist.splice(idx, 1);
+      const oIdx = originalPlaylist.findIndex(t => t && (t.Id === ctxMenuItem.Id || t.Name === ctxMenuItem.Name));
+      if (oIdx >= 0) originalPlaylist.splice(oIdx, 1);
+
+      // Ajustar índice de reproducción si se borra algo antes o igual que la actual
+      if (idx < currentTrackIndex) {
+        currentTrackIndex--;
+      } else if (idx === currentTrackIndex) {
+        // Si se borra la canción actual, retroceder o avanzar
+        if (playlist.length > 0) {
+          currentTrackIndex = Math.min(currentTrackIndex, playlist.length - 1);
+        }
+      }
+
+      if (playlist.length === 0) {
+        currentTrackIndex = -1;
+      }
+
+      renderQueueList();
+      refreshCarouselImages();
+      showToast('Eliminada de la cola');
       closeContextMenu();
     }
 
@@ -3824,6 +3871,7 @@
             <div class="queue-item-title">${item.Name}</div>
             <div class="queue-item-artist">${item.Artists ? item.Artists.join(', ') : 'Artista'}</div>
           </div>
+          <button class="list-item-more" onclick="event.stopPropagation(); openContextMenu(event, ${JSON.stringify(item).replace(/"/g, '&quot;')}, ${idx})"><span class="material-icons">more_vert</span></button>
         `;
 
         div.onclick = () => {
