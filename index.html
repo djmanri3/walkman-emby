@@ -29,6 +29,7 @@
       --bg-color-2: #050505;
       --accent-color: #aa00ff;
       --walkman-green: #76c02a;
+      --carousel-size: 1;
     }
 
     * {
@@ -135,6 +136,12 @@
       position: relative;
     }
 
+    /* Con zoom > 100% el contenido puede exceder el alto: fluir desde arriba
+       y permitir scroll hasta los controles en vez de recortarlos */
+    body.zoom-large #view-playing {
+      justify-content: flex-start;
+    }
+
     .track-header-wrapper {
       width: 100%;
       display: flex;
@@ -205,7 +212,7 @@
 
     .carousel-container {
       width: 100%;
-      height: 360px;
+      height: calc(360px * var(--carousel-size));
       display: flex;
       align-items: center;
       justify-content: center;
@@ -215,8 +222,8 @@
 
     .art-card {
       position: absolute;
-      width: 330px;
-      height: 330px;
+      width: calc(330px * var(--carousel-size));
+      height: calc(330px * var(--carousel-size));
       transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
       box-shadow: 0 12px 35px rgba(0, 0, 0, 0.85);
       border-radius: 2px;
@@ -238,7 +245,7 @@
     }
 
     .art-card.next {
-      transform: translateX(190px) scale(0.82);
+      transform: translateX(calc(190px * var(--carousel-size))) scale(0.82);
       z-index: 2;
       opacity: 0.5;
       cursor: pointer;
@@ -247,7 +254,7 @@
     }
 
     .art-card.prev {
-      transform: translateX(-190px) scale(0.82);
+      transform: translateX(calc(-190px * var(--carousel-size))) scale(0.82);
       z-index: 2;
       opacity: 0.5;
       cursor: pointer;
@@ -257,17 +264,17 @@
 
     @media (max-width: 400px) {
       .carousel-container {
-        height: 260px;
+        height: calc(260px * var(--carousel-size));
       }
       .art-card {
-        width: 230px;
-        height: 230px;
+        width: calc(230px * var(--carousel-size));
+        height: calc(230px * var(--carousel-size));
       }
       .art-card.next {
-        transform: translateX(140px) scale(0.82);
+        transform: translateX(calc(140px * var(--carousel-size))) scale(0.82);
       }
       .art-card.prev {
-        transform: translateX(-140px) scale(0.82);
+        transform: translateX(calc(-140px * var(--carousel-size))) scale(0.82);
       }
       .vis-progress-side {
         width: 90px;
@@ -281,27 +288,27 @@
 
     @media (min-width: 401px) and (max-width: 500px) {
       .carousel-container {
-        height: 300px;
+        height: calc(300px * var(--carousel-size));
       }
       .art-card {
-        width: 280px;
-        height: 280px;
+        width: calc(280px * var(--carousel-size));
+        height: calc(280px * var(--carousel-size));
       }
       .art-card.next {
-        transform: translateX(160px) scale(0.82);
+        transform: translateX(calc(160px * var(--carousel-size))) scale(0.82);
       }
       .art-card.prev {
-        transform: translateX(-160px) scale(0.82);
+        transform: translateX(calc(-160px * var(--carousel-size))) scale(0.82);
       }
     }
 
     /* Orientación horizontal (landscape): compactar para que se vea a escala */
     @media (orientation: landscape) and (max-height: 520px) {
       header { height: 42px; padding: 0 10px; }
-      .carousel-container { height: 190px; margin: 0; }
-      .art-card { width: 170px; height: 170px; }
-      .art-card.next { transform: translateX(110px) scale(0.82); }
-      .art-card.prev { transform: translateX(-110px) scale(0.82); }
+      .carousel-container { height: calc(190px * var(--carousel-size)); margin: 0; }
+      .art-card { width: calc(170px * var(--carousel-size)); height: calc(170px * var(--carousel-size)); }
+      .art-card.next { transform: translateX(calc(110px * var(--carousel-size))) scale(0.82); }
+      .art-card.prev { transform: translateX(calc(-110px * var(--carousel-size))) scale(0.82); }
       .track-title { font-size: 17px; }
       .track-artist { font-size: 12px; }
       .vis-control-btn { width: 46px; height: 46px; }
@@ -1839,6 +1846,26 @@
       <div class="accent-color-row" id="accent-custom-row" style="display:none;">
         <input type="color" id="accent-color-input" value="#aa00ff" oninput="setCustomAccent(this.value)">
         <span>Elige un color</span>
+      </div>
+    </div>
+
+    <div class="settings-group">
+      <div class="settings-group-label">Tamaño Barra Walkman</div>
+      <div class="accent-options" id="zoom-options">
+        <div class="accent-option" data-zoom="100" onclick="setZoom(this.dataset.zoom)">100%</div>
+        <div class="accent-option" data-zoom="125" onclick="setZoom(this.dataset.zoom)">125%</div>
+        <div class="accent-option" data-zoom="150" onclick="setZoom(this.dataset.zoom)">150%</div>
+        <div class="accent-option" data-zoom="175" onclick="setZoom(this.dataset.zoom)">175%</div>
+      </div>
+    </div>
+
+    <div class="settings-group">
+      <div class="settings-group-label">Tamaño carrusel de álbumes</div>
+      <div class="accent-options" id="carousel-options">
+        <div class="accent-option" data-czoom="100" onclick="setCarouselZoom(this.dataset.czoom)">100%</div>
+        <div class="accent-option" data-czoom="125" onclick="setCarouselZoom(this.dataset.czoom)">125%</div>
+        <div class="accent-option" data-czoom="150" onclick="setCarouselZoom(this.dataset.czoom)">150%</div>
+        <div class="accent-option" data-czoom="175" onclick="setCarouselZoom(this.dataset.czoom)">175%</div>
       </div>
     </div>
 
@@ -4225,6 +4252,61 @@
       }
     }
 
+    function applyZoom(z) {
+      const num = Math.max(100, Math.min(175, Number(z) || 100));
+      const factor = num / 100;
+      // Aplicar zoom geométrico a la interfaz para que todo escale visiblemente
+      try { document.body.style.zoom = factor; } catch (e) {}
+      // Compensar la altura: con zoom el body growía a 100vh*factor de layout;
+      // reducimos su altura a 100vh/factor para que el body siga ocupando el viewport
+      try { document.body.style.height = ((100 / num) * 100) + 'vh'; } catch (e) {}
+      // La vista del reproductor usa tamaños fijos grandes (portada, carrusel,
+      // controles, título). A zoom alto esos elementos crecerían y se saldrían
+      // de la pantalla. Se contra-escalan (zoom = 100/num) para que siguan cabiendo.
+      const cZoom = (num > 100) ? (100 / num) : '';
+      try {
+        ['carousel-container', 'controls-wrapper', 'track-header-wrapper', 'settings-menu'].forEach(id => {
+          const el = document.querySelector('.' + id);
+          if (el) el.style.zoom = cZoom;
+        });
+      } catch (e) {}
+      const opts = document.querySelectorAll('#zoom-options .accent-option');
+      opts.forEach(o => {
+        o.classList.toggle('active', Number(o.dataset.zoom) === num);
+      });
+    }
+
+    function setZoom(z) {
+      applyZoom(z);
+      try { localStorage.setItem('walkman_zoom', String(z)); } catch (e) {}
+    }
+
+    function initZoom() {
+      let saved = 100;
+      try { saved = Number(localStorage.getItem('walkman_zoom')) || 100; } catch (e) {}
+      applyZoom(saved);
+    }
+
+    function applyCarouselZoom(z) {
+      const num = Math.max(100, Math.min(175, Number(z) || 100));
+      try { document.documentElement.style.setProperty('--carousel-size', String(num / 100)); } catch (e) {}
+      const opts = document.querySelectorAll('#carousel-options .accent-option');
+      opts.forEach(o => {
+        o.classList.toggle('active', Number(o.dataset.czoom) === num);
+      });
+    }
+
+    function setCarouselZoom(z) {
+      applyCarouselZoom(z);
+      try { localStorage.setItem('walkman_zoom_carousel', String(z)); } catch (e) {}
+    }
+
+    function initCarouselZoom() {
+      let saved = 100;
+      try { saved = Number(localStorage.getItem('walkman_zoom_carousel')) || 100; } catch (e) {}
+      applyCarouselZoom(saved);
+    }
+
     function showServerModal() {
       document.getElementById('emby-modal').style.display = 'flex';
       // Restaurar tab activa según config guardada
@@ -4979,6 +5061,8 @@
     }
 
     window.onload = async () => {
+      initZoom();
+      initCarouselZoom();
       initVolume();
       setupMediaSession();
       renderVptCards();
