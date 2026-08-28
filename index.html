@@ -4669,10 +4669,18 @@
       return !!item && item.Type === 'MusicAlbum';
     }
 
-    // Si el elemento es un álbum, devuelve todas sus canciones; si no, el propio elemento
+    function isPlaylistItem(item) {
+      return !!item && item.Type === 'Playlist';
+    }
+
+    function isArtistItem(item) {
+      return !!item && item.Type === 'MusicArtist';
+    }
+
+    // Si el elemento es un álbum, playlist o artista, devuelve sus canciones; si no, el propio elemento
     async function resolveQueueItems(item) {
       const st = embyConfig.serverType;
-      if (!isAlbumItem(item)) return [item];
+      if (!isAlbumItem(item) && !isPlaylistItem(item) && !isArtistItem(item)) return [item];
       let tracks = [];
       try {
         const data = await fetchItems((SERVER_TYPES[st] || {}).Audio, item.Id);
@@ -4697,7 +4705,8 @@
       originalPlaylist.splice(idx, 0, ...items);
       renderQueueList();
       refreshCarouselImages();
-      showToast(items.length === 1 ? 'Reproducirá después de la actual' : 'Álbum programado (' + items.length + ' canciones)');
+      const kind = isArtistItem(ctxMenuItem) ? 'Artista' : (isPlaylistItem(ctxMenuItem) ? 'Playlist' : 'Álbum');
+      showToast(items.length === 1 ? 'Reproducirá después de la actual' : kind + ' programado (' + items.length + ' canciones)');
       closeContextMenu();
     }
 
@@ -4708,7 +4717,8 @@
       originalPlaylist.push(...items);
       renderQueueList();
       refreshCarouselImages();
-      showToast(items.length === 1 ? 'Añadida a la cola' : 'Álbum añadido (' + items.length + ' canciones)');
+      const kind = isArtistItem(ctxMenuItem) ? 'Artista' : (isPlaylistItem(ctxMenuItem) ? 'Playlist' : 'Álbum');
+      showToast(items.length === 1 ? 'Añadida a la cola' : kind + ' añadido (' + items.length + ' canciones)');
       closeContextMenu();
     }
 
