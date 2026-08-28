@@ -4188,22 +4188,40 @@
       showToast('Biblioteca cambiada');
     }
 
-    async function clearCache() {
+    function clearCache() {
+      // 1) Cachés del service worker (protegido: falla en APK con origin null)
       try {
-        // Limpiar cachés del service worker
-        if ('caches' in window) {
-          const keys = await caches.keys();
-          await Promise.all(keys.map(key => caches.delete(key)));
+        if (window.caches) {
+          caches.keys().then(keys => {
+            return Promise.all(keys.map(k => caches.delete(k)));
+          }).catch(() => {});
         }
-        // Limpiar object URLs locales de canciones
-        localTracks.forEach(t => { if (t.objUrl) try { URL.revokeObjectURL(t.objUrl); } catch(e) {} });
-        localTracks.forEach(t => { if (t.coverUrl && t.coverUrl.startsWith('blob:')) try { URL.revokeObjectURL(t.coverUrl); } catch(e) {} });
+      } catch (e) {}
+
+      // 2) Object URLs locales de canciones
+      try {
+        (localTracks || []).forEach(t => {
+          if (t.objUrl) { try { URL.revokeObjectURL(t.objUrl); } catch (e) {} }
+          if (t.coverUrl && t.coverUrl.startsWith('blob:')) { try { URL.revokeObjectURL(t.coverUrl); } catch (e) {} }
+        });
         localTracks = [];
-        // Recargar
-        alert('Caché borrada. La app se recargará.');
-        window.location.reload();
+      } catch (e) {}
+
+      // 3) Borrar localStorage COMPLETO (incluida la config de servidor)
+      try { localStorage.clear(); } catch (e) {}
+
+      // 4) Borrar sessionStorage
+      try { if (window.sessionStorage) sessionStorage.clear(); } catch (e) {}
+
+      alert('Caché borrada. La app se recargará.');
+
+      // 5) Recargar con cache-busting para no servir copia antigua
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.set('v', Date.now());
+        window.location.href = url.toString();
       } catch (e) {
-        alert('Error al borrar la caché: ' + e.message);
+        try { window.location.reload(); } catch (e2) {}
       }
     }
 
