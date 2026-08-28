@@ -1,0 +1,5 @@
+services:
+  walkman-server:
+    image: ghcr.io/djmanri3/walkman-server:main
+    ports:
+      - 8081:80
