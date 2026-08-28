@@ -661,6 +661,40 @@
       object-fit: cover;
     }
 
+    .queue-drag {
+      background: none;
+      border: none;
+      color: #888;
+      cursor: grab;
+      padding: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      touch-action: none;
+      flex-shrink: 0;
+    }
+
+    .queue-drag .material-icons {
+      font-size: 20px;
+    }
+
+    .queue-drag:active {
+      cursor: grabbing;
+    }
+
+    .queue-item.dragging {
+      opacity: 0.6;
+      background: rgba(255,255,255,0.1);
+    }
+
+    .queue-item.drop-above {
+      border-top: 2px solid var(--accent-color);
+    }
+
+    .queue-item.drop-below {
+      border-bottom: 2px solid var(--accent-color);
+    }
+
     .queue-item-info {
       flex: 1;
       overflow: hidden;
@@ -5227,9 +5261,11 @@
       playlist.forEach((item, idx) => {
         const div = document.createElement('div');
         div.className = `queue-item ${idx === currentTrackIndex ? 'active' : ''}`;
+        div.dataset.idx = idx;
         const imgUrl = getEmbyImageUrl(item);
         
         div.innerHTML = `
+          <button class="queue-drag" data-idx="${idx}" title="Arrastrar para reordenar"><span class="material-icons">drag_handle</span></button>
           <img src="${imgUrl}" onerror="this.onerror=null;this.src='${defaultPlaceholder}';">
           <div class="queue-item-info">
             <div class="queue-item-title">${item.Name}</div>
@@ -5239,17 +5275,97 @@
         `;
 
         div.onclick = () => {
+          if (window.__queueDragMoved) { window.__queueDragMoved = false; return; }
           playTrack(idx, true);
           renderQueueList();
         };
 
         container.appendChild(div);
+        const dragBtn = div.querySelector('.queue-drag');
+        setupQueueDrag(dragBtn, div, idx, container);
       });
     }
 
     function setCardImg(imgEl, src) {
       imgEl.onerror = () => { imgEl.src = defaultPlaceholder; };
       imgEl.src = src;
+    }
+
+    function setupQueueDrag(dragBtn, itemDiv, idx, container) {
+      let dragging = false;
+      let dragged = false;
+      let startY = 0;
+
+      dragBtn.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dragging = true;
+        dragged = false;
+        window.__queueDragMoved = false;
+        startY = e.clientY;
+        itemDiv.classList.add('dragging');
+        try { dragBtn.setPointerCapture(e.pointerId); } catch (err) {}
+      });
+
+      dragBtn.addEventListener('pointermove', (e) => {
+        if (!dragging) return;
+        const delta = Math.abs(e.clientY - startY);
+        if (delta > 6) dragged = true;
+        if (!dragged) return;
+        e.preventDefault();
+        // Limpiar indicadores previos
+        container.querySelectorAll('.queue-item').forEach((el) => {
+          el.classList.remove('drop-above');
+          el.classList.remove('drop-below');
+        });
+        // Encontrar el ítem sobre el que está el puntero
+        const el = document.elementFromPoint(e.clientX, e.clientY);
+        if (el) {
+          const target = el.closest('.queue-item');
+          if (target && target !== itemDiv) {
+            const rect = target.getBoundingClientRect();
+            const above = e.clientY < rect.top + rect.height / 2;
+            target.classList.add(above ? 'drop-above' : 'drop-below');
+          }
+        }
+      });
+
+      function endDrag(e) {
+        if (!dragging) return;
+        dragging = false;
+        itemDiv.classList.remove('dragging');
+        const overEl = e && e.clientX != null ? document.elementFromPoint(e.clientX, e.clientY) : null;
+        let target = overEl ? overEl.closest('.queue-item') : null;
+        container.querySelectorAll('.queue-item').forEach((el) => {
+          el.classList.remove('drop-above');
+          el.classList.remove('drop-below');
+        });
+        if (dragged) window.__queueDragMoved = true;
+        if (target && target !== itemDiv && dragged) {
+          const targetIdx = Number(target.dataset.idx);
+          const from = Number(itemDiv.dataset.idx);
+          reorderPlaylist(from, targetIdx);
+          renderQueueList();
+        }
+      }
+
+      dragBtn.addEventListener('pointerup', endDrag);
+      dragBtn.addEventListener('pointercancel', endDrag);
+    }
+
+    function reorderPlaylist(from, to) {
+      if (from === to || from < 0 || to < 0 || from >= playlist.length || to >= playlist.length) return;
+      const [moved] = playlist.splice(from, 1);
+      playlist.splice(to, 0, moved);
+      if (currentTrackIndex === from) {
+        currentTrackIndex = to;
+      } else if (from < currentTrackIndex && to >= currentTrackIndex) {
+        currentTrackIndex--;
+      } else if (from > currentTrackIndex && to <= currentTrackIndex) {
+        currentTrackIndex++;
+      }
+      playlistVersion++;
+      refreshCarouselImages();
     }
 
     let trackHasLoaded = false;
