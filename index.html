@@ -914,7 +914,7 @@
     .featured-slideshow {
       position: relative;
       width: 100%;
-      aspect-ratio: 1 / 0.29;
+      aspect-ratio: 1 / calc(0.29 * var(--featured-zoom, 1));
       overflow: hidden;
       background: #111;
       box-shadow: 0 6px 18px rgba(0,0,0,0.5);
@@ -2031,6 +2031,8 @@
     <div class="settings-group">
       <div class="settings-group-label">Tamaño Barra Walkman</div>
       <div class="accent-options" id="zoom-options">
+        <div class="accent-option" data-zoom="55" onclick="setZoom(this.dataset.zoom)">55%</div>
+        <div class="accent-option" data-zoom="85" onclick="setZoom(this.dataset.zoom)">85%</div>
         <div class="accent-option" data-zoom="100" onclick="setZoom(this.dataset.zoom)">100%</div>
         <div class="accent-option" data-zoom="125" onclick="setZoom(this.dataset.zoom)">125%</div>
         <div class="accent-option" data-zoom="150" onclick="setZoom(this.dataset.zoom)">150%</div>
@@ -2041,6 +2043,8 @@
     <div class="settings-group">
       <div class="settings-group-label">Tamaño carrusel de álbumes</div>
       <div class="accent-options" id="carousel-options">
+        <div class="accent-option" data-czoom="55" onclick="setCarouselZoom(this.dataset.czoom)">55%</div>
+        <div class="accent-option" data-czoom="85" onclick="setCarouselZoom(this.dataset.czoom)">85%</div>
         <div class="accent-option" data-czoom="100" onclick="setCarouselZoom(this.dataset.czoom)">100%</div>
         <div class="accent-option" data-czoom="125" onclick="setCarouselZoom(this.dataset.czoom)">125%</div>
         <div class="accent-option" data-czoom="150" onclick="setCarouselZoom(this.dataset.czoom)">150%</div>
@@ -2052,6 +2056,17 @@
       <div class="settings-btn" id="featured-btn" onclick="toggleFeatured()">
         <span class="material-icons">slideshow</span>
         <span id="featured-btn-label">Side show de álbumes</span>
+      </div>
+      <div class="featured-size-wrap" id="featured-size-wrap" style="display:none;">
+        <div class="settings-group-label">Tamaño del side show</div>
+        <div class="accent-options" id="featured-size-options">
+          <div class="accent-option" data-fz="55" onclick="setFeaturedZoom(this.dataset.fz)">55%</div>
+          <div class="accent-option" data-fz="85" onclick="setFeaturedZoom(this.dataset.fz)">85%</div>
+          <div class="accent-option" data-fz="100" onclick="setFeaturedZoom(this.dataset.fz)">100%</div>
+          <div class="accent-option" data-fz="125" onclick="setFeaturedZoom(this.dataset.fz)">125%</div>
+          <div class="accent-option" data-fz="150" onclick="setFeaturedZoom(this.dataset.fz)">150%</div>
+          <div class="accent-option" data-fz="175" onclick="setFeaturedZoom(this.dataset.fz)">175%</div>
+        </div>
       </div>
     </div>
 
@@ -4443,7 +4458,7 @@
     }
 
     function applyZoom(z) {
-      const num = Math.max(100, Math.min(175, Number(z) || 100));
+      const num = Math.max(55, Math.min(175, Number(z) || 100));
       const factor = num / 100;
       // Aplicar zoom geométrico a la interfaz para que todo escale visiblemente
       try { document.body.style.zoom = factor; } catch (e) {}
@@ -4478,7 +4493,7 @@
     }
 
     function applyCarouselZoom(z) {
-      const num = Math.max(100, Math.min(175, Number(z) || 100));
+      const num = Math.max(55, Math.min(175, Number(z) || 100));
       try { document.documentElement.style.setProperty('--carousel-size', String(num / 100)); } catch (e) {}
       const opts = document.querySelectorAll('#carousel-options .accent-option');
       opts.forEach(o => {
@@ -4715,6 +4730,9 @@
       section.style.display = enabled ? '' : 'none';
       const btn = document.getElementById('featured-btn');
       if (btn) btn.classList.toggle('on', enabled);
+      const sizeWrap = document.getElementById('featured-size-wrap');
+      if (sizeWrap) sizeWrap.style.display = enabled ? '' : 'none';
+      applyFeaturedZoom();
     }
 
     function toggleFeatured() {
@@ -4728,6 +4746,30 @@
         if (slideshow) slideshow.innerHTML = '';
         if (featuredTimer) { clearInterval(featuredTimer); featuredTimer = null; }
       }
+    }
+
+    function applyFeaturedZoom() {
+      const num = Math.max(55, Math.min(175, Number(getFeaturedZoom()) || 100));
+      try {
+        document.documentElement.style.setProperty('--featured-zoom', String(num / 100));
+      } catch (e) {}
+      const opts = document.querySelectorAll('#featured-size-options .accent-option');
+      opts.forEach(o => {
+        o.classList.toggle('active', Number(o.dataset.fz) === num);
+      });
+    }
+
+    function setFeaturedZoom(z) {
+      try { localStorage.setItem('walkman_featured_zoom', String(z)); } catch (e) {}
+      applyFeaturedZoom();
+    }
+
+    function getFeaturedZoom() {
+      try { return Number(localStorage.getItem('walkman_featured_zoom')) || 100; } catch (e) { return 100; }
+    }
+
+    function initFeaturedZoom() {
+      applyFeaturedZoom();
     }
 
     function buildFeaturedSlides() {
@@ -5449,6 +5491,7 @@
     window.onload = async () => {
       initZoom();
       initCarouselZoom();
+      initFeaturedZoom();
       applyFeaturedVisibility();
       initVolume();
       setupMediaSession();
