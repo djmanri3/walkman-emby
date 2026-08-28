@@ -1,7 +1,16 @@
 # walkman-server
 Small Emby music player with style Walkman app of Xpetia NXT series, only in this commment connect to Emby :)
 
+# Acces without install on presise
 You can access in this link: https://djmanri3.github.io/walkman-server/
+
+# How install on premise
+- Do you need install docker and docker-compose
+- Only download docker-compose.yaml file and exec in the same folder you donwload it
+```
+docker-compose up -d
+```
+- And acces to <ip server or locahost>:8081
 
 # Features
 - Native equalizer with 5 bands
