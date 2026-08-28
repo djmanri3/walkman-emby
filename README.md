@@ -1,5 +1,5 @@
 # walkman-server
-Small Emby music player with style Walkman app of Xpetia NXT series, only in this commment connect to Emby :)
+Small music player for Emby Jellyfin ande Plex with style Walkman app of Xpetia NXT series
 
 # Acces without install on presise
 You can access in this link: https://djmanri3.github.io/walkman-server/
