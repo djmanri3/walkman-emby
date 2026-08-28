@@ -945,6 +945,32 @@
       pointer-events: none;
     }
 
+    .featured-refresh {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      z-index: 10;
+      font-size: 22px;
+      color: #fff;
+      padding: 6px;
+      cursor: pointer;
+      background: transparent;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+      user-select: none;
+      opacity: 0.8;
+    }
+    .featured-refresh:hover {
+      opacity: 1;
+      background: transparent;
+    }
+    .featured-refresh.spinning {
+      animation: featuredSpin 0.6s ease;
+    }
+    @keyframes featuredSpin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
     .featured-slideshow {
       position: relative;
       width: 100%;
@@ -2020,6 +2046,86 @@
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
+
+    .local-wait-banner {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 2000;
+      width: min(720px, calc(100vw - 24px));
+    }
+    .local-wait-content {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      width: 100%;
+      padding: 20px 31px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+    .local-wait-spinner {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      height: 24px;
+    }
+    .local-wait-spinner span {
+      width: 4px;
+      height: 100%;
+      border-radius: 2px;
+      background: #fff;
+      animation: sinWave 1s ease-in-out infinite;
+      transform-origin: center;
+    }
+    .local-wait-spinner span:nth-child(1) { animation-delay: 0s; }
+    .local-wait-spinner span:nth-child(2) { animation-delay: 0.1s; }
+    .local-wait-spinner span:nth-child(3) { animation-delay: 0.2s; }
+    .local-wait-spinner span:nth-child(4) { animation-delay: 0.3s; }
+    .local-wait-spinner span:nth-child(5) { animation-delay: 0.4s; }
+    .local-wait-spinner span:nth-child(6) { animation-delay: 0.2s; }
+    .local-wait-spinner span:nth-child(7) { animation-delay: 0.1s; }
+    .local-wait-spinner span:nth-child(8) { animation-delay: 0s; }
+    @keyframes sinWave {
+      0%, 100% { transform: scaleY(0.3); }
+      50%      { transform: scaleY(1); }
+    }
+    .local-wait-text {
+      flex: 1;
+      min-width: 0;
+    }
+    .local-wait-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+    }
+    .local-wait-sub {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.9);
+      line-height: 1.5;
+      margin-top: 3px;
+    }
+    .local-wait-close {
+      flex: 0 0 auto;
+      color: #fff;
+      font-size: 22px;
+      cursor: pointer;
+      padding: 4px;
+      opacity: 0.9;
+    }
+    .local-wait-close:hover {
+      opacity: 1;
+    }
+    @media (max-width: 480px) {
+      .local-wait-content {
+        padding: 18px 14px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -2434,6 +2540,7 @@
         <div class="featured-slideshow" id="featured-slideshow">
           <div class="featured-title-strip">My Music</div>
         </div>
+        <span class="featured-refresh material-icons" title="Recargar side show" onclick="refreshFeatured()">refresh</span>
       </div>
       <div class="grid-menu">
         <div class="grid-card" style="background-image: linear-gradient(135deg, #1e3c72, #2a5298);" onclick="loadCategory('Songs')">
@@ -2621,7 +2728,19 @@
       return /Android|iPhone|iPad|iPod|Mobile|Touch/i.test(navigator.userAgent) || (navigator.maxTouchPoints && navigator.maxTouchPoints > 1);
     }
 
+    function showLocalImportBanner() {
+      if (!/Android/i.test(navigator.userAgent)) return;
+      const b = document.getElementById('local-banner');
+      if (b) b.style.display = 'block';
+    }
+
+    function hideLocalImportBanner() {
+      const b = document.getElementById('local-banner');
+      if (b) b.style.display = 'none';
+    }
+
     async function pickLocalFolder() {
+      showLocalImportBanner();
       // En Android/móvil el File System Access API es poco fiable;
       // usamos siempre el selector de carpeta (input webkitdirectory)
       if (!window.showDirectoryPicker || isMobileDevice()) {
@@ -2793,6 +2912,12 @@
 
       try {
         const files = Array.from(event.target.files || []);
+        if (files.length === 0) {
+          hideLocalImportBanner();
+          statusEl.textContent = '';
+          statusEl.style.display = 'none';
+          return;
+        }
         localTracks = [];
         localRootName = 'Local';
 
@@ -2857,13 +2982,17 @@
         // Extraer portadas incrustadas en segundo plano (solo las que aún no tienen carpeta)
         extractEmbeddedCoversInBackground(localTracks);
       } catch (err) {
+        hideLocalImportBanner();
         statusEl.innerHTML = `<div style="color:#ff5555;">Error: ${err.message}</div>`;
       }
     }
 
     async function extractEmbeddedCoversInBackground(tracks) {
       const pending = tracks.filter(t => !t.coverUrl && t._file);
-      if (pending.length === 0) return;
+      if (pending.length === 0) {
+        hideLocalImportBanner();
+        return;
+      }
 
       const CONCURRENCY = 4;
       let i = 0;
@@ -2897,6 +3026,7 @@
       console.log(`[WALKMAN] portadas extraídas: ${coversFound}/${pending.length}`);
       toast.textContent = coversFound > 0 ? `Portadas listas (${coversFound})` : 'Sin portadas incrustadas';
       setTimeout(() => toast.classList.remove('show'), 1500);
+      hideLocalImportBanner();
 
       // Refrescar cola, carrusel y la vista actual para mostrar las portadas ya extraídas
       renderQueueList();
@@ -3189,7 +3319,7 @@
     }
 
     function getImageUrl(item) {
-      if (embyConfig.serverType === 'local' || item.IsLocal) return defaultPlaceholder;
+      if (embyConfig.serverType === 'local' || item.IsLocal) return item.coverUrl || defaultPlaceholder;
       if (embyConfig.serverType === 'plex') return getPlexImageUrl(item);
       return getEmbyImageUrl(item);
     }
@@ -4887,11 +5017,41 @@
       featuredSlides = selected.map(album => ({
         id: album.Id,
         albumId: album.AlbumId,
+        coverUrl: album.coverUrl || '',
         img: getImageUrl(album),
         title: album.Name || 'Desconocido',
         artist: album.AlbumArtist || (album.Artists && album.Artists[0]) || ''
       }));
       buildFeaturedSlides();
+    }
+
+    async function refreshFeatured() {
+      const el = document.querySelector('.featured-refresh');
+      if (el) {
+        el.classList.remove('spinning');
+        void el.offsetWidth;
+        el.classList.add('spinning');
+      }
+      const st = embyConfig.serverType;
+      const types = SERVER_TYPES[st];
+      if (!types || !types.Album) return;
+      try {
+        const fdata = await fetchItems(types.Album);
+        const albums = fdata.Items || fdata || [];
+        if (albums.length > 0) renderFeaturedAlbums(albums);
+      } catch (e) {}
+    }
+
+    async function refreshFeaturedImages() {
+      if (!isFeaturedEnabled()) return;
+      const fst = embyConfig.serverType;
+      if (!fst) return;
+      const ftypes = SERVER_TYPES[fst];
+      if (!ftypes || !ftypes.Album) return;
+      try {
+        const fdata = await fetchItems(ftypes.Album);
+        renderFeaturedAlbums(fdata.Items || []);
+      } catch (e) {}
     }
 
     async function playFeaturedAlbum(index) {
@@ -5674,5 +5834,16 @@
     };
 
   </script>
+
+  <div id="local-banner" class="local-wait-banner" style="display:none;">
+    <div class="local-wait-content">
+      <div class="local-wait-spinner"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+      <div class="local-wait-text">
+        <div class="local-wait-title">Importando música local</div>
+        <div class="local-wait-sub">Esto puede tardar un rato según la cantidad de canciones.<br>Se paciente, no cierres la ventana.</div>
+      </div>
+      <span class="local-wait-close material-icons" onclick="hideLocalImportBanner()">close</span>
+    </div>
+  </div>
 </body>
 </html>
