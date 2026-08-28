@@ -23,10 +23,18 @@ You can access in this link: https://djmanri3.github.io/walkman-server/
 - Compatible with medIa widget browser 
 - Add connection with Emby, Jellyfin, Plex AND LOCAL!!!
 - FIX LIST ALBUM COVERS ON EMBY SERVERS!!!!!
+- Add Side Show of albums on tab My Music (can be disable on settings)
+- Add reorder song on play queue
+- Fix auto close Ecualizer when clic or touch on another part
+- Fix clean cache
+- Add settings to resize some thigns
+- Fix add song by Album on play queue
+- Add banner when add local music on Android to wait ready
+- Update lib of get album color 
 
 
 # Bugs
-- When add album to queue no play :(
+- Tell me :)
 
 # Screenshots
 
@@ -60,3 +68,9 @@ You can access in this link: https://djmanri3.github.io/walkman-server/
 
 ### Inside of playlists
 <img width="1915" height="952" alt="image" src="https://github.com/djmanri3/walkman-emby/blob/main/Demo_images/Inside_playlist.png?raw=true" />
+
+### Settings
+<img width="1915" height="952" alt="image" src="https://github.com/djmanri3/walkman-server/blob/main/Demo_images/Settings.png?raw=true" />
+
+### Connect to server or local
+<img width="1915" height="952" alt="image" src="https://github.com/djmanri3/walkman-server/blob/main/Demo_images/Connect_to_server_or_local.png?raw=true" />
