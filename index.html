@@ -1111,7 +1111,7 @@
       border: 1px solid rgba(255, 255, 255, 0.15);
       border-radius: 8px;
       box-shadow: 0 8px 24px rgba(0,0,0,0.85);
-      z-index: 50;
+      z-index: 60;
       display: none;
       flex-direction: column;
       padding: 10px;
@@ -1120,6 +1120,19 @@
 
     .audio-enhancements-menu.open {
       display: flex;
+    }
+
+    /* Overlay para cerrar las Mejoras de Sonido pulsando fuera */
+    .eq-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.01);
+      z-index: 55;
+      display: none;
+    }
+
+    .eq-overlay.open {
+      display: block;
     }
 
     /* Sub-Header Pestañas */
@@ -2000,6 +2013,9 @@
     </div>
   </div>
 
+  <!-- Overlay para cerrar las Mejoras de Sonido pulsando fuera -->
+  <div id="eq-overlay" class="eq-overlay" onclick="closeEqualizer()"></div>
+
   <!-- OVERLAY DE BÚSQUEDA INTERACTIVA -->
   <div id="search-overlay" class="search-overlay">
     <div class="search-input-box">
@@ -2191,8 +2207,8 @@
   </div>
 
   <!-- MODAL CONEXIÓN SERVIDOR -->
-  <div id="emby-modal" class="modal">
-    <div class="modal-content">
+  <div id="emby-modal" class="modal" onclick="closeServerModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
       <h3>Conectarse al Servidor</h3>
 
       <div class="server-tabs">
@@ -3894,12 +3910,22 @@
       
       dropdown.classList.toggle('open');
       btn.classList.toggle('active');
+      document.getElementById('eq-overlay').classList.toggle('open');
 
       if (dropdown.classList.contains('open')) {
         document.getElementById('search-overlay').classList.remove('open');
         // Cerrar el menú de ajustes si está abierto
         closeSettingsMenu();
         renderVptCards();
+      }
+    }
+
+    function closeEqualizer() {
+      const dropdown = document.getElementById('eq-dropdown');
+      if (dropdown.classList.contains('open')) {
+        dropdown.classList.remove('open');
+        document.getElementById('eq-btn').classList.remove('active');
+        document.getElementById('eq-overlay').classList.remove('open');
       }
     }
 
@@ -4029,8 +4055,7 @@
       document.getElementById('settings-overlay').classList.toggle('open');
       document.getElementById('settings-menu').classList.toggle('open');
       // Cerrar el menú EQ si está abierto
-      document.getElementById('eq-dropdown').classList.remove('open');
-      document.getElementById('eq-btn').classList.remove('active');
+      closeEqualizer();
     }
 
     function closeSettingsMenu() {
@@ -4194,6 +4219,10 @@
       }
     }
 
+    function closeServerModal() {
+      document.getElementById('emby-modal').style.display = 'none';
+    }
+
     function getEmbyImageUrl(item) {
       if (!item) return defaultPlaceholder;
       if (embyConfig.serverType === 'local' || item.IsLocal) {
@@ -4225,8 +4254,7 @@
       const overlay = document.getElementById('search-overlay');
       overlay.classList.toggle('open');
       if (overlay.classList.contains('open')) {
-        document.getElementById('eq-dropdown').classList.remove('open');
-        document.getElementById('eq-btn').classList.remove('active');
+        closeEqualizer();
         document.getElementById('search-input').focus();
       }
     }
