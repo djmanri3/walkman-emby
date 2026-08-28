@@ -4,7 +4,7 @@ const ASSETS = [
   './index.html',
   './manifest.json',
   './Walkman.png',
-  'https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js',
+  'https://unpkg.com/colorthief@3/dist/umd/color-thief.global.js',
   'https://fonts.googleapis.com/icon?family=Material+Icons'
 ];
 

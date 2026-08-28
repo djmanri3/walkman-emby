@@ -16,7 +16,7 @@
   <link rel="apple-touch-icon" href="Walkman.png">
 
   <!-- ColorThief para el color dinámico -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
+  <script src="https://unpkg.com/colorthief@3/dist/umd/color-thief.global.js"></script>
   <!-- jsmediatags para extraer carátulas incrustadas en archivos de audio -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
   <!-- Material Icons -->
@@ -3351,7 +3351,6 @@
     }
 
     const audio = document.getElementById('audio-player');
-    const colorThief = new ColorThief();
     const defaultPlaceholder = "data:image/svg+xml;base64," + btoa(`<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="#282828"/><circle cx="150" cy="130" r="60" fill="none" stroke="#535353" stroke-width="4"/><circle cx="150" cy="130" r="20" fill="#535353"/><path d="M165 130 L165 70 Q165 55 180 50 L180 60 Q170 65 170 70 L170 125" fill="#535353"/><rect x="130" y="210" width="40" height="6" rx="3" fill="#535353"/><rect x="110" y="222" width="80" height="6" rx="3" fill="#404040"/></svg>`);
 
 
@@ -4422,16 +4421,36 @@
       }
     }
 
+    // Color promedio de la carátula (refleja fielmente cualquier tono, incl. verde)
+    function dominantFromCanvas(img) {
+      const cv = document.createElement('canvas');
+      const size = 32;
+      cv.width = size; cv.height = size;
+      const ctx = cv.getContext('2d', { willReadFrequently: true });
+      try {
+        ctx.drawImage(img, 0, 0, size, size);
+        const data = ctx.getImageData(0, 0, size, size).data;
+        let r = 0, g = 0, b = 0, n = 0;
+        for (let i = 0; i < data.length; i += 4) {
+          r += data[i]; g += data[i + 1]; b += data[i + 2]; n++;
+        }
+        r = Math.round(r / n); g = Math.round(g / n); b = Math.round(b / n);
+        return { r: r, g: g, b: b };
+      } catch (e) {
+        return { r: 120, g: 120, b: 120 };
+      }
+    }
+
     // Color Thief
     const imgCurrent = document.getElementById('img-current');
     imgCurrent.addEventListener('load', function() {
       try {
         if (imgCurrent.complete && imgCurrent.naturalWidth !== 0) {
-          const rgb = colorThief.getColor(imgCurrent);
-          const colorHex = `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
+          const { r, g, b } = dominantFromCanvas(imgCurrent);
+          const colorHex = `rgb(${r}, ${g}, ${b})`;
           
           // Guardar color del álbum para el visualizador estilo PS3
-          visAlbumColor = { r: rgb[0], g: rgb[1], b: rgb[2] };
+          visAlbumColor = { r: r, g: g, b: b };
 
           // El fondo SIEMPRE se adapta al color de la carátula, independientemente del modo
           document.getElementById('bg-container').style.background = 
@@ -4473,8 +4492,9 @@
         // Restaurar dinámico: el próximo load de imgCurrent lo recalculará
         try {
           if (imgCurrent.complete && imgCurrent.naturalWidth !== 0) {
-            const rgb = colorThief.getColor(imgCurrent);
-            document.documentElement.style.setProperty('--accent-color', `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`);
+            const c = ColorThief.getColorSync(imgCurrent);
+            const { r, g, b } = c.rgb();
+            document.documentElement.style.setProperty('--accent-color', `rgb(${r}, ${g}, ${b})`);
           }
         } catch (e) {}
       }
@@ -4706,18 +4726,18 @@
 
       // Canciones: si no tienen imagen propia, usar la del álbum que las contiene
       if (item.Type === 'Audio' && !item.ImageTags?.Primary && !item.PrimaryImageTag && item.AlbumId) {
-        return `${host}/Items/${item.AlbumId}/Images/Primary?maxWidth=350&api_key=${token}`;
+        return `${host}/Items/${item.AlbumId}/Images/Primary?api_key=${token}`;
       }
 
       // Álbumes de música (Emby/Jellyfin): el Id listado a veces reporta imagen
       // pero 404 al pedirla; solo es fiable el AlbumId real de sus canciones.
       if (item.Type === 'MusicAlbum') {
         if (item.AlbumId && item.AlbumId !== item.Id) {
-          return `${host}/Items/${item.AlbumId}/Images/Primary?maxWidth=350&api_key=${token}`;
+          return `${host}/Items/${item.AlbumId}/Images/Primary?api_key=${token}`;
         }
       }
 
-      return `${host}/Items/${item.Id}/Images/Primary?maxWidth=350&api_key=${token}`;
+      return `${host}/Items/${item.Id}/Images/Primary?api_key=${token}`;
     }
 
     // BÚSQUEDA EN EMBY EN TIEMPO REAL
