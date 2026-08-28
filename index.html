@@ -880,6 +880,137 @@
       color: #ccc;
     }
 
+    .featured-section {
+      position: relative;
+      margin-bottom: 16px;
+    }
+
+    .featured-header {
+      font-size: 13px;
+      font-weight: 600;
+      color: #ddd;
+      margin-bottom: 8px;
+      letter-spacing: 0.3px;
+    }
+
+    .featured-title-strip {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      z-index: 10;
+      display: inline-block;
+      box-sizing: border-box;
+      font-size: 24px;
+      font-weight: 300;
+      line-height: 1;
+      color: #fff;
+      padding: 6px 12px;
+      background: rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      pointer-events: none;
+    }
+
+    .featured-slideshow {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 0.29;
+      overflow: hidden;
+      background: #111;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+    }
+
+    .featured-slide {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      transition: opacity 1.2s ease;
+    }
+
+    .featured-slide-bg {
+      position: absolute;
+      top: -20px;
+      left: -20px;
+      right: -20px;
+      bottom: -20px;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      filter: blur(14px) saturate(1.3);
+    }
+
+    .featured-slide-art {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      margin: auto;
+      width: 90%;
+      height: 90%;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: contain;
+    }
+
+    .featured-slide.active {
+      opacity: 1;
+    }
+
+    .featured-slide-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.78) 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 10px;
+      pointer-events: none;
+    }
+
+    .featured-slide-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+    }
+
+    .featured-slide-artist {
+      font-size: 10px;
+      color: #ddd;
+      margin-top: 2px;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+    }
+
+    .featured-dots {
+      position: absolute;
+      bottom: 8px;
+      right: 12px;
+      display: flex;
+      gap: 5px;
+    }
+
+    .featured-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.4);
+      background-clip: padding-box;
+      transition: background 0.3s;
+      cursor: pointer;
+      padding: 4px;
+    }
+
+    .featured-dot.active {
+      background: #fff;
+    }
+
     .items-list {
       display: flex;
       flex-direction: column;
@@ -1641,10 +1772,58 @@
       background: rgba(255,255,255,0.08);
     }
 
+    .settings-btn.on {
+      border-color: var(--accent-color);
+      background: color-mix(in srgb, var(--accent-color) 25%, transparent);
+      box-shadow: 0 0 0 1px var(--accent-color) inset;
+    }
+
     .settings-btn .material-icons {
       font-size: 18px;
       color: var(--accent-color);
       transition: color 0.5s;
+    }
+
+    .settings-switch {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 4px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .settings-switch span {
+      font-size: 13px;
+      color: #fff;
+    }
+
+    .switch-track {
+      width: 44px;
+      height: 24px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.25);
+      position: relative;
+      transition: background 0.3s;
+    }
+
+    .switch-track.on {
+      background: var(--accent-color);
+    }
+
+    .switch-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #fff;
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      transition: left 0.3s;
+    }
+
+    .switch-track.on .switch-thumb {
+      left: 22px;
     }
 
     .settings-link {
@@ -1866,6 +2045,13 @@
         <div class="accent-option" data-czoom="125" onclick="setCarouselZoom(this.dataset.czoom)">125%</div>
         <div class="accent-option" data-czoom="150" onclick="setCarouselZoom(this.dataset.czoom)">150%</div>
         <div class="accent-option" data-czoom="175" onclick="setCarouselZoom(this.dataset.czoom)">175%</div>
+      </div>
+    </div>
+
+    <div class="settings-group">
+      <div class="settings-btn" id="featured-btn" onclick="toggleFeatured()">
+        <span class="material-icons">slideshow</span>
+        <span id="featured-btn-label">Side show de álbumes</span>
       </div>
     </div>
 
@@ -2195,7 +2381,11 @@
   <!-- VISTA: MY MUSIC -->
   <div id="view-music" class="view">
     <div id="category-view">
-      <div class="menu-header">My music</div>
+      <div class="featured-section">
+        <div class="featured-slideshow" id="featured-slideshow">
+          <div class="featured-title-strip">My Music</div>
+        </div>
+      </div>
       <div class="grid-menu">
         <div class="grid-card" style="background-image: linear-gradient(135deg, #1e3c72, #2a5298);" onclick="loadCategory('Songs')">
           <div class="grid-card-content">
@@ -4482,12 +4672,171 @@
 
       const albums = await fetchItems(types.Album);
       document.getElementById('count-albums').textContent = albums.TotalRecordCount || albums.Items.length;
+      if (st === 'emby' || st === 'jellyfin') {
+        try {
+          const idByTrackAlbum = {};
+          (songs.Items || []).forEach(s => {
+            if (s.Id && s.Album && !idByTrackAlbum[s.Album]) {
+              idByTrackAlbum[s.Album] = s.Id;
+            }
+          });
+          (albums.Items || []).forEach(item => {
+            if (idByTrackAlbum[item.Name] && (!item.AlbumId || item.AlbumId === item.Id)) {
+              item.AlbumId = idByTrackAlbum[item.Name];
+            }
+          });
+        } catch (e) {}
+      }
+      if (isFeaturedEnabled()) {
+        renderFeaturedAlbums(albums.Items);
+      } else {
+        applyFeaturedVisibility();
+      }
 
       const artists = await fetchItems(types.Artist);
       document.getElementById('count-artists').textContent = artists.TotalRecordCount || artists.Items.length;
 
       const playlists = await fetchItems(types.Playlist);
       document.getElementById('count-playlists').textContent = playlists.TotalRecordCount || playlists.Items.length;
+    }
+
+    let featuredSlides = [];
+    let featuredTimer = null;
+    let featuredIndex = 0;
+
+    function isFeaturedEnabled() {
+      try { return localStorage.getItem('walkman_featured') !== 'off'; } catch (e) { return true; }
+    }
+
+    function applyFeaturedVisibility() {
+      const section = document.getElementById('featured-slideshow');
+      if (!section) return;
+      const enabled = isFeaturedEnabled();
+      section.style.display = enabled ? '' : 'none';
+      const btn = document.getElementById('featured-btn');
+      if (btn) btn.classList.toggle('on', enabled);
+    }
+
+    function toggleFeatured() {
+      const enabled = !isFeaturedEnabled();
+      try { localStorage.setItem('walkman_featured', enabled ? 'on' : 'off'); } catch (e) {}
+      applyFeaturedVisibility();
+      if (enabled) {
+        updateCategoryCounts();
+      } else {
+        const slideshow = document.getElementById('featured-slideshow');
+        if (slideshow) slideshow.innerHTML = '';
+        if (featuredTimer) { clearInterval(featuredTimer); featuredTimer = null; }
+      }
+    }
+
+    function buildFeaturedSlides() {
+      const container = document.getElementById('featured-slideshow');
+      if (!container) return;
+      container.innerHTML = '';
+      if (featuredSlides.length === 0) return;
+
+      const titleStrip = document.createElement('div');
+      titleStrip.className = 'featured-title-strip';
+      titleStrip.textContent = 'My Music';
+      container.appendChild(titleStrip);
+
+      featuredSlides.forEach((slide, i) => {
+        const div = document.createElement('div');
+        div.className = 'featured-slide' + (i === 0 ? ' active' : '');
+        div.style.backgroundImage = `url('${slide.img}')`;
+        div.innerHTML = `
+          <div class="featured-slide-bg" style="background-image:url('${slide.img}')"></div>
+          <div class="featured-slide-art" style="background-image:url('${slide.img}')"></div>
+          <div class="featured-slide-overlay">
+            <div class="featured-slide-title">${slide.title}</div>
+            <div class="featured-slide-artist">${slide.artist}</div>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+
+      const dots = document.createElement('div');
+      dots.className = 'featured-dots';
+      featuredSlides.forEach((s, i) => {
+        const d = document.createElement('div');
+        d.className = 'featured-dot' + (i === 0 ? ' active' : '');
+        d.onclick = (ev) => {
+          ev.stopPropagation();
+          goToFeatured(i);
+        };
+        dots.appendChild(d);
+      });
+      container.appendChild(dots);
+
+      container.style.cursor = 'pointer';
+      container.onclick = () => playFeaturedAlbum(featuredIndex);
+
+      featuredIndex = 0;
+      if (featuredTimer) clearInterval(featuredTimer);
+      featuredTimer = setInterval(featuredNext, 4000);
+    }
+
+    function featuredNext() {
+      if (featuredSlides.length < 2) return;
+      const slides = document.querySelectorAll('#featured-slideshow .featured-slide');
+      const dots = document.querySelectorAll('#featured-slideshow .featured-dot');
+      if (!slides.length) return;
+      slides[featuredIndex].classList.remove('active');
+      if (dots[featuredIndex]) dots[featuredIndex].classList.remove('active');
+      featuredIndex = (featuredIndex + 1) % featuredSlides.length;
+      slides[featuredIndex].classList.add('active');
+      if (dots[featuredIndex]) dots[featuredIndex].classList.add('active');
+    }
+
+    function goToFeatured(i) {
+      if (!featuredSlides.length) return;
+      i = (i + featuredSlides.length) % featuredSlides.length;
+      const slides = document.querySelectorAll('#featured-slideshow .featured-slide');
+      const dots = document.querySelectorAll('#featured-slideshow .featured-dot');
+      if (!slides.length) return;
+      slides[featuredIndex].classList.remove('active');
+      if (dots[featuredIndex]) dots[featuredIndex].classList.remove('active');
+      featuredIndex = i;
+      slides[featuredIndex].classList.add('active');
+      if (dots[featuredIndex]) dots[featuredIndex].classList.add('active');
+      if (featuredTimer) clearInterval(featuredTimer);
+      featuredTimer = setInterval(featuredNext, 4000);
+    }
+
+    function renderFeaturedAlbums(albums) {
+      if (!albums || albums.length === 0) return;
+      const shuffled = albums.slice().sort(() => Math.random() - 0.5);
+      const selected = shuffled.slice(0, 10);
+      featuredSlides = selected.map(album => ({
+        id: album.Id,
+        albumId: album.AlbumId,
+        img: getImageUrl(album),
+        title: album.Name || 'Desconocido',
+        artist: album.AlbumArtist || (album.Artists && album.Artists[0]) || ''
+      }));
+      buildFeaturedSlides();
+    }
+
+    async function playFeaturedAlbum(index) {
+      if (!featuredSlides || !featuredSlides[index]) return;
+      const slide = featuredSlides[index];
+      const st = embyConfig.serverType;
+      const types = SERVER_TYPES[st];
+      const id = slide.id;
+      let albumTracks = [];
+      try {
+        const data = await fetchItems(types.Audio, id);
+        albumTracks = data.Items || [];
+      } catch (e) {}
+      if (albumTracks.length === 0) return;
+      playlist = [...albumTracks];
+      originalPlaylist = [...albumTracks];
+      playlistVersion++;
+      renderQueueList();
+      refreshCarouselImages();
+      playTrack(0);
+      switchTab('playing');
     }
 
     async function fetchEmbyItems(type, parentId = embyConfig.libraryId) {
@@ -5100,6 +5449,7 @@
     window.onload = async () => {
       initZoom();
       initCarouselZoom();
+      applyFeaturedVisibility();
       initVolume();
       setupMediaSession();
       renderVptCards();
