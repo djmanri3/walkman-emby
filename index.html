@@ -2743,6 +2743,12 @@
 
     async function pickLocalFolder() {
       showLocalImportBanner();
+      // En la app Android, el selector de carpetas lo gestiona la propia app
+      // (SAF) y entrega las pistas vía el puente onLocalTracks.
+      if (window.AndroidBridge && window.AndroidBridge.pickLocalFolder) {
+        window.AndroidBridge.pickLocalFolder();
+        return;
+      }
       // En Android/móvil el File System Access API es poco fiable;
       // usamos siempre el selector de carpeta (input webkitdirectory)
       if (!window.showDirectoryPicker || isMobileDevice()) {
@@ -2988,6 +2994,41 @@
         statusEl.innerHTML = `<div style="color:#ff5555;">Error: ${err.message}</div>`;
       }
     }
+
+    // Recibe de la app Android (vía selector SAF) la lista de pistas locales y
+    // las integra en la biblioteca local, igual que handleLocalFolderInput.
+    window.onAndroidLocalTracks = function (tracks) {
+      if (!tracks || !Array.isArray(tracks) || tracks.length === 0) {
+        const statusEl = document.getElementById('local-status');
+        if (statusEl) {
+          statusEl.style.display = 'block';
+          statusEl.innerHTML = '<div style="color:#ff5555;">No se encontraron archivos de audio en la carpeta.</div>';
+        }
+        return;
+      }
+      localTracks = tracks.map(t => Object.assign({}, t, { IsLocal: true }));
+      localRootName = (tracks[0] && tracks[0].Album) || 'Local';
+      embyConfig.serverType = 'local';
+      embyConfig.host = '';
+      embyConfig.token = '';
+      embyConfig.user = localRootName;
+      saveServerSettings();
+      localTracks.sort((a, b) => (a.Name || '').localeCompare(b.Name || ''));
+      updateLocalCounts();
+      switchServerType('local');
+      const modal = document.getElementById('emby-modal');
+      if (modal) modal.style.display = 'none';
+      switchTab('music');
+      renderQueueList();
+      refreshCarouselImages();
+      const statusEl = document.getElementById('local-status');
+      if (statusEl) {
+        statusEl.style.display = 'block';
+        statusEl.innerHTML = '<div style="color:#4CAF50;">✓ ' + localTracks.length + ' canciones cargadas.</div>';
+        setTimeout(() => { statusEl.style.display = 'none'; }, 3000);
+      }
+      hideLocalImportBanner();
+    };
 
     async function extractEmbeddedCoversInBackground(tracks) {
       const pending = tracks.filter(t => !t.coverUrl && t._file);
