@@ -3264,11 +3264,11 @@
             const artist = parentId.replace('local_artist_', '');
             result = result.filter(t => (t.Artists || ['Desconocido']).includes(artist));
           } else if (parentId) {
-            // Sub-listado de una playlist local
+            // Sub-listado de una playlist local, respetando el orden original
             const pl = localTracks.find(t => t.Type === 'Playlist' && t.Id === parentId);
             if (pl && Array.isArray(pl.PlaylistIds)) {
-              const ids = new Set(pl.PlaylistIds);
-              result = result.filter(t => ids.has(t.Id));
+              const byId = new Map(result.map(t => [t.Id, t]));
+              result = pl.PlaylistIds.map(id => byId.get(id)).filter(Boolean);
             }
           }
           return { Items: result, TotalRecordCount: result.length };
