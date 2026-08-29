@@ -3137,10 +3137,10 @@
     }
 
     function updateLocalCounts() {
-      document.getElementById('count-songs').textContent = localTracks.length;
-      document.getElementById('count-albums').textContent = new Set(localTracks.map(t => t.Album)).size;
-      document.getElementById('count-artists').textContent = new Set(localTracks.map(t => t.AlbumArtist)).size;
-      document.getElementById('count-playlists').textContent = '0';
+      document.getElementById('count-songs').textContent = localTracks.filter(t => t.Type !== 'Playlist').length;
+      document.getElementById('count-albums').textContent = new Set(localTracks.filter(t => t.Type !== 'Playlist').map(t => t.Album)).size;
+      document.getElementById('count-artists').textContent = new Set(localTracks.filter(t => t.Type !== 'Playlist').map(t => t.AlbumArtist)).size;
+      document.getElementById('count-playlists').textContent = localTracks.filter(t => t.Type === 'Playlist').length;
     }
 
     async function connectServer() {
@@ -3256,19 +3256,30 @@
       const st = embyConfig.serverType;
       if (st === 'local') {
         if (type === 'Audio') {
-          let result = [...localTracks];
+          let result = [...localTracks].filter(t => t.Type !== 'Playlist');
           if (parentId && parentId.startsWith('local_album_')) {
             const albumName = parentId.replace('local_album_', '');
             result = result.filter(t => (t.Album || 'Desconocido') === albumName);
           } else if (parentId && parentId.startsWith('local_artist_')) {
             const artist = parentId.replace('local_artist_', '');
             result = result.filter(t => (t.Artists || ['Desconocido']).includes(artist));
+          } else if (parentId) {
+            // Sub-listado de una playlist local
+            const pl = localTracks.find(t => t.Type === 'Playlist' && t.Id === parentId);
+            if (pl && Array.isArray(pl.PlaylistIds)) {
+              const ids = new Set(pl.PlaylistIds);
+              result = result.filter(t => ids.has(t.Id));
+            }
           }
           return { Items: result, TotalRecordCount: result.length };
         }
+        if (type === 'Playlist') {
+          const pls = localTracks.filter(t => t.Type === 'Playlist');
+          return { Items: pls, TotalRecordCount: pls.length };
+        }
         if (type === 'Album') {
           const map = new Map();
-          localTracks.forEach(t => {
+          localTracks.filter(t => t.Type !== 'Playlist').forEach(t => {
             const key = t.Album || 'Desconocido';
             if (!map.has(key)) {
               map.set(key, {
@@ -3290,7 +3301,7 @@
         }
         if (type === 'Artist') {
           const map = new Map();
-          localTracks.forEach(t => {
+          localTracks.filter(t => t.Type !== 'Playlist').forEach(t => {
             (t.Artists || ['Desconocido']).forEach(a => {
               if (!map.has(a)) map.set(a, { Id: 'local_artist_' + a, Name: a, Type: 'MusicArtist', AlbumArtist: a, Artists: [], Count: 0, IsLocal: true });
               map.get(a).Count++;
