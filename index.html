@@ -3968,25 +3968,43 @@
         try {
           pinData = JSON.parse(pinText);
         } catch {
+          // Plex a veces regresa HTML o formato inesperado
+          console.error('PIN RESPONSE:', pinText.substring(0, 500));
           // Plex a veces regresa XML, inténtalo parsearlo
           const xmlRegex = /<pin[^>]*code="([^"]*)"/;
           const match = pinText.match(xmlRegex);
           if (match) pinData = { code: match[1], id: '' };
-          else throw new Error('Respuesta inesperada del servidor Plex');
+          else throw new Error('Respuesta inesperada del servidor Plex. Raw: ' + pinText.substring(0, 200));
         }
         const pinId = pinData.id;
         const authUrl = `https://app.plex.tv/auth#?forward=https%3A%2F%2Fwww.plex.tv%2F%3Fcode%3D${pinData.code}&code=${pinData.code}`;
 
         statusEl.innerHTML = `
           <div class="plex-spinner"></div>
-          <div>Abre el enlace para autenticar:</div>
-          <a href="${authUrl}" target="_blank" rel="noopener">${authUrl}</a>
+          <div>Código de autorización Plex:</div>
+          <div id="plex-code" style="font-size:1.2em;font-weight:bold;margin:10px 0;min-height:24px;cursor:pointer;user-select:all;">${pinData.code}</div>
+          <div style="margin-top:4px;font-size:0.8em;color:#666;">Clic para copiar</div>
+          <div style="margin-top:8px;">Autoriza en: <a href="https://www.plex.tv/link" target="_blank" rel="noopener">www.plex.tv/link</a></div>
+          <div id="copy-message" style="margin-top:4px;display:none;color:#4CAF50;font-size:0.9em;">¡Copiado!</div>
           <div style="margin-top:8px;color:#888;">Esperando autorización...</div>
         `;
 
-        // Paso 2: Polling del PIN (máx 600s / 10 min)
+        // Función para copiar el código al hacer clic
+        document.getElementById('plex-code').addEventListener('click', function() {
+          navigator.clipboard.writeText(pinData.code).then(function() {
+            // Mostrar mensaje de copiado
+            const copyMsg = document.getElementById('copy-message');
+            copyMsg.style.display = 'block';
+            // Ocultar después de 2 segundos
+            setTimeout(function() {
+              copyMsg.style.display = 'none';
+            }, 2000);
+          });
+        });
+
+        // Paso 2: Polling del PIN (máx 180s / 3 min)
         let plexToken = null;
-        for (let i = 0; i < 120; i++) {
+        for (let i = 0; i < 36; i++) {
           await new Promise(r => setTimeout(r, 5000));
           const pollRes = await fetch(`https://plex.tv/api/v2/pins/${pinId}?X-Plex-Client-Identifier=walkman-web`);
           const pollText = await pollRes.text();
@@ -3994,10 +4012,11 @@
           try {
             pollData = JSON.parse(pollText);
           } catch {
+            console.error('POLL RESPONSE:', pollText.substring(0, 500));
             const xmlRegex = /<pin[^>]*authToken="([^"]*)"/;
             const match = pollText.match(xmlRegex);
             if (match) pollData = { authToken: match[1] };
-            else throw new Error('Respuesta inesperada del servidor Plex');
+            else throw new Error('Respuesta inesperada del servidor Plex. Raw: ' + pollText.substring(0, 200));
           }
           if (pollData.authToken) {
             plexToken = pollData.authToken;
