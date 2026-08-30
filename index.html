@@ -3959,10 +3959,21 @@
 
       try {
         // Paso 1: Registrar dispositivo y obtener PIN
-        const pinRes = await fetch('https://plex.tv/api/v2/pins?X-Plex-Client-Identifier=walkman-web', {
+        const pinRes = await fetch('https://plex.tv/api/v2/pins?X-Plex-Client-Identifier=walkman-server', {
           method: 'POST'
         });
-        const pinData = await pinRes.json();
+        if (!pinRes.ok) throw new Error(`Error al conectar con Plex: ${pinRes.statusText}`);
+        const pinText = await pinRes.text();
+        let pinData;
+        try {
+          pinData = JSON.parse(pinText);
+        } catch {
+          // Plex a veces regresa XML, inténtalo parsearlo
+          const xmlRegex = /<pin[^>]*code="([^"]*)"/;
+          const match = pinText.match(xmlRegex);
+          if (match) pinData = { code: match[1], id: '' };
+          else throw new Error('Respuesta inesperada del servidor Plex');
+        }
         const pinId = pinData.id;
         const authUrl = `https://app.plex.tv/auth#?forward=https%3A%2F%2Fwww.plex.tv%2F%3Fcode%3D${pinData.code}&code=${pinData.code}`;
 
@@ -3973,23 +3984,42 @@
           <div style="margin-top:8px;color:#888;">Esperando autorización...</div>
         `;
 
-        // Paso 2: Polling del PIN (máx 120s)
+        // Paso 2: Polling del PIN (máx 600s / 10 min)
         let plexToken = null;
-        for (let i = 0; i < 40; i++) {
-          await new Promise(r => setTimeout(r, 3000));
-          const pollRes = await fetch(`https://plex.tv/api/v2/pins/${pinId}?X-Plex-Client-Identifier=walkman-web`);
-          const pollData = await pollRes.json();
+        for (let i = 0; i < 120; i++) {
+          await new Promise(r => setTimeout(r, 5000));
+          const pollRes = await fetch(`https://plex.tv/api/v2/pins/${pinId}?X-Plex-Client-Identifier=walkman-server`);
+          const pollText = await pollRes.text();
+          let pollData;
+          try {
+            pollData = JSON.parse(pollText);
+          } catch {
+            const xmlRegex = /<pin[^>]*authToken="([^"]*)"/;
+            const match = pollText.match(xmlRegex);
+            if (match) pollData = { authToken: match[1] };
+            else throw new Error('Respuesta inesperada del servidor Plex');
+          }
           if (pollData.authToken) {
             plexToken = pollData.authToken;
             break;
           }
         }
 
-        if (!plexToken) throw new Error('Tiempo de espera agotado. Inténtalo de nuevo.');
+        if (!plexToken) throw new Error('Tiempo de espera agotado. Inténtalo de nuevo otro día o usa Emby/Jellyfin que conectan directo.');
 
-        // Paso 3: Obtener bibliotecas del servidor
+// Paso 3: Obtener bibliotecas del servidor
         const sectRes = await fetch(`${host}/library/sections?X-Plex-Token=${plexToken}`);
-        const sectData = await sectRes.json();
+        if (!sectRes.ok) throw new Error(`Error al obtener bibliotecas de Plex: ${sectRes.statusText}`);
+        const sectText = await sectRes.text();
+        let sectData;
+        try {
+          sectData = JSON.parse(sectText);
+        } catch {
+          // Plex a veces regresa XML
+          const xmlMediaContainer = /<MediaContainer[^>]*directory="([^"]*)"/;
+          const dirMatch = sectText.match(xmlMediaContainer);
+          throw new Error(`Error Plex: No se pudieron parsear los datos. ${sectText.substring(0, 200)}`);
+        }
         const musicSections = (sectData.MediaContainer.Directory || []).filter(s => s.type === 'artist');
 
         if (musicSections.length === 0) throw new Error('No se encontraron bibliotecas de música en Plex.');
@@ -4004,6 +4034,7 @@
         populateLibrarySelect(musicSections.map(s => ({ Id: s.key, Name: s.title })));
       } catch (err) {
         statusEl.innerHTML = `<div style="color:#ff5555;">Error: ${err.message}</div>`;
+        console.error('PLEX ERROR:', err);
       }
     }
 
