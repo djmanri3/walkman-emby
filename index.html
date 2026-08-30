@@ -7049,30 +7049,39 @@
       }
       try {
         const st = embyConfig.serverType;
-        let tracks = [];
+        let artistItem = null;
         if (st === 'local') {
-          tracks = localTracks.filter(t =>
-            (t.AlbumArtist || '').toLowerCase() === artist.toLowerCase() ||
-            (t.Artists || []).some((a) => String(a).toLowerCase() === artist.toLowerCase())
-          );
+          // Local: buscar en la lista de artistas únicos
+          const map = new Map();
+          localTracks.filter(t => t.Type !== 'Playlist').forEach(t => {
+            (t.Artists || [t.AlbumArtist || 'Desconocido']).forEach(a => {
+              if (!map.has(a)) map.set(a, { Id: 'local_artist_' + a, Name: a, Type: 'MusicArtist', AlbumArtist: a, Artists: [], Count: 0, IsLocal: true });
+              map.get(a).Count++;
+            });
+          });
+          artistItem = map.get(artist) || null;
+        } else if (st === 'plex') {
+          // Plex: buscar artista por nombre
+          const data = await fetchPlexJson(`${embyConfig.host}/search?query=${encodeURIComponent(artist)}&X-Plex-Token=${embyConfig.token}`);
+          const meta = data.MediaContainer.Metadata || [];
+          const found = meta.find(m => m.type === 8 && String(m.title || '').toLowerCase() === String(artist).toLowerCase());
+          if (found) artistItem = normalizePlexItem(found);
         } else {
-          const data = await fetchItems(SERVER_TYPES[st].Audio, undefined, undefined, artist);
-          tracks = (data && data.Items) ? data.Items : [];
+          // Emby/Jellyfin: buscar artista por nombre
+          const res = await fetch(`${embyConfig.host}/Users/${embyConfig.userId}/Items?SearchTerm=${encodeURIComponent(artist)}&IncludeItemTypes=MusicArtist&Recursive=true&api_key=${embyConfig.token}`);
+          const data = await res.json();
+          if (data.Items && data.Items.length) artistItem = data.Items[0];
         }
-        if (!tracks.length) {
-          showToast('No se encontraron más canciones de ' + artist);
+        if (!artistItem) {
+          showToast('No se encontró el artista: ' + artist);
           return;
         }
-        playlist = tracks;
-        originalPlaylist = [...tracks];
-        playlistVersion++;
-        renderQueueList();
-        refreshCarouselImages();
-        playTrack(0);
-        switchTab('playing');
-        showToast('Reproduciendo canciones de ' + artist);
+        // Navegar a la pestaña My music y cargar canciones del artista
+        switchTab('music');
+        loadSubItems(artistItem.Id, artistItem.Name, artistItem.Type);
+        showToast('Mostrando canciones de ' + artist);
       } catch (e) {
-        showToast('Error al cargar canciones del artista');
+        showToast('Error al cargar artista');
       }
     }
 
