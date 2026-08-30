@@ -8,6 +8,9 @@
   <!-- PWA Meta Tags -->
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#3a0007">
+
+  <!-- Config en tiempo de ejecución (generada por envsubst en Docker) -->
+  <script src="config.js"></script>
   
   <!-- Soporte para iOS (Apple Safari) -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -3376,7 +3379,17 @@
       return dict[key] !== undefined ? dict[key] : (I18N.en[key] !== undefined ? I18N.en[key] : key);
     }
     function getLang() {
-      try { return localStorage.getItem('walkman_lang') || 'en'; } catch (e) { return 'en'; }
+      try {
+        const saved = localStorage.getItem('walkman_lang');
+        if (saved) return saved;
+      } catch (e) {}
+      const cfg = window.WALKMAN_CONFIG;
+      if (cfg && cfg.language) {
+        const langMap = { 'English': 'en', 'Español': 'es', 'Français': 'fr', 'Deutsch': 'de', 'Italiano': 'it', 'Português': 'pt' };
+        const code = langMap[cfg.language] || String(cfg.language).toLowerCase();
+        return I18N[code] ? code : 'en';
+      }
+      return 'en';
     }
     function setLang(lang) {
       currentLang = I18N[lang] ? lang : 'en';
@@ -3408,6 +3421,16 @@
     currentLang = getLang();
 
     let embyConfig = { host: '', token: '', userId: '', libraryId: '', user: '', serverType: 'emby' };
+    // Aplicar defaults inyectados por config.js (Docker/.env)
+    (function () {
+      const cfg = window.WALKMAN_CONFIG;
+      if (!cfg) return;
+      if (cfg.serverType) {
+        const st = String(cfg.serverType).toLowerCase();
+        if (['emby', 'jellyfin', 'plex', 'local'].indexOf(st) >= 0) embyConfig.serverType = st;
+      }
+      if (cfg.serverUrl) embyConfig.host = String(cfg.serverUrl).replace(/\/$/, '');
+    })();
     // Mapeo de tipos por servidor
     const SERVER_TYPES = {
       emby:    { Audio: 'Audio', Album: 'MusicAlbum', Artist: 'MusicArtist', Playlist: 'Playlist' },
@@ -6061,6 +6084,13 @@
       // Restaurar tab activa según config guardada
       switchServerType(embyConfig.serverType || 'emby');
 
+      // Precargar URL por defecto del servidor si viene de config.js (Docker/.env)
+      const hostInput = document.getElementById('emby-host');
+      const cfg = window.WALKMAN_CONFIG;
+      if (cfg && cfg.serverUrl && hostInput && !hostInput.value && !embyConfig.host) {
+        hostInput.value = cfg.serverUrl;
+      }
+
       // Si ya hay bibliotecas guardadas del servidor conectado, mostrar el selector
       // para poder cambiar de biblioteca sin reconectar
       if (availableLibraries.length > 0) {
@@ -6218,9 +6248,10 @@
 
         const parsed = JSON.parse(saved);
         if (parsed.serverType === 'local') {
-          // La biblioteca local necesita volver a seleccionar la carpeta
-          embyConfig = { ...embyConfig, ...parsed, host: '', token: '' };
-          switchServerType('local');
+          // La biblioteca local necesita volver a seleccionar la carpeta.
+          // No forzamos Local en la recarga: se respeta el tipo por defecto
+          // (DEFAULT_SERVER_TYPE de config.js / .env) al abrir el modal.
+          embyConfig = { ...embyConfig, host: '', token: '' };
           return false;
         }
         if (parsed.host && parsed.token && parsed.libraryId) {

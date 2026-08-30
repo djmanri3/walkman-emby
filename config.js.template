@@ -1,0 +1,6 @@
+// Configuracion generada en tiempo de ejecucion por docker-entrypoint.sh (envsubst)
+window.WALKMAN_CONFIG = {
+  language: "${DEFAULT_LANGUAGE}",
+  serverType: "${DEFAULT_SERVER_TYPE}",
+  serverUrl: "${DEFAULT_SERVER_URL}"
+};

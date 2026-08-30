@@ -1,5 +1,13 @@
 services:
   walkman-server:
     image: ghcr.io/djmanri3/walkman-server:main
+    env_file:
+      - .env
+    environment:
+      # Edita estos valores en despliegue (o en .env) para cambiar los defaults
+      # que recibe la web en config.js
+      DEFAULT_LANGUAGE: ${DEFAULT_LANGUAGE:-English}
+      DEFAULT_SERVER_TYPE: ${DEFAULT_SERVER_TYPE:-Emby}
+      DEFAULT_SERVER_URL: ${DEFAULT_SERVER_URL:-}
     ports:
       - 8081:80
