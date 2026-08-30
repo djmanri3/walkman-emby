@@ -8,20 +8,6 @@
   <!-- PWA Meta Tags -->
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#3a0007">
-
-  <!-- Config en tiempo de ejecución (generada por envsubst en Docker) -->
-  <script src="config.js"></script>
-  <script>
-    // Fallback para hostings estáticos (sin config.js): en Docker, la config.js
-    // generada por docker-entrypoint.sh siempre prevalece sobre estos valores.
-    if (!window.WALKMAN_CONFIG) {
-      window.WALKMAN_CONFIG = {
-        language: "English",
-        serverType: "Jellyfin",
-        serverUrl: ""
-      };
-    }
-  </script>
   
   <!-- Soporte para iOS (Apple Safari) -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -3390,17 +3376,7 @@
       return dict[key] !== undefined ? dict[key] : (I18N.en[key] !== undefined ? I18N.en[key] : key);
     }
     function getLang() {
-      try {
-        const saved = localStorage.getItem('walkman_lang');
-        if (saved) return saved;
-      } catch (e) {}
-      const cfg = window.WALKMAN_CONFIG;
-      if (cfg && cfg.language) {
-        const langMap = { 'English': 'en', 'Español': 'es', 'Français': 'fr', 'Deutsch': 'de', 'Italiano': 'it', 'Português': 'pt' };
-        const code = langMap[cfg.language] || String(cfg.language).toLowerCase();
-        return I18N[code] ? code : 'en';
-      }
-      return 'en';
+      try { return localStorage.getItem('walkman_lang') || 'en'; } catch (e) { return 'en'; }
     }
     function setLang(lang) {
       currentLang = I18N[lang] ? lang : 'en';
@@ -3432,16 +3408,6 @@
     currentLang = getLang();
 
     let embyConfig = { host: '', token: '', userId: '', libraryId: '', user: '', serverType: 'emby' };
-    // Aplicar defaults inyectados por config.js (Docker/.env)
-    (function () {
-      const cfg = window.WALKMAN_CONFIG;
-      if (!cfg) return;
-      if (cfg.serverType) {
-        const st = String(cfg.serverType).toLowerCase();
-        if (['emby', 'jellyfin', 'plex', 'local'].indexOf(st) >= 0) embyConfig.serverType = st;
-      }
-      if (cfg.serverUrl) embyConfig.host = String(cfg.serverUrl).replace(/\/$/, '');
-    })();
     // Mapeo de tipos por servidor
     const SERVER_TYPES = {
       emby:    { Audio: 'Audio', Album: 'MusicAlbum', Artist: 'MusicArtist', Playlist: 'Playlist' },
@@ -3959,86 +3925,37 @@
 
       try {
         // Paso 1: Registrar dispositivo y obtener PIN
-        const pinRes = await fetch('https://plex.tv/api/v2/pins?X-Plex-Client-Identifier=Chrome', {
+        const pinRes = await fetch('https://plex.tv/api/v2/pins?X-Plex-Client-Identifier=walkman-web', {
           method: 'POST'
         });
-        if (!pinRes.ok) throw new Error(`Error al conectar con Plex: ${pinRes.statusText}`);
-        const pinText = await pinRes.text();
-        let pinData;
-        try {
-          pinData = JSON.parse(pinText);
-        } catch {
-          // Plex a veces regresa HTML o formato inesperado
-          console.error('PIN RESPONSE:', pinText.substring(0, 500));
-          // Plex a veces regresa XML, inténtalo parsearlo
-          const xmlRegex = /<pin[^>]*code="([^"]*)"/;
-          const match = pinText.match(xmlRegex);
-          if (match) pinData = { code: match[1], id: '' };
-          else throw new Error('Respuesta inesperada del servidor Plex. Raw: ' + pinText.substring(0, 200));
-        }
+        const pinData = await pinRes.json();
         const pinId = pinData.id;
         const authUrl = `https://app.plex.tv/auth#?forward=https%3A%2F%2Fwww.plex.tv%2F%3Fcode%3D${pinData.code}&code=${pinData.code}`;
 
         statusEl.innerHTML = `
           <div class="plex-spinner"></div>
-          <div>Código de autorización Plex:</div>
-          <div id="plex-code" style="font-size:1.2em;font-weight:bold;margin:10px 0;min-height:24px;cursor:pointer;user-select:all;">${pinData.code}</div>
-          <div style="margin-top:4px;font-size:0.8em;color:#666;">Clic para copiar</div>
-          <div style="margin-top:8px;">Autoriza en: <a href="https://www.plex.tv/link" target="_blank" rel="noopener">www.plex.tv/link</a></div>
-          <div id="copy-message" style="margin-top:4px;display:none;color:#4CAF50;font-size:0.9em;">¡Copiado!</div>
+          <div>Abre el enlace para autenticar:</div>
+          <a href="${authUrl}" target="_blank" rel="noopener">${authUrl}</a>
           <div style="margin-top:8px;color:#888;">Esperando autorización...</div>
         `;
 
-        // Función para copiar el código al hacer clic
-        document.getElementById('plex-code').addEventListener('click', function() {
-          navigator.clipboard.writeText(pinData.code).then(function() {
-            // Mostrar mensaje de copiado
-            const copyMsg = document.getElementById('copy-message');
-            copyMsg.style.display = 'block';
-            // Ocultar después de 2 segundos
-            setTimeout(function() {
-              copyMsg.style.display = 'none';
-            }, 2000);
-          });
-        });
-
-        // Paso 2: Polling del PIN (máx 180s / 3 min)
+        // Paso 2: Polling del PIN (máx 120s)
         let plexToken = null;
-        for (let i = 0; i < 36; i++) {
-          await new Promise(r => setTimeout(r, 5000));
-          const pollRes = await fetch(`https://plex.tv/api/v2/pins/${pinId}?X-Plex-Client-Identifier=Chrome`);
-          const pollText = await pollRes.text();
-          let pollData;
-          try {
-            pollData = JSON.parse(pollText);
-          } catch {
-            console.error('POLL RESPONSE:', pollText.substring(0, 500));
-            const xmlRegex = /<pin[^>]*authToken="([^"]*)"/;
-            const match = pollText.match(xmlRegex);
-            if (match) pollData = { authToken: match[1] };
-            else throw new Error('Respuesta inesperada del servidor Plex. Raw: ' + pollText.substring(0, 200));
-          }
+        for (let i = 0; i < 40; i++) {
+          await new Promise(r => setTimeout(r, 3000));
+          const pollRes = await fetch(`https://plex.tv/api/v2/pins/${pinId}?X-Plex-Client-Identifier=walkman-web`);
+          const pollData = await pollRes.json();
           if (pollData.authToken) {
             plexToken = pollData.authToken;
             break;
           }
         }
 
-        if (!plexToken) throw new Error('Tiempo de espera agotado. Inténtalo de nuevo otro día o usa Emby/Jellyfin que conectan directo.');
+        if (!plexToken) throw new Error('Tiempo de espera agotado. Inténtalo de nuevo.');
 
-// Paso 3: Obtener bibliotecas del servidor
+        // Paso 3: Obtener bibliotecas del servidor
         const sectRes = await fetch(`${host}/library/sections?X-Plex-Token=${plexToken}`);
-        if (!sectRes.ok) throw new Error(`Error al obtener bibliotecas de Plex: ${sectRes.statusText}`);
-        const sectText = await sectRes.text();
-        let sectData;
-        try {
-          sectData = JSON.parse(sectText);
-        } catch {
-          // Plex a veces regresa XML
-          const xmlMediaContainer = /<MediaContainer[^>]*directory="([^"]*)"/;
-          const dirMatch = sectText.match(xmlMediaContainer);
-          throw new Error(`Error Plex: No se pudieron parsear los datos. ${sectText.substring(0, 200)}`);
-        }
+        const sectData = await sectRes.json();
         const musicSections = (sectData.MediaContainer.Directory || []).filter(s => s.type === 'artist');
 
         if (musicSections.length === 0) throw new Error('No se encontraron bibliotecas de música en Plex.');
@@ -4053,7 +3970,6 @@
         populateLibrarySelect(musicSections.map(s => ({ Id: s.key, Name: s.title })));
       } catch (err) {
         statusEl.innerHTML = `<div style="color:#ff5555;">Error: ${err.message}</div>`;
-        console.error('PLEX ERROR:', err);
       }
     }
 
@@ -6145,16 +6061,6 @@
       // Restaurar tab activa según config guardada
       switchServerType(embyConfig.serverType || 'emby');
 
-      // Precargar URL por defecto del servidor si viene de config.js (Docker/.env)
-      const cfg = window.WALKMAN_CONFIG;
-      if (cfg && cfg.serverUrl) {
-        const url = String(cfg.serverUrl).replace(/\/$/, '');
-        const embyHost = document.getElementById('emby-host');
-        if (embyHost && !embyHost.value) embyHost.value = url;
-        const plexHost = document.getElementById('plex-host');
-        if (plexHost && !plexHost.value) plexHost.value = url;
-      }
-
       // Si ya hay bibliotecas guardadas del servidor conectado, mostrar el selector
       // para poder cambiar de biblioteca sin reconectar
       if (availableLibraries.length > 0) {
@@ -6312,10 +6218,9 @@
 
         const parsed = JSON.parse(saved);
         if (parsed.serverType === 'local') {
-          // La biblioteca local necesita volver a seleccionar la carpeta.
-          // No forzamos Local en la recarga: se respeta el tipo por defecto
-          // (DEFAULT_SERVER_TYPE de config.js / .env) al abrir el modal.
-          embyConfig = { ...embyConfig, host: '', token: '' };
+          // La biblioteca local necesita volver a seleccionar la carpeta
+          embyConfig = { ...embyConfig, ...parsed, host: '', token: '' };
+          switchServerType('local');
           return false;
         }
         if (parsed.host && parsed.token && parsed.libraryId) {
