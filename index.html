@@ -4942,19 +4942,7 @@
       const albums = await fetchItems(types.Album);
       document.getElementById('count-albums').textContent = albums.TotalRecordCount || albums.Items.length;
       if (st === 'emby' || st === 'jellyfin') {
-        try {
-          const idByTrackAlbum = {};
-          (songs.Items || []).forEach(s => {
-            if (s.Id && s.Album && !idByTrackAlbum[s.Album]) {
-              idByTrackAlbum[s.Album] = s.Id;
-            }
-          });
-          (albums.Items || []).forEach(item => {
-            if (idByTrackAlbum[item.Name] && (!item.AlbumId || item.AlbumId === item.Id)) {
-              item.AlbumId = idByTrackAlbum[item.Name];
-            }
-          });
-        } catch (e) {}
+        await resolveAlbumCoverIds(albums.Items);
       }
       if (isFeaturedEnabled()) {
         renderFeaturedAlbums(albums.Items);
@@ -5128,7 +5116,43 @@
       try {
         const fdata = await fetchItems(types.Album);
         const albums = fdata.Items || fdata || [];
-        if (albums.length > 0) renderFeaturedAlbums(albums);
+        if (albums.length > 0) {
+          await resolveAlbumCoverIds(albums);
+          renderFeaturedAlbums(albums);
+        }
+      } catch (e) {}
+    }
+
+    // Fix carátulas de álbumes (Emby/Jellyfin): el Id del álbum listado a
+    // veces da 404 aunque reporte imagen; el fiable es el Id de la canción,
+    // que es el álbum físico que sí tiene la portada. Se reutiliza en el side
+    // show, en el recuento de categorías y en la vista de álbumes.
+    async function resolveAlbumCoverIds(albums) {
+      if (!Array.isArray(albums) || albums.length === 0) return;
+      const st = embyConfig.serverType;
+      if (st !== 'emby' && st !== 'jellyfin') return;
+      const types = SERVER_TYPES[st];
+      try {
+        const songsData = await fetchItems(types.Audio);
+        const idByTrackAlbum = {};
+        (songsData.Items || []).forEach(s => {
+          if (s.Id && s.Album && !idByTrackAlbum[s.Album]) {
+            idByTrackAlbum[s.Album] = s.Id;
+          }
+        });
+        albums.forEach(item => {
+          if (idByTrackAlbum[item.Name] && (!item.AlbumId || item.AlbumId === item.Id)) {
+            item.AlbumId = idByTrackAlbum[item.Name];
+          }
+        });
+        const pending = albums.filter(item => !item.AlbumId || item.AlbumId === item.Id);
+        await Promise.all(pending.map(async (item) => {
+          try {
+            const sub = await fetchItems(types.Audio, item.Id);
+            const first = (sub.Items || []).find(s => s.Id);
+            if (first && first.Id) item.AlbumId = first.Id;
+          } catch (e) {}
+        }));
       } catch (e) {}
     }
 
@@ -5140,6 +5164,7 @@
       if (!ftypes || !ftypes.Album) return;
       try {
         const fdata = await fetchItems(ftypes.Album);
+        await resolveAlbumCoverIds(fdata.Items || []);
         renderFeaturedAlbums(fdata.Items || []);
       } catch (e) {}
     }
@@ -5191,30 +5216,7 @@
       // veces da 404 aunque reporte imagen; el fiable es el Id de la canción,
       // que es el álbum físico que sí tiene la portada.
       if (category === 'Albums' && (st === 'emby' || st === 'jellyfin')) {
-        try {
-          const songsData = await fetchItems(types.Audio);
-          // Mapear álbum (por nombre) -> Id de una de sus canciones
-          const idByTrackAlbum = {};
-          (songsData.Items || []).forEach(s => {
-            if (s.Id && s.Album && !idByTrackAlbum[s.Album]) {
-              idByTrackAlbum[s.Album] = s.Id;
-            }
-          });
-          (data.Items || []).forEach(item => {
-            if (idByTrackAlbum[item.Name]) {
-              item.AlbumId = idByTrackAlbum[item.Name];
-            }
-          });
-          // Para los que sigan sin resolver, consultar sus canciones (paralelo)
-          const pending = (data.Items || []).filter(item => !item.AlbumId || item.AlbumId === item.Id);
-          await Promise.all(pending.map(async (item) => {
-            try {
-              const sub = await fetchItems(types.Audio, item.Id);
-              const first = (sub.Items || []).find(s => s.Id);
-              if (first && first.Id) item.AlbumId = first.Id;
-            } catch (e) {}
-          }));
-        } catch (e) {}
+        await resolveAlbumCoverIds(data.Items || []);
       }
 
       container.innerHTML = '';
