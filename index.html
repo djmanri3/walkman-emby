@@ -13,7 +13,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="WALKMAN">
-  <link rel="apple-touch-icon" href="Walkman.png">
+  <link rel="apple-touch-icon" href="icons/Walkman.png">
 
   <!-- ColorThief para el color dinámico -->
   <script src="https://unpkg.com/colorthief@3/dist/umd/color-thief.global.js"></script>
@@ -21,7 +21,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
   <!-- Material Icons -->
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-  <link rel="icon" href="Walkman.png" type="image/x-icon">
+  <link rel="icon" href="icons/Walkman.png" type="image/x-icon">
   
   <style>
     :root {
@@ -1838,17 +1838,98 @@
     .modal {
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.9);
+      background: rgba(0,0,0,0.85);
       display: flex;
       align-items: center;
       justify-content: center;
       z-index: 200;
     }
 
-    .modal-content {
-      background: #1a1a1a;
-      padding: 24px;
+    #emby-modal {
+      overflow: hidden;
+      background: #000;
+    }
+
+    #emby-modal::before {
+      content: '';
+      position: absolute;
+      top: -30px; left: -30px; right: -30px; bottom: -30px;
+      background-image: url('backgrounds/Emby.gif');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      filter: blur(14px);
+      transform: scale(1.02);
+      z-index: 0;
+    }
+
+    #emby-modal[data-type="jellyfin"]::before {
+      background-image: url('backgrounds/Jellyfin.gif');
+    }
+
+    #emby-modal[data-type="plex"]::before {
+      background-image: url('backgrounds/Plex.gif');
+    }
+
+    #emby-modal[data-type="local"]::before {
+      background-image: url('backgrounds/Local.gif');
+    }
+
+    #emby-modal .modal-content {
+      position: relative;
+      z-index: 1;
+    }
+
+    #emby-modal .modal-content .input-group input,
+    #emby-modal .modal-content .input-group select,
+    #emby-modal .modal-content .lang-select {
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(12px) saturate(150%);
+      -webkit-backdrop-filter: blur(12px) saturate(150%);
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.12);
+      color: #fff;
+    }
+
+    #emby-modal .modal-content .btn {
+      background: linear-gradient(180deg, rgba(255,255,255,0.2), rgba(255,255,255,0.07));
+      backdrop-filter: blur(20px) saturate(200%) brightness(1.1);
+      -webkit-backdrop-filter: blur(20px) saturate(200%) brightness(1.1);
+      border: 1px solid rgba(255, 255, 255, 0.35);
       border-radius: 8px;
+      box-shadow:
+        0 4px 18px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.35),
+        inset 0 -2px 6px rgba(0, 0, 0, 0.25);
+      color: #fff;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+      transition: transform 0.12s, box-shadow 0.12s, background 0.3s;
+    }
+
+    #emby-modal .modal-content .btn:hover {
+      background: linear-gradient(180deg, rgba(255,255,255,0.26), rgba(255,255,255,0.1));
+      box-shadow:
+        0 6px 22px rgba(0, 0, 0, 0.45),
+        inset 0 1px 0 rgba(255, 255, 255, 0.42),
+        inset 0 -2px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    #emby-modal .modal-content .btn:active {
+      transform: translateY(1px) scale(0.98);
+      background: linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.04));
+      box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.4),
+        inset 0 2px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    .modal-content {
+      background: rgba(30, 30, 40, 0.35);
+      backdrop-filter: blur(18px) saturate(160%);
+      -webkit-backdrop-filter: blur(18px) saturate(160%);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      padding: 24px;
+      border-radius: 14px;
       width: 90%;
       max-width: 380px;
     }
@@ -1856,6 +1937,19 @@
     .modal-content h3 {
       margin-bottom: 16px;
       font-weight: 300;
+      text-align: center;
+    }
+
+    .server-modal-logo {
+      text-align: center;
+      margin-bottom: 14px;
+    }
+
+    .server-modal-logo img {
+      width: 72px;
+      height: auto;
+      object-fit: contain;
+      transition: opacity 0.25s;
     }
 
     .input-group {
@@ -2242,20 +2336,59 @@
       color: #fff;
     }
 
-    .server-tab[data-type="emby"].active {
-      background: #4CAF50;
+    #emby-modal .server-tab {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(10px) saturate(150%);
+      -webkit-backdrop-filter: blur(10px) saturate(150%);
+      color: #cfcfcf;
+      border-right: 1px solid rgba(255, 255, 255, 0.16);
     }
 
-    .server-tab[data-type="jellyfin"].active {
-      background: #9b59b6;
+    #emby-modal .server-tab:last-child {
+      border-right: none;
     }
 
-    .server-tab[data-type="plex"].active {
-      background: #e5a00d;
+    #emby-modal .server-tab.active {
+      background: linear-gradient(180deg, rgba(255,255,255,0.34), rgba(255,255,255,0.1));
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
+      color: #fff;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.35),
+        inset 0 -2px 6px rgba(0, 0, 0, 0.15);
     }
 
-    .server-tab[data-type="local"].active {
-      background: #00bcd4;
+    #emby-modal .server-tab[data-type="emby"].active {
+      background: linear-gradient(180deg, rgba(76,175,80,0.75), rgba(76,175,80,0.35));
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.35),
+        inset 0 -2px 6px rgba(0, 0, 0, 0.2),
+        0 4px 14px rgba(76, 175, 80, 0.35);
+    }
+
+    #emby-modal .server-tab[data-type="jellyfin"].active {
+      background: linear-gradient(180deg, rgba(155,89,182,0.75), rgba(155,89,182,0.35));
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.35),
+        inset 0 -2px 6px rgba(0, 0, 0, 0.2),
+        0 4px 14px rgba(155, 89, 182, 0.35);
+    }
+
+    #emby-modal .server-tab[data-type="plex"].active {
+      background: linear-gradient(180deg, rgba(229,160,13,0.75), rgba(229,160,13,0.35));
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.35),
+        inset 0 -2px 6px rgba(0, 0, 0, 0.2),
+        0 4px 14px rgba(229, 160, 13, 0.35);
+    }
+
+    #emby-modal .server-tab[data-type="local"].active {
+      background: linear-gradient(180deg, rgba(0,188,212,0.75), rgba(0,188,212,0.35));
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.35),
+        inset 0 -2px 6px rgba(0, 0, 0, 0.2),
+        0 4px 14px rgba(0, 188, 212, 0.35);
     }
 
     .server-form {
@@ -2912,8 +3045,9 @@
   </div>
 
   <!-- MODAL CONEXIÓN SERVIDOR -->
-  <div id="emby-modal" class="modal" onclick="closeServerModal()">
+  <div id="emby-modal" class="modal" data-type="emby" onclick="closeServerModal()">
     <div class="modal-content" onclick="event.stopPropagation()">
+      <div class="server-modal-logo" id="server-modal-logo" data-type="emby"><img id="server-modal-logo-img" src="icons/Walkman_emby.png" alt="Walkman"></div>
       <h3 data-i18n="connectServer">Conectarse al Servidor</h3>
 
       <div class="input-group">
@@ -3306,6 +3440,15 @@
       document.getElementById('form-plex').classList.toggle('active', type === 'plex');
       document.getElementById('form-local').classList.toggle('active', type === 'local');
       document.getElementById('library-selector').style.display = 'none';
+      const logo = document.getElementById('server-modal-logo');
+      if (logo) logo.setAttribute('data-type', type);
+      const modalEl = document.getElementById('emby-modal');
+      if (modalEl) modalEl.setAttribute('data-type', type);
+      const logoImg = document.getElementById('server-modal-logo-img');
+      if (logoImg) {
+        const map = { emby: 'icons/Walkman_emby.png', jellyfin: 'icons/Walkman_jellyfin.png', plex: 'icons/Walkman_plex.png', local: 'icons/Walkman_monocolor.png' };
+        logoImg.src = map[type] || 'icons/Walkman_monocolor.png';
+      }
     }
 
     // ---- Biblioteca Local (File System Access API) ----
