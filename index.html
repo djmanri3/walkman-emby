@@ -2948,7 +2948,7 @@
         <div class="art-card prev" id="card-prev" onclick="prevTrack()">
           <img id="img-prev" src="" />
         </div>
-        <div class="art-card current" id="card-current">
+        <div class="art-card current" id="card-current" onclick="openAlbumActionsMenu()">
           <img id="img-current" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 24 24' fill='%23666666'><rect width='24' height='24' fill='%23222222'/><path d='M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z' fill='%23888888'/></svg>" crossorigin="anonymous" />
         </div>
         <div class="art-card next" id="card-next" onclick="nextTrack()">
@@ -3160,6 +3160,32 @@
 
   <div id="context-toast" class="context-menu-toast"></div>
 
+  <!-- MENÚ DE ACCIONES DE LA PORTADA (Playing) -->
+  <div id="album-actions-overlay" class="context-menu-overlay" onclick="closeAlbumActionsMenu()">
+    <div class="context-menu" onclick="event.stopPropagation()">
+      <div class="context-menu-header">
+        <div id="album-actions-title" class="context-menu-header-title"></div>
+        <div id="album-actions-sub" class="context-menu-header-sub"></div>
+      </div>
+      <div class="context-menu-option" onclick="albumActionsYouTube()">
+        <span class="material-icons">smart_display</span>
+        <span data-i18n="searchYouTube">Buscar canción en YouTube</span>
+      </div>
+      <div class="context-menu-option" onclick="albumActionsGoogleAlbum()">
+        <span class="material-icons">album</span>
+        <span data-i18n="searchGoogleAlbum">Buscar álbum en Google</span>
+      </div>
+      <div class="context-menu-option" onclick="albumActionsGoogleArtist()">
+        <span class="material-icons">person_search</span>
+        <span data-i18n="searchGoogleArtist">Buscar artista en Google</span>
+      </div>
+      <div class="context-menu-option" onclick="albumActionsMoreFromArtist()">
+        <span class="material-icons">queue_music</span>
+        <span data-i18n="moreFromArtist">Más canciones del artista</span>
+      </div>
+    </div>
+  </div>
+
   <audio id="audio-player" crossorigin="anonymous"></audio>
 
   <script>
@@ -3197,6 +3223,8 @@
         visParticles: 'Album particles', visBlocks: 'Rhythmic blocks',
         playNext: 'Play next', addToQueue: 'Add to queue', removeFromQueue: 'Remove from queue',
         musicInfo: 'Music information', noName: 'No name', noAvailable: 'Not available',
+        searchYouTube: 'Search song on YouTube', searchGoogleAlbum: 'Search album on Google',
+        searchGoogleArtist: 'Search artist on Google', moreFromArtist: 'More songs from this artist',
         unknown: 'Unknown', infoName: 'Name', infoArtist: 'Artist', infoAlbum: 'Album', infoFile: 'File',
         libraryChanged: 'Library changed', noResults: 'No results found',
         addedToQueue: 'Added to queue', addedToQueueMany: '{kind} added ({n} songs)',
@@ -3238,6 +3266,8 @@
         visParticles: 'Partículas del álbum', visBlocks: 'Bloques rítmicos',
         playNext: 'Reproducir siguiente', addToQueue: 'Añadir a la cola', removeFromQueue: 'Eliminar de la cola',
         musicInfo: 'Información de la música', noName: 'Sin nombre', noAvailable: 'No disponible',
+        searchYouTube: 'Buscar canción en YouTube', searchGoogleAlbum: 'Buscar álbum en Google',
+        searchGoogleArtist: 'Buscar artista en Google', moreFromArtist: 'Más canciones del artista',
         unknown: 'Desconocido', infoName: 'Nombre', infoArtist: 'Artista', infoAlbum: 'Álbum', infoFile: 'Fichero',
         libraryChanged: 'Biblioteca cambiada', noResults: 'No se encontraron resultados',
         addedToQueue: 'Añadida a la cola', addedToQueueMany: '{kind} añadido ({n} canciones)',
@@ -3269,6 +3299,8 @@
         visParticles: 'Particules d\'album', visBlocks: 'Blocs rythmiques',
         playNext: 'Lire ensuite', addToQueue: 'Ajouter à la file', removeFromQueue: 'Retirer de la file',
         musicInfo: 'Informations musicales', noName: 'Sans nom', noAvailable: 'Indisponible',
+        searchYouTube: 'Rechercher la chanson sur YouTube', searchGoogleAlbum: 'Rechercher l’album sur Google',
+        searchGoogleArtist: 'Rechercher l’artiste sur Google', moreFromArtist: 'Plus de chansons de cet artiste',
         unknown: 'Inconnu', infoName: 'Nom', infoArtist: 'Artiste', infoAlbum: 'Album', infoFile: 'Fichier',
         libraryChanged: 'Bibliothèque changée', noResults: 'Aucun résultat trouvé',
         addedToQueue: 'Ajouté à la file', addedToQueueMany: '{kind} ajouté ({n} chansons)',
@@ -3299,6 +3331,8 @@
         visParticles: 'Album-Partikel', visBlocks: 'Rhythmische Blöcke',
         playNext: 'Als Nächstes abspielen', addToQueue: 'Zur Warteschlange hinzufügen',
         removeFromQueue: 'Aus der Warteschlange entfernen', musicInfo: 'Musikinformationen', noName: 'Ohne Namen',
+        searchYouTube: 'Song auf YouTube suchen', searchGoogleAlbum: 'Album auf Google suchen',
+        searchGoogleArtist: 'Künstler auf Google suchen', moreFromArtist: 'Mehr Lieder dieses Künstlers',
         noAvailable: 'Nicht verfügbar', unknown: 'Unbekannt', infoName: 'Name', infoArtist: 'Künstler',
         infoAlbum: 'Album', infoFile: 'Datei', libraryChanged: 'Bibliothek geändert', noResults: 'Keine Ergebnisse gefunden',
         addedToQueue: 'Zur Warteschlange hinzugefügt', addedToQueueMany: '{kind} hinzugefügt ({n} Songs)',
@@ -3329,6 +3363,8 @@
         visParticles: 'Particelle dell\'album', visBlocks: 'Blocchi ritmici',
         playNext: 'Riproduci successiva', addToQueue: 'Aggiungi alla coda', removeFromQueue: 'Rimuovi dalla coda',
         musicInfo: 'Informazioni musicali', noName: 'Senza nome', noAvailable: 'Non disponibile',
+        searchYouTube: 'Cerca canzone su YouTube', searchGoogleAlbum: 'Cerca album su Google',
+        searchGoogleArtist: 'Cerca artista su Google', moreFromArtist: 'Altre canzoni di questo artista',
         unknown: 'Sconosciuto', infoName: 'Nome', infoArtist: 'Artista', infoAlbum: 'Album', infoFile: 'File',
         libraryChanged: 'Libreria cambiata', noResults: 'Nessun risultato trovato',
         addedToQueue: 'Aggiunto alla coda', addedToQueueMany: '{kind} aggiunto ({n} canzoni)',
@@ -3359,6 +3395,8 @@
         visParticles: 'Partículas do álbum', visBlocks: 'Blocos rítmicos',
         playNext: 'Reproduzir a seguir', addToQueue: 'Adicionar à fila', removeFromQueue: 'Remover da fila',
         musicInfo: 'Informações da música', noName: 'Sem nome', noAvailable: 'Indisponível',
+        searchYouTube: 'Pesquisar música no YouTube', searchGoogleAlbum: 'Pesquisar álbum no Google',
+        searchGoogleArtist: 'Pesquisar artista no Google', moreFromArtist: 'Mais músicas deste artista',
         unknown: 'Desconhecido', infoName: 'Nome', infoArtist: 'Artista', infoAlbum: 'Álbum', infoFile: 'Arquivo',
         libraryChanged: 'Biblioteca alterada', noResults: 'Nenhum resultado encontrado',
         addedToQueue: 'Adicionado à fila', addedToQueueMany: '{kind} adicionado ({n} músicas)',
@@ -4095,12 +4133,18 @@
       document.getElementById('library-selector').style.display = 'block';
     }
 
-    async function fetchItems(type, parentId, parentKind) {
+    async function fetchItems(type, parentId, parentKind, artistName) {
       const st = embyConfig.serverType;
       if (st === 'local') {
         if (type === 'Audio') {
           let result = [...localTracks].filter(t => t.Type !== 'Playlist');
-          if (parentId && parentId.startsWith('local_album_')) {
+          if (artistName) {
+            const a = String(artistName).toLowerCase();
+            result = result.filter(t =>
+              (t.AlbumArtist || '').toLowerCase() === a ||
+              (t.Artists || []).some(ar => String(ar).toLowerCase() === a)
+            );
+          } else if (parentId && parentId.startsWith('local_album_')) {
             const albumName = parentId.replace('local_album_', '');
             result = result.filter(t => (t.Album || 'Desconocido') === albumName);
           } else if (parentId && parentId.startsWith('local_artist_')) {
@@ -4154,8 +4198,8 @@
         }
         return { Items: [], TotalRecordCount: 0 };
       }
-      if (st === 'plex') return fetchPlexItems(type, parentId, parentKind);
-      return fetchEmbyItems(type, parentId);
+      if (st === 'plex') return fetchPlexItems(type, parentId, parentKind, artistName);
+      return fetchEmbyItems(type, parentId, parentKind, artistName);
     }
 
     function plexItemId(item) {
@@ -4167,12 +4211,21 @@
       return '';
     }
 
-    async function fetchPlexItems(type, sectionKey, parentKind) {
+    async function fetchPlexItems(type, sectionKey, parentKind, artistName) {
       const sk = sectionKey || embyConfig.libraryId;
       let items = [];
-      console.log('[PlexDebug] fetchPlexItems', { type, sectionKey, parentKind, libraryId: embyConfig.libraryId });
+      console.log('[PlexDebug] fetchPlexItems', { type, sectionKey, parentKind, artistName, libraryId: embyConfig.libraryId });
 
-      if (type === 'Playlist' || type === 15) {
+      if (type === 10 && artistName) {
+        // Buscar todas las canciones de un artista por nombre mediante /search
+        const data = await fetchPlexJson(`${embyConfig.host}/search?query=${encodeURIComponent(artistName)}&X-Plex-Token=${embyConfig.token}`);
+        const meta = data.MediaContainer.Metadata || [];
+        const a = String(artistName).toLowerCase();
+        items = meta.filter(i => i.type === 10 &&
+          (String(i.grandparentTitle || '').toLowerCase() === a ||
+           String(i.originalTitle || '').toLowerCase() === a));
+        console.log('[PlexDebug] artist search tracks', { artistName, matched: items.length });
+      } else if (type === 'Playlist' || type === 15) {
         // Listar todas las playlists de audio
         const data = await fetchPlexJson(`${embyConfig.host}/playlists?X-Plex-Token=${embyConfig.token}`);
         const rawPlaylists = data.MediaContainer.Metadata || [];
@@ -6649,9 +6702,16 @@
       switchTab('playing');
     }
 
-    async function fetchEmbyItems(type, parentId = embyConfig.libraryId) {
+    async function fetchEmbyItems(type, parentId = embyConfig.libraryId, parentKind, artistName) {
       const fields = "PrimaryImageAspectRatio,BasicSyncInfo,ImageTags,PrimaryImageTag,AlbumPrimaryImageTag,AlbumId";
-      const res = await fetch(`${embyConfig.host}/Users/${embyConfig.userId}/Items?ParentId=${parentId}&IncludeItemTypes=${type}&Recursive=true&Fields=${fields}&api_key=${embyConfig.token}`);
+      let url;
+      if (type === 'Audio' && artistName) {
+        // Buscar todas las canciones de un artista por nombre
+        url = `${embyConfig.host}/Users/${embyConfig.userId}/Items?SearchTerm=${encodeURIComponent(artistName)}&IncludeItemTypes=Audio&Recursive=true&Fields=${fields}&Limit=100&api_key=${embyConfig.token}`;
+      } else {
+        url = `${embyConfig.host}/Users/${embyConfig.userId}/Items?ParentId=${parentId}&IncludeItemTypes=${type}&Recursive=true&Fields=${fields}&api_key=${embyConfig.token}`;
+      }
+      const res = await fetch(url);
       return await res.json();
     }
 
@@ -6913,6 +6973,106 @@
       toast.textContent = msg;
       toast.classList.add('show');
       setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+
+    // --- MENÚ DE ACCIONES DE LA PORTADA (PLAYING) ---
+    function getCurrentTrack() {
+      return playlist && playlist[currentTrackIndex] ? playlist[currentTrackIndex] : null;
+    }
+
+    function openAlbumActionsMenu() {
+      const track = getCurrentTrack();
+      if (!track) {
+        showToast('No hay ninguna canción en reproducción');
+        return;
+      }
+      const title = document.getElementById('album-actions-title');
+      const sub = document.getElementById('album-actions-sub');
+      title.textContent = track.Name || '...';
+      sub.textContent = (track.Artists && track.Artists.length) ? track.Artists.join(', ') : (track.AlbumArtist || '');
+      const overlay = document.getElementById('album-actions-overlay');
+      overlay.classList.add('open');
+      overlay.style.display = 'flex';
+    }
+
+    function closeAlbumActionsMenu() {
+      const overlay = document.getElementById('album-actions-overlay');
+      overlay.classList.remove('open');
+      overlay.style.display = 'none';
+    }
+
+    function currentTrackSearchTerms() {
+      const track = getCurrentTrack();
+      const artist = track.Artists && track.Artists.length ? track.Artists.join(' ') : (track.AlbumArtist || '');
+      const title = track.Name || '';
+      const album = track.Album || '';
+      return { artist, title, album };
+    }
+
+    function albumActionsYouTube() {
+      closeAlbumActionsMenu();
+      const { artist, title } = currentTrackSearchTerms();
+      const q = `${artist} ${title}`.trim();
+      if (!q) return;
+      window.open('https://www.youtube.com/results?search_query=' + encodeURIComponent(q), '_blank');
+    }
+
+    function albumActionsGoogleAlbum() {
+      closeAlbumActionsMenu();
+      const { artist, album, title } = currentTrackSearchTerms();
+      let q = '';
+      if (album) {
+        q = `${album} ${artist}`.trim();
+      } else {
+        q = `${title} ${artist} álbum`.trim();
+      }
+      if (!q) return;
+      window.open('https://www.google.com/search?q=' + encodeURIComponent(q), '_blank');
+    }
+
+    function albumActionsGoogleArtist() {
+      closeAlbumActionsMenu();
+      const { artist } = currentTrackSearchTerms();
+      if (!artist) return;
+      window.open('https://www.google.com/search?q=' + encodeURIComponent(artist), '_blank');
+    }
+
+    async function albumActionsMoreFromArtist() {
+      closeAlbumActionsMenu();
+      const track = getCurrentTrack();
+      if (!track) return;
+      const artist = track.Artists && track.Artists.length ? track.Artists[0] : (track.AlbumArtist || '');
+      if (!artist) {
+        showToast('No se ha podido identificar el artista');
+        return;
+      }
+      try {
+        const st = embyConfig.serverType;
+        let tracks = [];
+        if (st === 'local') {
+          tracks = localTracks.filter(t =>
+            (t.AlbumArtist || '').toLowerCase() === artist.toLowerCase() ||
+            (t.Artists || []).some((a) => String(a).toLowerCase() === artist.toLowerCase())
+          );
+        } else {
+          const data = await fetchItems(SERVER_TYPES[st].Audio, undefined, undefined, artist);
+          tracks = (data && data.Items) ? data.Items : [];
+        }
+        if (!tracks.length) {
+          showToast('No se encontraron más canciones de ' + artist);
+          return;
+        }
+        playlist = tracks;
+        originalPlaylist = [...tracks];
+        playlistVersion++;
+        renderQueueList();
+        refreshCarouselImages();
+        playTrack(0);
+        switchTab('playing');
+        showToast('Reproduciendo canciones de ' + artist);
+      } catch (e) {
+        showToast('Error al cargar canciones del artista');
+      }
     }
 
     // --- EASTER EGG WALKMAN ---
