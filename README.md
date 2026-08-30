@@ -43,6 +43,12 @@ docker-compose up -d
 - Add a glow adjustment based on the song's rhythm on settings.
 - Add option on settings to simulate led effect of Xperia SP leds
 - Add option to view lyris, lyris get on service LRCLIB and translate in your language use api.memory.translated.net
+- Fix onnection to Plex servers and fix get data of them (Songs, Artists, Albums and Playlists)
+- Add menu when clic or touch on album cover is playing with this options:
+  - Search song on YouTube
+  - Search album on Google
+  - Search artist on Google
+  - More songs from this artist
 - Add config parameters on docker-compose
   - DEFAULT_LANGUAGE: English, Español, Français, Deutsch, Italiano or Português
   - DEFAULT_SERVER_TYPE: Emby, Jellyfin, Plex or Local
