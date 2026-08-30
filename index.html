@@ -4818,7 +4818,23 @@
           let items = [];
           const st = embyConfig.serverType;
 
-          if (st === 'plex') {
+          if (st === 'local') {
+            // La biblioteca local se guarda en memoria (localTracks), así que
+            // la búsqueda se hace localmente sin llamar a ningún servidor.
+            const q = query.toLowerCase();
+            items = localTracks.filter(t => {
+              const name = (t.Name || '').toLowerCase();
+              const album = (t.Album || '').toLowerCase();
+              const albumArtist = (t.AlbumArtist || '').toLowerCase();
+              if (name.includes(q) || album.includes(q) || albumArtist.includes(q)) return true;
+              const artists = (t.Artists && t.Artists.length)
+                ? t.Artists : (t.AlbumArtist ? [t.AlbumArtist] : []);
+              for (const a of artists) {
+                if (String(a).toLowerCase().includes(q)) return true;
+              }
+              return false;
+            });
+          } else if (st === 'plex') {
             const res = await fetch(`${embyConfig.host}/search?query=${encodeURIComponent(query)}&X-Plex-Token=${embyConfig.token}`);
             const data = await res.json();
             const metadata = data.MediaContainer.Metadata || [];
