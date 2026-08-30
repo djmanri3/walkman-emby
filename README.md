@@ -63,6 +63,9 @@ docker-compose up -d
 ## Player
 <img width="1915" height="952" alt="image" src="https://github.com/djmanri3/walkman-emby/blob/main/Demo_images/Player.png?raw=true" />
 
+## Player search
+<img width="1915" height="952" alt="image" src="https://github.com/djmanri3/walkman-server/blob/main/Demo_images/Playing_search.png?raw=true" />
+
 ## Lyris
 <img width="1915" height="952" alt="image" src="https://github.com/djmanri3/walkman-server/blob/main/Demo_images/Lyris.png?raw=true" />
 
