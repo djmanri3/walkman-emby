@@ -11,6 +11,17 @@
 
   <!-- Config en tiempo de ejecución (generada por envsubst en Docker) -->
   <script src="config.js"></script>
+  <script>
+    // Fallback para hostings estáticos (sin config.js): en Docker, la config.js
+    // generada por docker-entrypoint.sh siempre prevalece sobre estos valores.
+    if (!window.WALKMAN_CONFIG) {
+      window.WALKMAN_CONFIG = {
+        language: "English",
+        serverType: "Jellyfin",
+        serverUrl: "http://127.0.0.1"
+      };
+    }
+  </script>
   
   <!-- Soporte para iOS (Apple Safari) -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -6085,10 +6096,13 @@
       switchServerType(embyConfig.serverType || 'emby');
 
       // Precargar URL por defecto del servidor si viene de config.js (Docker/.env)
-      const hostInput = document.getElementById('emby-host');
       const cfg = window.WALKMAN_CONFIG;
-      if (cfg && cfg.serverUrl && hostInput && !hostInput.value && !embyConfig.host) {
-        hostInput.value = cfg.serverUrl;
+      if (cfg && cfg.serverUrl) {
+        const url = String(cfg.serverUrl).replace(/\/$/, '');
+        const embyHost = document.getElementById('emby-host');
+        if (embyHost && !embyHost.value) embyHost.value = url;
+        const plexHost = document.getElementById('plex-host');
+        if (plexHost && !plexHost.value) plexHost.value = url;
       }
 
       // Si ya hay bibliotecas guardadas del servidor conectado, mostrar el selector

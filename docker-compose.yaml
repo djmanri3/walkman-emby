@@ -1,6 +1,8 @@
 services:
   walkman-server:
     image: ghcr.io/djmanri3/walkman-server:main
+    env_file:
+      - .env
     #environment:
       # Edit this default values if do you want ;)
       #DEFAULT_LANGUAGE: English
