@@ -40,6 +40,32 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
 
+    /* Barra de scroll moderna e integrada con la UI */
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: color-mix(in srgb, var(--accent-color) 55%, transparent) rgba(255, 255, 255, 0.06);
+    }
+    *::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    *::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 99px;
+    }
+    *::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg,
+        rgba(255, 255, 255, 0.35),
+        var(--accent-color));
+      border-radius: 99px;
+    }
+    *::-webkit-scrollbar-thumb:hover {
+      background: var(--accent-color);
+    }
+    *::-webkit-scrollbar-corner {
+      background: transparent;
+    }
+
     body {
       background-color: #000;
       color: #fff;
@@ -199,6 +225,145 @@
     .queue-btn-top span {
       font-size: 22px;
       color: #fff;
+    }
+
+    .top-btns {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    /* VISTA DE LETRAS (Lyrics) — fondo estilo crystal glass */
+    .lyrics-view {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 300;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      box-sizing: border-box;
+    }
+    .lyrics-view.active {
+      display: flex;
+    }
+    .lyrics-glass {
+      width: 100%;
+      max-width: 520px;
+      height: 58vh;
+      min-height: 340px;
+      max-height: 560px;
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(28px) saturate(160%);
+      -webkit-backdrop-filter: blur(28px) saturate(160%);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+    .lyrics-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      color: #fff;
+    }
+    .lyrics-title {
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .lyrics-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .lyrics-lang {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #fff;
+      font-size: 13px;
+      padding: 6px 10px;
+      border-radius: 99px;
+      outline: none;
+      cursor: pointer;
+      max-width: 110px;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+    .lyrics-lang option {
+      background: #1a1a1a;
+      color: #fff;
+    }
+    .lyrics-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px 20px 60px;
+      position: relative;
+    }
+    .lyrics-body {
+      color: rgba(255, 255, 255, 0.55);
+      font-size: 19px;
+      line-height: 2.1;
+      text-align: center;
+      min-height: 100%;
+    }
+    .lyrics-line {
+      transition: color 0.25s ease, transform 0.25s ease, opacity 0.25s ease;
+      opacity: 0.4;
+      padding: 6px 0;
+    }
+    .lyrics-line.active {
+      color: #fff;
+      opacity: 1;
+      transform: scale(1.06);
+      text-shadow: 0 0 18px rgba(255, 255, 255, 0.4);
+    }
+    .lyrics-loading, .lyrics-empty, .lyrics-error {
+      text-align: center;
+      color: rgba(255, 255, 255, 0.6);
+      padding: 40px 0;
+      font-size: 15px;
+    }
+    /* Indicador "Traduciendo..." superpuesto mientras se traduce */
+    .lyrics-translating {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 12px;
+      background: rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(4px);
+      color: #fff;
+      font-size: 15px;
+      letter-spacing: 0.3px;
+    }
+    .lyrics-spinner {
+      width: 34px;
+      height: 34px;
+      border: 3px solid rgba(255, 255, 255, 0.2);
+      border-top-color: var(--accent-color);
+      border-radius: 50%;
+      animation: lyrics-spin 0.8s linear infinite;
+    }
+    @keyframes lyrics-spin {
+      to { transform: rotate(360deg); }
     }
 
     /* CARRUSEL DE PORTADAS */
@@ -717,6 +882,11 @@
       width: 100%;
       max-width: 420px;
       position: relative;
+    }
+    /* Cuando el popup de letras está abierto, los controles multimedia
+       quedan por encima para poder usarlos */
+    .controls-wrapper.lyrics-open {
+      z-index: 320;
     }
 
     .controls {
@@ -2566,8 +2736,47 @@
         <div class="track-artist" id="track-artist">Emby Server</div>
       </div>
 
-      <div class="queue-btn-top" onclick="toggleQueueDrawer()" title="Lista de reproducción en curso">
-        <span class="material-icons">queue_music</span>
+      <div class="top-btns">
+        <div class="queue-btn-top" id="lyrics-btn" onclick="toggleLyricsView()" title="Letras (Lyrics)">
+          <span class="material-icons">menu_book</span>
+        </div>
+        <div class="queue-btn-top" onclick="toggleQueueDrawer()" title="Lista de reproducción en curso">
+          <span class="material-icons">queue_music</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- VISTA: LETRAS (Lyrics) -->
+    <div id="view-lyrics" class="lyrics-view">
+      <div class="lyrics-glass">
+        <div class="lyrics-header">
+          <span class="lyrics-title" id="lyrics-title">Letras</span>
+          <div class="lyrics-actions">
+            <select id="lyrics-lang" class="lyrics-lang" title="Idioma de traducción" onchange="translateLyrics(this.value)">
+              <option value="">Original</option>
+              <option value="es">Español</option>
+              <option value="en">Inglés</option>
+              <option value="de">Alemán</option>
+              <option value="fr">Francés</option>
+              <option value="it">Italiano</option>
+              <option value="pt">Portugués</option>
+              <option value="ja">Japonés</option>
+              <option value="zh">Chino</option>
+              <option value="ru">Ruso</option>
+              <option value="ar">Árabe</option>
+            </select>
+            <span class="material-icons" style="cursor:pointer;" onclick="toggleLyricsView()">close</span>
+          </div>
+        </div>
+        <div class="lyrics-scroll" id="lyrics-scroll">
+          <div class="lyrics-body" id="lyrics-body">
+            <div class="lyrics-loading">Buscando letras...</div>
+          </div>
+        </div>
+        <div class="lyrics-translating" id="lyrics-translating" style="display:none;">
+          <div class="lyrics-spinner"></div>
+          <span>Traduciendo...</span>
+        </div>
       </div>
     </div>
 
@@ -3816,9 +4025,11 @@
         ctx.beginPath();
         const r = (60 * i) + (audioIntensity * 40 * i);
         ctx.arc(centerX, centerY, r, 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(235, 210, 120, ${0.35 / i + audioIntensity * 0.2})`;
+        ctx.globalAlpha = 0.35 / i + audioIntensity * 0.2;
+        ctx.strokeStyle = accent;
         ctx.lineWidth = 1.5;
         ctx.stroke();
+        ctx.globalAlpha = 1;
       }
     }
 
@@ -4985,6 +5196,200 @@
       applyXpspLedUI();
     }
 
+
+    // ---- Letras (Lyrics) sincronizadas con LRCLIB ----
+    const lrcLines = [];            // { time (s), text }
+    let lrcLoadedTitle = '';
+    let lrcInterval = null;
+
+    function escapeHtml(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function toggleLyricsView() {
+      const view = document.getElementById('view-lyrics');
+      const open = !view.classList.contains('active');
+      view.classList.toggle('active', open);
+      // Los controles multimedia quedan visibles y clicables encima del popup
+      const cw = document.querySelector('.controls-wrapper');
+      if (cw) cw.classList.toggle('lyrics-open', open);
+      if (open) {
+        loadLyrics();
+        if (!lrcInterval) {
+          lrcInterval = setInterval(() => {
+            if (document.getElementById('view-lyrics').classList.contains('active')) {
+              // Si cambió la canción mientras el popup está abierto, recargar letras
+              const track = playlist[currentTrackIndex];
+              const currentKey = track
+                ? (track.Name || '') + '|' + ((track.Artists && track.Artists.length) ? track.Artists.join(' ') : '')
+                : '';
+              if (currentKey && currentKey !== lrcLoadedTitle) {
+                loadLyrics();
+                return;
+              }
+              updateLyricsHighlight();
+            }
+          }, 250);
+        }
+      } else {
+        if (lrcInterval) { clearInterval(lrcInterval); lrcInterval = null; }
+      }
+    }
+
+    async function loadLyrics() {
+      const body = document.getElementById('lyrics-body');
+      body.innerHTML = '<div class="lyrics-loading">Buscando letras...</div>';
+      const track = playlist[currentTrackIndex];
+      if (!track) {
+        body.innerHTML = '<div class="lyrics-empty">Sin canción en reproducción</div>';
+        return;
+      }
+      const artist = (track.Artists && track.Artists.length) ? track.Artists.join(' ') : '';
+      const title = track.Name || '';
+      lrcLoadedTitle = title + '|' + artist;
+      document.getElementById('lyrics-title').textContent = title ? title : 'Letras';
+      const duration = Number(track.RunTimeTicks ? (track.RunTimeTicks / 10000000) : 0);
+      const durParam = duration ? `&duration=${duration.toFixed(2)}` : '';
+      try {
+        const res = await fetch(
+          `https://lrclib.net/api/search?track_name=${encodeURIComponent(title)}` +
+          `&artist_name=${encodeURIComponent(artist)}${durParam}`);
+        if (!res.ok) throw new Error('http');
+        const results = await res.json();
+        const match = Array.isArray(results) && results[0];
+        if (match) {
+          displayLrc(match.syncedLyrics || match.plainLyrics, title);
+        } else {
+          body.innerHTML = '<div class="lyrics-empty">No se encontraron letras para esta canción</div>';
+        }
+      } catch (e) {
+        body.innerHTML = '<div class="lyrics-error">Error al conectar con el servidor de letras</div>';
+      }
+    }
+
+    function displayLrc(lrc, title) {
+      const body = document.getElementById('lyrics-body');
+      lrcLines.length = 0;
+      document.getElementById('lyrics-title').textContent = title;
+      // Reiniciar selector de idioma a "Original" al cambiar de canción
+      const sel = document.getElementById('lyrics-lang');
+      if (sel) sel.value = '';
+      if (!lrc || !String(lrc).trim()) {
+        body.innerHTML = '<div class="lyrics-empty">Esta canción no tiene letras sincronizadas</div>';
+        return;
+      }
+      const lineRe = /\[(\d+):(\d+)(?:[.:](\d+))?\](.*)/;
+      String(lrc).split(/\r?\n/).forEach(line => {
+        const m = line.match(lineRe);
+        if (m) {
+          const t = parseInt(m[1]) * 60 + parseInt(m[2]) + (m[3] ? parseInt(m[3]) / 100 : 0);
+          const text = m[4].trim();
+          lrcLines.push({ time: t, text, _orig: text });
+        }
+      });
+      lrcLines.sort((a, b) => a.time - b.time);
+      if (!lrcLines.length) {
+        body.innerHTML = '<div class="lyrics-empty">No se encontraron letras sincronizadas</div>';
+        return;
+      }
+      renderLyricsBody();
+      updateLyricsHighlight();
+    }
+
+    function renderLyricsBody() {
+      const body = document.getElementById('lyrics-body');
+      body.innerHTML = lrcLines
+        .map((l, i) => `<div class="lyrics-line" id="lrc-line-${i}">${escapeHtml(l.text)}</div>`)
+        .join('');
+      updateLyricsHighlight();
+    }
+
+    // Detecta el idioma de origen de las letras (Google, gratuito y con CORS).
+    function detectSourceLang(probe) {
+      return fetch(
+        `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=` +
+        encodeURIComponent(probe))
+        .then(r => r.ok ? r.json() : null)
+        .then(d => {
+          if (d && Array.isArray(d) && d[2]) return String(d[2]).substring(0, 2).toUpperCase();
+          return 'en';
+        })
+        .catch(() => 'en');
+    }
+
+    // Traduce las letras al idioma seleccionado. MyMemory limita cada query a
+    // 500 caracteres, así que se traduce línea a línea (cada una corta) con
+    // varios workers en paralelo. "Original" restaura el texto fuente.
+    async function translateLyrics(lang) {
+      const sel = document.getElementById('lyrics-lang');
+      if (!lrcLines.length) return;
+      sel.disabled = true;
+      const ind = document.getElementById('lyrics-translating');
+      if (ind) ind.style.display = 'flex';
+      try {
+        if (!lang) {
+          // Volver al idioma original
+          lrcLines.forEach(l => { l.text = l._orig || l.text; });
+          renderLyricsBody();
+          return;
+        }
+        const original = lrcLines.map(l => l._orig || l.text);
+        const detTitle = document.getElementById('lyrics-title').textContent;
+        const probe = original.filter(x => x).slice(0, 15).join(' ') || detTitle || 'music';
+        const src = await detectSourceLang(probe);
+
+        const results = new Array(original.length);
+        let cursor = 0;
+        const concurrency = 4;
+        const worker = async () => {
+          while (cursor < original.length) {
+            const idx = cursor++;
+            const line = original[idx].slice(0, 480);
+            if (!line.trim()) { results[idx] = original[idx]; continue; }
+            try {
+              const r = await fetch(
+                `https://api.mymemory.translated.net/get?q=${encodeURIComponent(line)}` +
+                `&langpair=${src}|${encodeURIComponent(lang)}`);
+              if (!r.ok) throw new Error('http');
+              const d = await r.json();
+              const tr = d.responseData && d.responseData.translatedText;
+              results[idx] = (tr && tr.trim()) ? tr : original[idx];
+            } catch (e) {
+              results[idx] = original[idx];
+            }
+          }
+        };
+        await Promise.all(Array.from({ length: concurrency }, worker));
+
+        lrcLines.forEach((l, i) => { if (results[i]) l.text = results[i]; });
+        renderLyricsBody();
+      } catch (e) {
+        // Mantener texto actual si falla la traducción
+      } finally {
+        sel.disabled = false;
+        if (ind) ind.style.display = 'none';
+      }
+    }
+
+    function updateLyricsHighlight() {
+      if (!lrcLines.length) return;
+      const t = audio.currentTime;
+      let idx = -1;
+      for (let i = lrcLines.length - 1; i >= 0; i--) {
+        if (t >= lrcLines[i].time) { idx = i; break; }
+      }
+      const prev = document.querySelector('.lyrics-line.active');
+      if (prev) prev.classList.remove('active');
+      if (idx >= 0) {
+        const el = document.getElementById('lrc-line-' + idx);
+        if (el) {
+          el.classList.add('active');
+          el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        }
+      }
+    }
 
     function changeLibrary() {
       closeSettingsMenu();
