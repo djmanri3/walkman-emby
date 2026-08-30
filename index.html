@@ -2213,6 +2213,21 @@
     </div>
 
     <div class="settings-group">
+      <div class="settings-btn" id="beatglow-btn" onclick="toggleBeatGlow()">
+        <span class="material-icons">auto_awesome</span>
+        <span id="beatglow-btn-label">Resplandor al ritmo</span>
+      </div>
+      <div class="featured-size-wrap" id="beatglow-sens-wrap" style="display:none;">
+        <div class="settings-group-label">Intensidad del resplandor</div>
+        <div class="accent-options" id="beatglow-sens-options">
+          <div class="accent-option" data-bsens="1" onclick="setBeatGlowSens(this.dataset.bsens)">Baja</div>
+          <div class="accent-option" data-bsens="2" onclick="setBeatGlowSens(this.dataset.bsens)">Media</div>
+          <div class="accent-option" data-bsens="3" onclick="setBeatGlowSens(this.dataset.bsens)">Alta</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-group">
       <div class="settings-btn" onclick="changeLibrary()">
         <span class="material-icons">library_music</span>
         Cambiar biblioteca de música
@@ -4583,6 +4598,116 @@
       applyAccent();
     }
 
+    // ---- Resplandor al ritmo de la música ----
+    let beatGlowEnabled = false;
+    let beatGlowSens = 2;
+    let beatGlowAnimId = null;
+    let beatGlowPulse = 0;
+    let beatGlowAvg = 0;
+
+    function getBeatGlow() {
+      try { return localStorage.getItem('walkman_beatglow') === 'on'; } catch (e) { return false; }
+    }
+
+    function getBeatGlowSens() {
+      try { return Number(localStorage.getItem('walkman_beatglow_sens')) || 2; } catch (e) { return 2; }
+    }
+
+    function applyBeatGlowUI() {
+      const btn = document.getElementById('beatglow-btn');
+      if (btn) btn.classList.toggle('on', beatGlowEnabled);
+      const label = document.getElementById('beatglow-btn-label');
+      if (label) label.textContent = beatGlowEnabled ? 'Resplandor al ritmo: ON' : 'Resplandor al ritmo';
+      const wrap = document.getElementById('beatglow-sens-wrap');
+      if (wrap) wrap.style.display = beatGlowEnabled ? '' : 'none';
+      const opts = document.querySelectorAll('#beatglow-sens-options .accent-option');
+      opts.forEach(o => o.classList.toggle('active', Number(o.dataset.bsens) === beatGlowSens));
+    }
+
+    function setBeatGlowSens(v) {
+      beatGlowSens = Number(v) || 2;
+      try { localStorage.setItem('walkman_beatglow_sens', String(beatGlowSens)); } catch (e) {}
+      applyBeatGlowUI();
+    }
+
+    function toggleBeatGlow() {
+      beatGlowEnabled = !beatGlowEnabled;
+      try { localStorage.setItem('walkman_beatglow', beatGlowEnabled ? 'on' : 'off'); } catch (e) {}
+      applyBeatGlowUI();
+      if (beatGlowEnabled) {
+        beatGlowPulse = 0; beatGlowAvg = 0;
+        try { if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); } catch (e) {}
+        const bg = document.getElementById('bg-container');
+        if (bg) bg.style.transition = 'background 90ms linear';
+        if (!beatGlowAnimId) beatGlowLoop();
+      } else {
+        const bg = document.getElementById('bg-container');
+        if (bg) bg.style.transition = 'background 1.5s ease-in-out';
+        resetBeatGlowBackground();
+      }
+    }
+
+    function beatGlowLoop() {
+      if (!beatGlowEnabled) { beatGlowAnimId = null; return; }
+      try {
+        if (!analyserNode && audio) initAudioContext();
+        if (analyserNode && audioCtx && audioCtx.state === 'suspended') {
+          try { audioCtx.resume(); } catch (e) {}
+        }
+      } catch (e) {}
+
+      if (analyserNode) {
+        try {
+          const bin = analyserNode.frequencyBinCount;
+          if (bin > 0) {
+            if (!visBands || visBands.length !== bin) visBands = new Uint8Array(bin);
+            analyserNode.getByteFrequencyData(visBands);
+            // Energía de graves (donde suele estar el ritmo)
+            const low = Math.min(24, bin);
+            let sum = 0;
+            for (let i = 0; i < low; i++) sum += visBands[i];
+            const energy = (sum / low) / 255;
+            beatGlowAvg = beatGlowAvg * 0.97 + energy * 0.03;
+            const diff = energy - beatGlowAvg;
+            const k = [1.8, 3.0, 4.5][beatGlowSens - 1] || 3.0;
+            const target = diff > 0 ? Math.min(0.85, diff * k) : 0;
+            beatGlowPulse = Math.max(beatGlowPulse * 0.86, target);
+            const breathe = energy * 0.15;
+            const level = 1 + beatGlowPulse + breathe;
+            const c = visAlbumColor || { r: 120, g: 120, b: 120 };
+            const r = Math.min(255, Math.floor(c.r * level));
+            const g = Math.min(255, Math.floor(c.g * level));
+            const b = Math.min(255, Math.floor(c.b * level));
+            const bg = document.getElementById('bg-container');
+            if (bg) {
+              bg.style.background = `radial-gradient(circle at 50% 60%, rgb(${r},${g},${b}) 0%, #050505 85%)`;
+            }
+          }
+        } catch (e) {}
+      }
+      beatGlowAnimId = requestAnimationFrame(beatGlowLoop);
+    }
+
+    function resetBeatGlowBackground() {
+      const c = visAlbumColor || { r: 120, g: 120, b: 120 };
+      const bg = document.getElementById('bg-container');
+      if (bg) {
+        bg.style.background = `radial-gradient(circle at 50% 60%, rgb(${c.r},${c.g},${c.b}) 0%, #050505 85%)`;
+      }
+    }
+
+    function initBeatGlow() {
+      beatGlowEnabled = getBeatGlow();
+      beatGlowSens = getBeatGlowSens();
+      applyBeatGlowUI();
+      if (beatGlowEnabled) {
+        const bg = document.getElementById('bg-container');
+        if (bg) bg.style.transition = 'background 90ms linear';
+        if (!beatGlowAnimId) beatGlowLoop();
+      }
+    }
+
+
     function changeLibrary() {
       closeSettingsMenu();
 
@@ -5866,6 +5991,7 @@
       renderVptCards();
       applySavedAudioSettings();
       restoreAccentSettings();
+      initBeatGlow();
       const connected = await restoreServerConfig();
       if (!connected) {
         showServerModal();
