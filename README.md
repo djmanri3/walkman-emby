@@ -42,7 +42,11 @@ docker-compose up -d
 - Update lib of get album color
 - Add a glow adjustment based on the song's rhythm on settings.
 - Add option on settings to simulate led effect of Xperia SP leds
-- Add option to view lyris, lyris get on service LRCLIB and translate in your lenguage use api.memory.translated.net
+- Add option to view lyris, lyris get on service LRCLIB and translate in your language use api.memory.translated.net
+- Add config parameters on docker-compose
+  - DEFAULT_LANGUAGE: English, Español, Français, Deutsch, Italiano or Português
+  - DEFAULT_SERVER_TYPE: Emby, Jellyfin, Plex or Local
+  - DEFAULT_SERVER_URL: your url of server
 
 
 # Bugs
