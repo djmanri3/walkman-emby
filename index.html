@@ -3412,7 +3412,7 @@
     const SERVER_TYPES = {
       emby:    { Audio: 'Audio', Album: 'MusicAlbum', Artist: 'MusicArtist', Playlist: 'Playlist' },
       jellyfin: { Audio: 'Audio', Album: 'MusicAlbum', Artist: 'MusicArtist', Playlist: 'Playlist' },
-      plex:    { Audio: 10, Album: 9, Artist: 4, Playlist: 15 },
+      plex:    { Audio: 10, Album: 9, Artist: 8, Playlist: 15 },
       local:   { Audio: 'Audio', Album: 'Album', Artist: 'Artist', Playlist: 'Playlist' }
     };
     let playlist = [];
@@ -3918,6 +3918,80 @@
       }
     }
 
+    function decodePlexEntities(str) {
+      if (typeof str !== 'string' || str.indexOf('&') === -1) return str;
+      return str.replace(/&#(\d+);/g, (m, d) => String.fromCharCode(d))
+                .replace(/&#x([0-9a-fA-F]+);/g, (m, h) => String.fromCharCode(parseInt(h, 16)))
+                .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+                .replace(/&quot;/g, '"').replace(/&apos;/g, "'");
+    }
+
+    function parseAttrs(str) {
+      const obj = {};
+      const re = /([\w:.-]+)="([^"]*)"/g;
+      let m;
+      while ((m = re.exec(str)) !== null) {
+        const k = m[1];
+        let v = m[2];
+        if (v === 'false') v = false; else if (v === 'true') v = true;
+        else if (/^-?\d+(\.\d+)?$/.test(v)) v = Number(v);
+        else v = decodePlexEntities(v);
+        obj[k] = v;
+      }
+      return obj;
+    }
+
+    function parsePlexObject(tag, xml) {
+      const out = [];
+      const re = new RegExp('<' + tag + '\\b[^>]*?/?>', 'g');
+      let m;
+      while ((m = re.exec(xml)) !== null) {
+        out.push(parseAttrs(m[0]));
+      }
+      return out;
+    }
+
+    function parsePlexMetadata(xml) {
+      const out = [];
+      const tagRe = /<(Metadata|Track|Album|Artist|Playlist|Video|Photo|Folder|Movie|Episode|Show)\b[^>]*>([\s\S]*?)<\/\1>|<\1\b[^>]*\/>/g;
+      let m;
+      while ((m = tagRe.exec(xml)) !== null) {
+        const inner = m[2] || '';
+        const tagStr = m[0];
+        const item = parseAttrs(tagStr);
+        const mediaMatches = new RegExp('<Media\\b[^>]*>([\\s\\S]*?)</Media>|<Media\\b[^>]*/>', 'g');
+        let mm;
+        const media = [];
+        while ((mm = mediaMatches.exec(inner)) !== null) {
+          const parts = parsePlexObject('Part', mm[1] || '');
+          media.push({ Part: parts });
+        }
+        if (media.length) item.Media = media;
+        out.push(item);
+      }
+      return out;
+    }
+
+    function parsePlexResponse(text) {
+      const obj = { MediaContainer: {} };
+      const mcMatch = text.match(/<MediaContainer\b([^>]*)>/);
+      if (mcMatch) Object.assign(obj.MediaContainer, parseAttrs(mcMatch[1]));
+      obj.MediaContainer.Metadata = parsePlexMetadata(text);
+      obj.MediaContainer.Directory = parsePlexObject('Directory', text);
+      return obj;
+    }
+
+    async function fetchPlexJson(url) {
+      const res = await fetch(url);
+      const text = await res.text();
+      if (!text || !text.trim()) return { MediaContainer: { Metadata: [], Directory: [] } };
+      try {
+        return JSON.parse(text);
+      } catch {
+        return parsePlexResponse(text);
+      }
+    }
+
     async function connectPlex() {
       const host = document.getElementById('plex-host').value.replace(/\/$/, '');
       const statusEl = document.getElementById('plex-status');
@@ -3928,23 +4002,54 @@
         const pinRes = await fetch('https://plex.tv/api/v2/pins?X-Plex-Client-Identifier=walkman-web', {
           method: 'POST'
         });
-        const pinData = await pinRes.json();
+        if (!pinRes.ok) throw new Error(`Error al conectar con Plex: ${pinRes.statusText}`);
+        const pinText = await pinRes.text();
+        let pinData;
+        const pinIdMatch = pinText.match(/<pin[^>]*\bid="([^"]*)"/);
+        const pinCodeMatch = pinText.match(/<pin[^>]*\bcode="([^"]*)"/);
+        if (pinIdMatch || pinCodeMatch) {
+          pinData = { id: pinIdMatch ? pinIdMatch[1] : '', code: pinCodeMatch ? pinCodeMatch[1] : '' };
+        } else {
+          try {
+            pinData = JSON.parse(pinText);
+          } catch {
+            throw new Error('Respuesta inesperada del servidor Plex. Raw: ' + pinText.substring(0, 200));
+          }
+        }
         const pinId = pinData.id;
         const authUrl = `https://app.plex.tv/auth#?forward=https%3A%2F%2Fwww.plex.tv%2F%3Fcode%3D${pinData.code}&code=${pinData.code}`;
 
         statusEl.innerHTML = `
           <div class="plex-spinner"></div>
-          <div>Abre el enlace para autenticar:</div>
-          <a href="${authUrl}" target="_blank" rel="noopener">${authUrl}</a>
+          <div>Código de autorización Plex:</div>
+          <div id="plex-code" style="font-size:1.2em;font-weight:bold;margin:10px 0;min-height:24px;cursor:pointer;user-select:all;">${pinData.code}</div>
+          <div style="margin-top:4px;font-size:0.8em;color:#666;">Clic para copiar</div>
+          <div style="margin-top:8px;">Autoriza en: <a href="https://www.plex.tv/link" target="_blank" rel="noopener">www.plex.tv/link</a></div>
+          <div id="copy-message" style="margin-top:4px;display:none;color:#4CAF50;font-size:0.9em;">¡Copiado!</div>
           <div style="margin-top:8px;color:#888;">Esperando autorización...</div>
         `;
 
-        // Paso 2: Polling del PIN (máx 120s)
+        document.getElementById('plex-code').addEventListener('click', function() {
+          navigator.clipboard.writeText(pinData.code).then(function() {
+            const copyMsg = document.getElementById('copy-message');
+            copyMsg.style.display = 'block';
+            setTimeout(function() { copyMsg.style.display = 'none'; }, 2000);
+          });
+        });
+
+        // Paso 2: Polling del PIN
         let plexToken = null;
-        for (let i = 0; i < 40; i++) {
-          await new Promise(r => setTimeout(r, 3000));
+        for (let i = 0; i < 36; i++) {
+          await new Promise(r => setTimeout(r, 5000));
           const pollRes = await fetch(`https://plex.tv/api/v2/pins/${pinId}?X-Plex-Client-Identifier=walkman-web`);
-          const pollData = await pollRes.json();
+          const pollText = await pollRes.text();
+          let pollData;
+          const tokenMatch = pollText.match(/<pin[^>]*\bauthToken="([^"]*)"/);
+          if (tokenMatch) {
+            pollData = { authToken: tokenMatch[1] };
+          } else {
+            try { pollData = JSON.parse(pollText); } catch { pollData = {}; }
+          }
           if (pollData.authToken) {
             plexToken = pollData.authToken;
             break;
@@ -3954,8 +4059,7 @@
         if (!plexToken) throw new Error('Tiempo de espera agotado. Inténtalo de nuevo.');
 
         // Paso 3: Obtener bibliotecas del servidor
-        const sectRes = await fetch(`${host}/library/sections?X-Plex-Token=${plexToken}`);
-        const sectData = await sectRes.json();
+        const sectData = await fetchPlexJson(`${host}/library/sections?X-Plex-Token=${plexToken}`);
         const musicSections = (sectData.MediaContainer.Directory || []).filter(s => s.type === 'artist');
 
         if (musicSections.length === 0) throw new Error('No se encontraron bibliotecas de música en Plex.');
@@ -3965,9 +4069,12 @@
         embyConfig.userId = '';
         embyConfig.user = 'Plex';
         embyConfig.serverType = 'plex';
+        embyConfig.libraryId = musicSections[0].key;
         saveServerSettings();
 
         populateLibrarySelect(musicSections.map(s => ({ Id: s.key, Name: s.title })));
+        document.getElementById('emby-modal').style.display = 'none';
+        await updateCategoryCounts();
       } catch (err) {
         statusEl.innerHTML = `<div style="color:#ff5555;">Error: ${err.message}</div>`;
       }
@@ -3988,7 +4095,7 @@
       document.getElementById('library-selector').style.display = 'block';
     }
 
-    async function fetchItems(type, parentId) {
+    async function fetchItems(type, parentId, parentKind) {
       const st = embyConfig.serverType;
       if (st === 'local') {
         if (type === 'Audio') {
@@ -4047,52 +4154,99 @@
         }
         return { Items: [], TotalRecordCount: 0 };
       }
-      if (st === 'plex') return fetchPlexItems(type, parentId);
+      if (st === 'plex') return fetchPlexItems(type, parentId, parentKind);
       return fetchEmbyItems(type, parentId);
     }
 
-    async function fetchPlexItems(type, sectionKey) {
+    function plexItemId(item) {
+      if (item.ratingKey !== undefined && item.ratingKey !== null && item.ratingKey !== '') return item.ratingKey;
+      if (item.key) {
+        const m = String(item.key).match(/(\d+)/);
+        if (m) return m[1];
+      }
+      return '';
+    }
+
+    async function fetchPlexItems(type, sectionKey, parentKind) {
       const sk = sectionKey || embyConfig.libraryId;
       let items = [];
+      console.log('[PlexDebug] fetchPlexItems', { type, sectionKey, parentKind, libraryId: embyConfig.libraryId });
 
-      if (type === 'Playlist') {
+      if (type === 'Playlist' || type === 15) {
         // Listar todas las playlists de audio
-        const res = await fetch(`${embyConfig.host}/playlists?X-Plex-Token=${embyConfig.token}`);
-        const data = await res.json();
-        items = (data.MediaContainer.Metadata || []).filter(i => i.playlistType === 'audio');
-      } else if (type === 10 && sectionKey && sectionKey !== embyConfig.libraryId) {
-        // Sub-items de un álbum o playlist específica
-        // Detectar si es una playlist (key numérico alto) o un álbum
-        const isPlaylist = !String(sectionKey).startsWith(embyConfig.libraryId);
-        if (isPlaylist) {
-          const res = await fetch(`${embyConfig.host}/playlists/${sectionKey}/contents?X-Plex-Token=${embyConfig.token}`);
-          const data = await res.json();
-          items = data.MediaContainer.Metadata || [];
+        const data = await fetchPlexJson(`${embyConfig.host}/playlists?X-Plex-Token=${embyConfig.token}`);
+        const rawPlaylists = data.MediaContainer.Metadata || [];
+        items = rawPlaylists.filter(i => i.playlistType === 'audio');
+        console.log('[PlexDebug] playlists listing', { meta: rawPlaylists.length, audio: items.length, sample: rawPlaylists.slice(0, 2).map(p => ({ title: p.title, ratingKey: p.ratingKey, key: p.key, composite: p.composite, type: p.type, leafCount: p.leafCount })) });
+      } else if (type === 10 && sectionKey) {
+        // Sub-items de un álbum, artista o playlist específica
+        if (parentKind === 'Playlist') {
+          // Plex: /playlists/{id}/items es el endpoint correcto para el contenido;
+          // /playlists/{id}/contents puede devolver MediaContainer vacío.
+          let data = await fetchPlexJson(`${embyConfig.host}/playlists/${sectionKey}/items?X-Plex-Token=${embyConfig.token}`);
+          let meta = data.MediaContainer.Metadata || [];
+          console.log('[PlexDebug] playlist items', { sectionKey, meta: meta.length, total: data.MediaContainer.totalSize, size: data.MediaContainer.size, first: meta[0] ? { type: meta[0].type, title: meta[0].title, ratingKey: meta[0].ratingKey, playlistItemID: meta[0].playlistItemID } : null });
+          if (!meta.length) {
+            data = await fetchPlexJson(`${embyConfig.host}/playlists/${sectionKey}/contents?X-Plex-Token=${embyConfig.token}`);
+            meta = data.MediaContainer.Metadata || [];
+            console.log('[PlexDebug] playlist contents fallback', { sectionKey, meta: meta.length });
+          }
+          items = meta;
+        } else if (parentKind === 'MusicArtist') {
+          // Vía robusta para artistas: los filtros artist.id/artistID de /all
+          // pueden ser ignorados (devolviendo TODAS las canciones), así que nos
+          // aseguramos con grandparentRatingKey (id del artista en cada canción).
+          let artistArr = [];
+          let artistData = await fetchPlexJson(`${embyConfig.host}/library/sections/${embyConfig.libraryId}/all?type=10&artist.id=${sectionKey}&X-Plex-Token=${embyConfig.token}`);
+          artistArr = (artistData.MediaContainer.Metadata || []).filter(i => String(i.grandparentRatingKey) === String(sectionKey));
+          console.log('[PlexDebug] artist.id attempt', { sectionKey, got: artistData.MediaContainer.Metadata ? artistData.MediaContainer.Metadata.length : 0, matched: artistArr.length });
+          if (!artistArr.length) {
+            artistData = await fetchPlexJson(`${embyConfig.host}/library/sections/${embyConfig.libraryId}/all?type=10&artistID=${sectionKey}&X-Plex-Token=${embyConfig.token}`);
+            artistArr = (artistData.MediaContainer.Metadata || []).filter(i => String(i.grandparentRatingKey) === String(sectionKey));
+            console.log('[PlexDebug] artistID attempt', { sectionKey, got: artistData.MediaContainer.Metadata ? artistData.MediaContainer.Metadata.length : 0, matched: artistArr.length });
+          }
+          if (!artistArr.length) {
+            // Fallback: álbumes del artista desde el listado de sección (vía ya probada) y sus canciones
+            const secData = await fetchPlexJson(`${embyConfig.host}/library/sections/${embyConfig.libraryId}/all?type=9&X-Plex-Token=${embyConfig.token}`);
+            const secAlbums = (secData.MediaContainer.Directory || []).filter(a => String(a.parentRatingKey) === String(sectionKey));
+            console.log('[PlexDebug] section albums fallback', { sectionKey, albums: secAlbums.length });
+            for (const album of secAlbums) {
+              const albData = await fetchPlexJson(`${embyConfig.host}/library/metadata/${plexItemId(album)}/children?type=10&X-Plex-Token=${embyConfig.token}`);
+              const albArr = albData.MediaContainer.Metadata || [];
+              console.log('[PlexDebug] album tracks', { album: album.title, id: plexItemId(album), tracks: albArr.length });
+              artistArr = artistArr.concat(albArr);
+            }
+          }
+          items = artistArr;
         } else {
-          const res = await fetch(`${embyConfig.host}/library/metadata/${sectionKey}/children?type=10&X-Plex-Token=${embyConfig.token}`);
-          const data = await res.json();
+          const data = await fetchPlexJson(`${embyConfig.host}/library/metadata/${sectionKey}/children?type=10&X-Plex-Token=${embyConfig.token}`);
           items = data.MediaContainer.Metadata || [];
         }
       } else {
         // Listado principal de una sección
-        const res = await fetch(`${embyConfig.host}/library/sections/${sk}/all?type=${type}&X-Plex-Token=${embyConfig.token}`);
-        const data = await res.json();
-        items = data.MediaContainer.Metadata || [];
+        const data = await fetchPlexJson(`${embyConfig.host}/library/sections/${sk}/all?type=${type}&X-Plex-Token=${embyConfig.token}`);
+        if (type === 9 || type === 8) {
+          items = (data.MediaContainer.Directory || []).map(i => ({ ...i, type }));
+        } else {
+          items = data.MediaContainer.Metadata || [];
+        }
       }
+
+      console.log('[PlexDebug] fetchPlexItems result', { type, parentKind, count: items.length });
 
       return { Items: items.map(normalizePlexItem), TotalRecordCount: items.length };
     }
 
     function normalizePlexItem(item) {
       const st = embyConfig.serverType;
-      const typeMap = { 10: 'Audio', 9: 'MusicAlbum', 4: 'MusicArtist', 15: 'Playlist' };
+      const typeMap = { 10: 'Audio', 9: 'MusicAlbum', 8: 'MusicArtist', 15: 'Playlist' };
       return {
-        Id: item.ratingKey,
-        Name: item.title || item.grandparentTitle,
+        Id: plexItemId(item),
+        Name: decodePlexEntities(item.title || item.grandparentTitle || ''),
         Type: typeMap[item.type] || 'Audio',
-        Artists: item.type === 10 ? [item.grandparentTitle] : [],
-        AlbumArtist: item.grandparentTitle || '',
-        Album: item.parentTitle || '',
+        Artists: item.type === 10 ? [decodePlexEntities(item.grandparentTitle || '')].filter(Boolean) : [],
+        AlbumArtist: decodePlexEntities(item.grandparentTitle || item.parentTitle || ''),
+        Album: decodePlexEntities(item.parentTitle || ''),
         Duration: item.duration ? Math.round(item.duration / 1000) : 0,
         Path: item.Media?.[0]?.Part?.[0]?.file || '',
         ImageTags: item.thumb ? { Primary: item.thumb } : {},
@@ -4100,7 +4254,7 @@
         AlbumPrimaryImageTag: '',
         // Plex specifics
         _plexKey: item.ratingKey,
-        _plexThumb: item.thumb || '',
+        _plexThumb: item.thumb || item.composite || '',
         _plexParentThumb: item.parentThumb || '',
         _plexGrandparentThumb: item.grandparentThumb || '',
         _plexPartId: item.Media?.[0]?.Part?.[0]?.id || '',
@@ -4931,7 +5085,7 @@
 
       if (track) {
         titleEl.textContent = track.Name || 'Song';
-        artistEl.textContent = track.Artists ? track.Artists.join(', ') : 'Artist';
+        artistEl.textContent = track.Artists && track.Artists.length ? track.Artists.join(', ') : (track.AlbumArtist || 'Artist');
         thumbEl.src = getEmbyImageUrl(track);
         ytEl.textContent = track.Path || `youtube.com/watch?v=PJniSb91tvo`;
         ytEl.href = `https://www.youtube.com/results?search_query=${encodeURIComponent((track.Artists ? track.Artists.join(' ') : '') + ' ' + track.Name)}`;
@@ -5922,8 +6076,7 @@
           }
         } else if (st === 'plex') {
           if (!embyConfig.host || !embyConfig.token) return false;
-          const res = await fetch(`${embyConfig.host}/library/sections?X-Plex-Token=${embyConfig.token}`);
-          const data = await res.json();
+          const data = await fetchPlexJson(`${embyConfig.host}/library/sections?X-Plex-Token=${embyConfig.token}`);
           const sections = (data.MediaContainer.Directory || []).filter(s => s.type === 'artist')
             .map(s => ({ Id: s.key, Name: s.title }));
           if (sections.length) {
@@ -6141,8 +6294,7 @@
               return false;
             });
           } else if (st === 'plex') {
-            const res = await fetch(`${embyConfig.host}/search?query=${encodeURIComponent(query)}&X-Plex-Token=${embyConfig.token}`);
-            const data = await res.json();
+            const data = await fetchPlexJson(`${embyConfig.host}/search?query=${encodeURIComponent(query)}&X-Plex-Token=${embyConfig.token}`);
             const metadata = data.MediaContainer.Metadata || [];
             items = metadata.filter(m => [10, 9, 4].includes(m.type)).map(normalizePlexItem);
           } else {
@@ -6181,7 +6333,7 @@
                 switchTab('playing');
               } else {
                 switchTab('music');
-                loadSubItems(item.Id, item.Name);
+                loadSubItems(item.Id, item.Name, item.Type);
               }
             };
 
@@ -6484,7 +6636,7 @@
       const id = slide.id;
       let albumTracks = [];
       try {
-        const data = await fetchItems(types.Audio, id);
+        const data = await fetchItems(types.Audio, id, 'MusicAlbum');
         albumTracks = data.Items || [];
       } catch (e) {}
       if (albumTracks.length === 0) return;
@@ -6553,7 +6705,8 @@
             playTrack(index);
             switchTab('playing');
           } else {
-            loadSubItems(item.Id, item.Name);
+            const kindMap = { 'Albums': 'MusicAlbum', 'Artists': 'MusicArtist', 'Playlists': 'Playlist' };
+            loadSubItems(item.Id, item.Name, kindMap[category]);
           }
         };
 
@@ -6561,7 +6714,7 @@
       });
     }
 
-    async function loadSubItems(parentId, title) {
+    async function loadSubItems(parentId, title, parentKind) {
       document.getElementById('category-view').style.display = 'none';
       document.getElementById('list-view').style.display = 'block';
       document.getElementById('selected-category-title').textContent = title;
@@ -6574,7 +6727,7 @@
 
       const st = embyConfig.serverType;
       const types = SERVER_TYPES[st];
-      const data = await fetchItems(types.Audio, parentId);
+      const data = await fetchItems(types.Audio, parentId, parentKind);
       const albumTracks = data.Items;
       container.innerHTML = '';
 
@@ -6668,13 +6821,13 @@
       if (!isAlbumItem(item) && !isPlaylistItem(item) && !isArtistItem(item)) return [item];
       let tracks = [];
       try {
-        const data = await fetchItems((SERVER_TYPES[st] || {}).Audio, item.Id);
+        const data = await fetchItems((SERVER_TYPES[st] || {}).Audio, item.Id, item.Type);
         tracks = (data && data.Items) ? data.Items : [];
       } catch (e) { tracks = []; }
       // Fallback: si el Id del álbum no devuelve canciones, probar con el Id de canción (AlbumId)
       if (tracks.length === 0 && item.AlbumId) {
         try {
-          const data2 = await fetchItems((SERVER_TYPES[st] || {}).Audio, item.AlbumId);
+          const data2 = await fetchItems((SERVER_TYPES[st] || {}).Audio, item.AlbumId, item.Type);
           tracks = (data2 && data2.Items) ? data2.Items : [];
         } catch (e) {}
       }
@@ -7069,12 +7222,12 @@
       }, 400);
 
       document.getElementById('track-title').textContent = track.Name;
-      document.getElementById('track-artist').textContent = track.Artists ? track.Artists.join(', ') : 'Artista Desconocido';
+      document.getElementById('track-artist').textContent = track.Artists && track.Artists.length ? track.Artists.join(', ') : (track.AlbumArtist || 'Artista Desconocido');
 
       if ('mediaSession' in navigator) {
         navigator.mediaSession.metadata = new MediaMetadata({
           title: track.Name,
-          artist: track.Artists ? track.Artists.join(', ') : 'Artista Desconocido',
+          artist: track.Artists && track.Artists.length ? track.Artists.join(', ') : (track.AlbumArtist || 'Artista Desconocido'),
           album: track.Album || 'Walkman Web',
           artwork: [{ src: newUrl, sizes: '512x512', type: 'image/jpeg' }]
         });
