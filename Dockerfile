@@ -3,7 +3,7 @@ FROM nginx:latest
 # Valores por defecto (sobrescribibles en despliegue vía docker-compose/.env)
 ENV DEFAULT_LANGUAGE=English
 ENV DEFAULT_SERVER_TYPE=Emby
-ENV DEFAULT_SERVER_URL=
+ENV DEFAULT_SERVER_URL=""
 
 COPY ./index.html /usr/share/nginx/html/index.html
 COPY ./manifest.json /usr/share/nginx/html
