@@ -1344,7 +1344,8 @@
     }
 
     /* Easter Egg (3 toques a WALKMAN): efecto cristal glass exagerado estilo iOS */
-    .context-menu.github-popup-card {
+    .context-menu.github-popup-card,
+    .context-menu-album-actions {
       background: rgba(255, 255, 255, 0.10);
       -webkit-backdrop-filter: blur(40px) saturate(220%) brightness(1.15);
       backdrop-filter: blur(40px) saturate(220%) brightness(1.15);
@@ -3162,7 +3163,7 @@
 
   <!-- MENÚ DE ACCIONES DE LA PORTADA (Playing) -->
   <div id="album-actions-overlay" class="context-menu-overlay" onclick="closeAlbumActionsMenu()">
-    <div class="context-menu" onclick="event.stopPropagation()">
+    <div class="context-menu context-menu-album-actions" onclick="event.stopPropagation()">
       <div class="context-menu-header">
         <div id="album-actions-title" class="context-menu-header-title"></div>
         <div id="album-actions-sub" class="context-menu-header-sub"></div>
