@@ -14,10 +14,14 @@ render_config() {
 ENV_FILE=/usr/share/nginx/html/.env
 if [ -f "$ENV_FILE" ]; then
   for _var in DEFAULT_LANGUAGE DEFAULT_SERVER_TYPE DEFAULT_SERVER_URL; do
-    eval "test -n \"\$$_var\" && continue"
-    _val=$(grep "^${_var}=" "$ENV_FILE" 2>/dev/null | head -n1 | cut -d= -f2-)
-    if [ -n "$_val" ]; then
-      eval "export $_var=\"\$_val\""
+    if ! eval "test -n \"\$$_var\""; then
+      _val=$(grep "^${_var}=" "$ENV_FILE" 2>/dev/null | head -n1 | cut -d= -f2-)
+      case "$_val" in
+        \"*\") _val=${_val#\"}; _val=${_val%\"} ;;
+      esac
+      if [ -n "$_val" ]; then
+        eval "export $_var=\"\$_val\""
+      fi
     fi
   done
   unset _var _val
