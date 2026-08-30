@@ -306,6 +306,18 @@
       background: #1a1a1a;
       color: #fff;
     }
+    .lang-select {
+      width: 100%;
+      padding: 10px;
+      background: #2a2a2a;
+      border: 1px solid #444;
+      color: #fff;
+      border-radius: 4px;
+    }
+    .lang-select option {
+      background: #2a2a2a;
+      color: #fff;
+    }
     .lyrics-scroll {
       flex: 1;
       overflow-y: auto;
@@ -2372,15 +2384,15 @@
   <header>
     <div style="font-weight: bold; letter-spacing: 1px; cursor: default;" onclick="walkmanTap()">WALKMAN</div>
     <div class="top-nav">
-      <div id="nav-playing" class="active" onclick="switchTab('playing')">Playing</div>
-      <div id="nav-music" onclick="switchTab('music')">My music</div>
+      <div id="nav-playing" class="active" onclick="switchTab('playing')" data-i18n="playing">Playing</div>
+      <div id="nav-music" onclick="switchTab('music')" data-i18n="myMusic">My music</div>
     </div>
     <div class="header-icons">
-      <span class="material-icons" onclick="toggleVisualizerView()" title="Visualizador">blur_on</span>
-      <span class="material-icons" onclick="toggleSearchOverlay()" title="Buscar">search</span>
-      <span class="material-icons" id="eq-btn" onclick="toggleEqualizer()" title="Mejoras de Sonido / Ecualizador">equalizer</span>
-      <span class="material-icons" onclick="showServerModal()" title="Ajustes de Servidor">storage</span>
-      <span class="material-icons" id="settings-btn" onclick="toggleSettingsMenu()" title="Ajustes">settings</span>
+      <span class="material-icons" onclick="toggleVisualizerView()" title="Visualizador" data-i18n-title="visualizer">blur_on</span>
+      <span class="material-icons" onclick="toggleSearchOverlay()" title="Buscar" data-i18n-title="search">search</span>
+      <span class="material-icons" id="eq-btn" onclick="toggleEqualizer()" title="Mejoras de Sonido / Ecualizador" data-i18n-title="soundEnhancements">equalizer</span>
+      <span class="material-icons" onclick="showServerModal()" title="Ajustes de Servidor" data-i18n-title="serverSettings">storage</span>
+      <span class="material-icons" id="settings-btn" onclick="toggleSettingsMenu()" title="Ajustes" data-i18n-title="settings">settings</span>
     </div>
   </header>
 
@@ -2389,23 +2401,35 @@
   <div id="settings-menu" class="settings-menu">
     <div class="settings-title">
       <span class="material-icons" style="font-size:15px;">settings</span>
-      Ajustes
+      <span data-i18n="settings">Ajustes</span>
     </div>
 
     <div class="settings-group">
-      <div class="settings-group-label">Color de acento</div>
+      <div class="settings-group-label" data-i18n="language">Idioma</div>
+      <select class="lang-select" onchange="setLang(this.value)">
+        <option value="en">English</option>
+        <option value="es">Español</option>
+        <option value="fr">Français</option>
+        <option value="de">Deutsch</option>
+        <option value="it">Italiano</option>
+        <option value="pt">Português</option>
+      </select>
+    </div>
+
+    <div class="settings-group">
+      <div class="settings-group-label" data-i18n="accentColor">Color de acento</div>
       <div class="accent-options">
-        <div class="accent-option" id="accent-opt-dynamic" onclick="setAccentMode('dynamic')">Dinámico</div>
-        <div class="accent-option" id="accent-opt-custom" onclick="setAccentMode('custom')">Personalizado</div>
+        <div class="accent-option" id="accent-opt-dynamic" onclick="setAccentMode('dynamic')" data-i18n="dynamic">Dinámico</div>
+        <div class="accent-option" id="accent-opt-custom" onclick="setAccentMode('custom')" data-i18n="custom">Personalizado</div>
       </div>
       <div class="accent-color-row" id="accent-custom-row" style="display:none;">
         <input type="color" id="accent-color-input" value="#aa00ff" oninput="setCustomAccent(this.value)">
-        <span>Elige un color</span>
+        <span data-i18n="pickColor">Elige un color</span>
       </div>
     </div>
 
     <div class="settings-group">
-      <div class="settings-group-label">Tamaño Barra Walkman</div>
+      <div class="settings-group-label" data-i18n="walkmanBarSize">Tamaño Barra Walkman</div>
       <div class="accent-options" id="zoom-options">
         <div class="accent-option" data-zoom="55" onclick="setZoom(this.dataset.zoom)">55%</div>
         <div class="accent-option" data-zoom="85" onclick="setZoom(this.dataset.zoom)">85%</div>
@@ -2417,7 +2441,7 @@
     </div>
 
     <div class="settings-group">
-      <div class="settings-group-label">Tamaño carrusel de álbumes</div>
+      <div class="settings-group-label" data-i18n="albumCarouselSize">Tamaño carrusel de álbumes</div>
       <div class="accent-options" id="carousel-options">
         <div class="accent-option" data-czoom="55" onclick="setCarouselZoom(this.dataset.czoom)">55%</div>
         <div class="accent-option" data-czoom="85" onclick="setCarouselZoom(this.dataset.czoom)">85%</div>
@@ -2431,10 +2455,10 @@
     <div class="settings-group">
       <div class="settings-btn" id="featured-btn" onclick="toggleFeatured()">
         <span class="material-icons">slideshow</span>
-        <span id="featured-btn-label">Side show de álbumes</span>
+        <span id="featured-btn-label" data-i18n="slideshow">Side show de álbumes</span>
       </div>
       <div class="featured-size-wrap" id="featured-size-wrap" style="display:none;">
-        <div class="settings-group-label">Tamaño del side show</div>
+        <div class="settings-group-label" data-i18n="slideshowSize">Tamaño del side show</div>
         <div class="accent-options" id="featured-size-options">
           <div class="accent-option" data-fz="55" onclick="setFeaturedZoom(this.dataset.fz)">55%</div>
           <div class="accent-option" data-fz="85" onclick="setFeaturedZoom(this.dataset.fz)">85%</div>
@@ -2452,11 +2476,11 @@
         <span id="beatglow-btn-label">Resplandor al ritmo</span>
       </div>
       <div class="featured-size-wrap" id="beatglow-sens-wrap" style="display:none;">
-        <div class="settings-group-label">Intensidad del resplandor</div>
+        <div class="settings-group-label" data-i18n="glowIntensity">Intensidad del resplandor</div>
         <div class="accent-options" id="beatglow-sens-options">
-          <div class="accent-option" data-bsens="1" onclick="setBeatGlowSens(this.dataset.bsens)">Baja</div>
-          <div class="accent-option" data-bsens="2" onclick="setBeatGlowSens(this.dataset.bsens)">Media</div>
-          <div class="accent-option" data-bsens="3" onclick="setBeatGlowSens(this.dataset.bsens)">Alta</div>
+          <div class="accent-option" data-bsens="1" onclick="setBeatGlowSens(this.dataset.bsens)" data-i18n="low">Baja</div>
+          <div class="accent-option" data-bsens="2" onclick="setBeatGlowSens(this.dataset.bsens)" data-i18n="medium">Media</div>
+          <div class="accent-option" data-bsens="3" onclick="setBeatGlowSens(this.dataset.bsens)" data-i18n="high">Alta</div>
         </div>
       </div>
     </div>
@@ -2467,11 +2491,11 @@
         <span id="xpsp-led-btn-label">LEDs Xperia SP</span>
       </div>
       <div class="featured-size-wrap" id="xpsp-sens-wrap" style="display:none;">
-        <div class="settings-group-label">Sensibilidad</div>
+        <div class="settings-group-label" data-i18n="sensitivity">Sensibilidad</div>
         <div class="accent-options" id="xpsp-sens-options">
-          <div class="accent-option" data-ssens="1" onclick="setXpspLedSens(this.dataset.ssens)">Baja</div>
-          <div class="accent-option" data-ssens="2" onclick="setXpspLedSens(this.dataset.ssens)">Media</div>
-          <div class="accent-option" data-ssens="3" onclick="setXpspLedSens(this.dataset.ssens)">Alta</div>
+          <div class="accent-option" data-ssens="1" onclick="setXpspLedSens(this.dataset.ssens)" data-i18n="low">Baja</div>
+          <div class="accent-option" data-ssens="2" onclick="setXpspLedSens(this.dataset.ssens)" data-i18n="medium">Media</div>
+          <div class="accent-option" data-ssens="3" onclick="setXpspLedSens(this.dataset.ssens)" data-i18n="high">Alta</div>
         </div>
       </div>
     </div>
@@ -2479,11 +2503,11 @@
     <div class="settings-group">
       <div class="settings-btn" onclick="changeLibrary()">
         <span class="material-icons">library_music</span>
-        Cambiar biblioteca de música
+        <span data-i18n="changeLibrary">Cambiar biblioteca de música</span>
       </div>
       <div class="settings-btn" onclick="clearCache()">
         <span class="material-icons">delete_sweep</span>
-        Borrar caché
+        <span data-i18n="clearCache">Borrar caché</span>
       </div>
     </div>
 
@@ -2507,8 +2531,8 @@
   <!-- MEJORAS DE SONIDO (ECUALIZADOR + VPT) DERECHO -->
   <div id="eq-dropdown" class="audio-enhancements-menu">
     <div class="sound-tabs">
-      <div id="tab-btn-eq" class="sound-tab-btn active" onclick="switchSoundTab('eq')">Ecualizador</div>
-      <div id="tab-btn-vpt" class="sound-tab-btn" onclick="switchSoundTab('vpt')">Ajustes / VPT</div>
+      <div id="tab-btn-eq" class="sound-tab-btn active" onclick="switchSoundTab('eq')" data-i18n="equalizer">Ecualizador</div>
+      <div id="tab-btn-vpt" class="sound-tab-btn" onclick="switchSoundTab('vpt')" data-i18n="eqVptTab">Ajustes / VPT</div>
     </div>
 
     <!-- PESTAÑA 1: ECUALIZADOR -->
@@ -2516,7 +2540,7 @@
       <div class="eq-dropdown-header">
         <div class="eq-title">
           <span class="material-icons" style="font-size: 15px;">tune</span>
-          Ecualizador
+          <span data-i18n="equalizer">Ecualizador</span>
         </div>
 
         <div class="eq-preset-bar">
@@ -2583,7 +2607,7 @@
 
     <!-- PESTAÑA 2: SONIDO DE AMBIENTE (VPT) -->
     <div id="sound-tab-vpt" class="sound-tab-content">
-      <div class="vpt-header">Sonido de ambiente (VPT)</div>
+      <div class="vpt-header" data-i18n="vptAmbient">Sonido de ambiente (VPT)</div>
 
       <div class="vpt-carousel-container" id="vpt-cards-wrapper">
         <!-- 0: Desactivado -->
@@ -2591,8 +2615,8 @@
           <div class="vpt-card-graphic">
             <span class="material-icons" style="font-size: 48px; color: #666;">off_timing</span>
           </div>
-          <div class="vpt-card-title">Desactivado</div>
-          <div class="vpt-card-desc">Sin efectos de sonido ambiente envolvente</div>
+          <div class="vpt-card-title" data-i18n="vptOff">Desactivado</div>
+          <div class="vpt-card-desc" data-i18n="vptOffDesc">Sin efectos de sonido ambiente envolvente</div>
         </div>
 
         <!-- 1: Estudio -->
@@ -2606,8 +2630,8 @@
               <path d="M 35 55 L 65 55 L 60 72 L 40 72 Z" fill="#ff4444" />
             </svg>
           </div>
-          <div class="vpt-card-title">Estudio</div>
-          <div class="vpt-card-desc">Crea el sonido de un estudio de grabación acústico</div>
+          <div class="vpt-card-title" data-i18n="vptStudio">Estudio</div>
+          <div class="vpt-card-desc" data-i18n="vptStudioDesc">Crea el sonido de un estudio de grabación acústico</div>
         </div>
 
         <!-- 2: Club -->
@@ -2620,8 +2644,8 @@
               <rect x="35" y="55" width="30" height="15" fill="#00ddff" rx="2" />
             </svg>
           </div>
-          <div class="vpt-card-title">Club</div>
-          <div class="vpt-card-desc">Simula el sonido en vivo de un club de música</div>
+          <div class="vpt-card-title" data-i18n="vptClub">Club</div>
+          <div class="vpt-card-desc" data-i18n="vptClubDesc">Simula el sonido en vivo de un club de música</div>
         </div>
 
         <!-- 3: Auditorio -->
@@ -2634,8 +2658,8 @@
               <rect x="70" y="52" width="10" height="18" fill="#99cc00" />
             </svg>
           </div>
-          <div class="vpt-card-title">Auditorio</div>
-          <div class="vpt-card-desc">Produce la resonancia amplia de una sala de conciertos</div>
+          <div class="vpt-card-title" data-i18n="vptAuditorium">Auditorio</div>
+          <div class="vpt-card-desc" data-i18n="vptAuditoriumDesc">Produce la resonancia amplia de una sala de conciertos</div>
         </div>
       </div>
 
@@ -2654,11 +2678,11 @@
   <div id="search-overlay" class="search-overlay">
     <div class="search-input-box">
       <span class="material-icons" style="color: #888;">search</span>
-      <input type="text" id="search-input" placeholder="Buscar canciones, álbumes, artistas..." oninput="handleSearch(this.value)">
+      <input type="text" id="search-input" data-i18n-placeholder="searchPlaceholder" placeholder="Buscar canciones, álbumes, artistas..." oninput="handleSearch(this.value)">
       <span class="material-icons" style="color: #888; cursor: pointer;" onclick="toggleSearchOverlay()">close</span>
     </div>
     <div class="search-results" id="search-results-container">
-      <div style="color: #888; font-size: 13px; text-align: center; padding: 10px;">Escribe para buscar...</div>
+      <div style="color: #888; font-size: 13px; text-align: center; padding: 10px;" data-i18n="searchHint">Escribe para buscar...</div>
     </div>
   </div>
 
@@ -2667,33 +2691,33 @@
     <div class="visualizer-header">
       <div class="visualizer-header-title">
         <span class="material-icons" style="cursor: pointer;" onclick="toggleVisualizerView()">arrow_back</span>
-        <span>Visualizador</span>
+        <span data-i18n="visualizer">Visualizador</span>
       </div>
       <span class="material-icons" style="cursor: pointer;" onclick="toggleVisStyleMenu()">more_vert</span>
     </div>
 
     <div class="vis-style-menu" id="vis-style-menu" onclick="event.stopPropagation()">
-      <div class="vis-style-title">Estilo del Visualizador</div>
+      <div class="vis-style-title" data-i18n="visStyle">Estilo del Visualizador</div>
       <div class="vis-style-option active" data-vis="rings" onclick="setVisStyle('rings')">
-        <span class="material-icons">album</span> Anillos pulsantes
+        <span class="material-icons">album</span> <span data-i18n="visRings">Anillos pulsantes</span>
       </div>
       <div class="vis-style-option" data-vis="bars" onclick="setVisStyle('bars')">
-        <span class="material-icons">bar_chart</span> Barras de frecuencia
+        <span class="material-icons">bar_chart</span> <span data-i18n="visBars">Barras de frecuencia</span>
       </div>
       <div class="vis-style-option" data-vis="wave" onclick="setVisStyle('wave')">
-        <span class="material-icons">show_chart</span> Onda estéreo
+        <span class="material-icons">show_chart</span> <span data-i18n="visWave">Onda estéreo</span>
       </div>
       <div class="vis-style-option" data-vis="ps3" onclick="setVisStyle('ps3')">
-        <span class="material-icons">waves</span> Ondas PS3
+        <span class="material-icons">waves</span> <span data-i18n="visPs3">Ondas PS3</span>
       </div>
       <div class="vis-style-option" data-vis="cosmic" onclick="setVisStyle('cosmic')">
-        <span class="material-icons">auto_awesome</span> Cosmic Flow
+        <span class="material-icons">auto_awesome</span> <span data-i18n="visCosmic">Cosmic Flow</span>
       </div>
       <div class="vis-style-option" data-vis="particles" onclick="setVisStyle('particles')">
-        <span class="material-icons">grain</span> Partículas del álbum
+        <span class="material-icons">grain</span> <span data-i18n="visParticles">Partículas del álbum</span>
       </div>
       <div class="vis-style-option" data-vis="blocks" onclick="setVisStyle('blocks')">
-        <span class="material-icons">grid_on</span> Bloques rítmicos
+        <span class="material-icons">grid_on</span> <span data-i18n="visBlocks">Bloques rítmicos</span>
       </div>
     </div>
 
@@ -2732,7 +2756,7 @@
     
     <div class="track-header-wrapper">
       <div class="track-info">
-        <div class="track-title" id="track-title">Selecciona una canción</div>
+        <div class="track-title" id="track-title" data-i18n="selectTrack">Selecciona una canción</div>
         <div class="track-artist" id="track-artist">Emby Server</div>
       </div>
 
@@ -2750,10 +2774,10 @@
     <div id="view-lyrics" class="lyrics-view">
       <div class="lyrics-glass">
         <div class="lyrics-header">
-          <span class="lyrics-title" id="lyrics-title">Letras</span>
+          <span class="lyrics-title" id="lyrics-title" data-i18n="lyrics">Letras</span>
           <div class="lyrics-actions">
             <select id="lyrics-lang" class="lyrics-lang" title="Idioma de traducción" onchange="translateLyrics(this.value)">
-              <option value="">Original</option>
+              <option value="" data-i18n="original">Original</option>
               <option value="es">Español</option>
               <option value="en">Inglés</option>
               <option value="de">Alemán</option>
@@ -2770,12 +2794,12 @@
         </div>
         <div class="lyrics-scroll" id="lyrics-scroll">
           <div class="lyrics-body" id="lyrics-body">
-            <div class="lyrics-loading">Buscando letras...</div>
+            <div class="lyrics-loading" data-i18n="searchingLyrics">Buscando letras...</div>
           </div>
         </div>
         <div class="lyrics-translating" id="lyrics-translating" style="display:none;">
           <div class="lyrics-spinner"></div>
-          <span>Traduciendo...</span>
+          <span data-i18n="translating">Traduciendo...</span>
         </div>
       </div>
     </div>
@@ -2805,7 +2829,7 @@
         <span class="material-icons" style="cursor: pointer;" onclick="toggleQueueDrawer()">close</span>
       </div>
       <div class="queue-list" id="queue-list-container">
-        <div style="color: #aaa; font-size: 13px; text-align: center; margin-top: 20px;">Sin canciones en la cola</div>
+        <div style="color: #aaa; font-size: 13px; text-align: center; margin-top: 20px;" data-i18n="emptyQueue">Sin canciones en la cola</div>
       </div>
     </div>
 
@@ -2846,32 +2870,32 @@
     <div id="category-view">
       <div class="featured-section">
         <div class="featured-slideshow" id="featured-slideshow">
-          <div class="featured-title-strip">My Music</div>
+          <div class="featured-title-strip" data-i18n="myMusicHome">My Music</div>
         </div>
-        <span class="featured-refresh material-icons" title="Recargar side show" onclick="refreshFeatured()">refresh</span>
+        <span class="featured-refresh material-icons" title="Recargar side show" data-i18n-title="refreshSlideshow" onclick="refreshFeatured()">refresh</span>
       </div>
       <div class="grid-menu">
         <div class="grid-card" style="background-image: linear-gradient(135deg, #1e3c72, #2a5298);" onclick="loadCategory('Songs')">
           <div class="grid-card-content">
-            <div class="grid-card-title">Songs</div>
+            <div class="grid-card-title" data-i18n="songs">Songs</div>
             <div class="grid-card-sub" id="count-songs">--</div>
           </div>
         </div>
         <div class="grid-card" style="background-image: linear-gradient(135deg, #232526, #414345);" onclick="loadCategory('Albums')">
           <div class="grid-card-content">
-            <div class="grid-card-title">Albums</div>
+            <div class="grid-card-title" data-i18n="albums">Albums</div>
             <div class="grid-card-sub" id="count-albums">--</div>
           </div>
         </div>
         <div class="grid-card" style="background-image: linear-gradient(135deg, #833ab4, #fd1d1d);" onclick="loadCategory('Artists')">
           <div class="grid-card-content">
-            <div class="grid-card-title">Artists</div>
+            <div class="grid-card-title" data-i18n="artists">Artists</div>
             <div class="grid-card-sub" id="count-artists">--</div>
           </div>
         </div>
         <div class="grid-card" style="background-image: linear-gradient(135deg, #ffe000, #799f0c);" onclick="loadCategory('Playlists')">
           <div class="grid-card-content">
-            <div class="grid-card-title">Playlists</div>
+            <div class="grid-card-title" data-i18n="playlists">Playlists</div>
             <div class="grid-card-sub" id="count-playlists">--</div>
           </div>
         </div>
@@ -2880,7 +2904,7 @@
 
     <div id="list-view" style="display: none;">
       <div class="back-btn" onclick="backToCategories()">
-        <span class="material-icons">arrow_back</span> Volver
+        <span class="material-icons">arrow_back</span> <span data-i18n="back">Volver</span>
       </div>
       <div class="menu-header" id="selected-category-title">Categoría</div>
       <div class="items-list" id="items-container"></div>
@@ -2890,7 +2914,19 @@
   <!-- MODAL CONEXIÓN SERVIDOR -->
   <div id="emby-modal" class="modal" onclick="closeServerModal()">
     <div class="modal-content" onclick="event.stopPropagation()">
-      <h3>Conectarse al Servidor</h3>
+      <h3 data-i18n="connectServer">Conectarse al Servidor</h3>
+
+      <div class="input-group">
+        <label data-i18n="language">Idioma</label>
+        <select class="lang-select" onchange="setLang(this.value)">
+          <option value="en">English</option>
+          <option value="es">Español</option>
+          <option value="fr">Français</option>
+          <option value="de">Deutsch</option>
+          <option value="it">Italiano</option>
+          <option value="pt">Português</option>
+        </select>
+      </div>
 
       <div class="server-tabs">
         <button class="server-tab active" data-type="emby" onclick="switchServerType('emby')">Emby</button>
@@ -2902,45 +2938,45 @@
       <!-- Emby / Jellyfin -->
       <div id="form-emby" class="server-form active">
         <div class="input-group">
-          <label>URL del Servidor</label>
+          <label data-i18n="serverUrl">URL del Servidor</label>
           <input type="text" id="emby-host" placeholder="http://192.168.1.50:8096">
         </div>
         <div class="input-group">
-          <label>Usuario</label>
+          <label data-i18n="user">Usuario</label>
           <input type="text" id="emby-user">
         </div>
         <div class="input-group">
-          <label>Contraseña</label>
+          <label data-i18n="password">Contraseña</label>
           <input type="password" id="emby-pass">
         </div>
-        <button class="btn" onclick="connectServer()">Conectar</button>
+        <button class="btn" onclick="connectServer()" data-i18n="connect">Conectar</button>
       </div>
 
       <!-- Plex -->
       <div id="form-plex" class="server-form">
         <div class="input-group">
-          <label>URL del Servidor</label>
+          <label data-i18n="serverUrl">URL del Servidor</label>
           <input type="text" id="plex-host" placeholder="http://192.168.1.50:32400">
         </div>
-        <button class="btn" onclick="connectServer()">Conectar</button>
+        <button class="btn" onclick="connectServer()" data-i18n="connect">Conectar</button>
         <div id="plex-status" class="plex-status" style="display:none;"></div>
       </div>
 
       <!-- Local -->
       <div id="form-local" class="server-form">
         <div class="input-group">
-          <label>Biblioteca local del dispositivo</label>
-          <div style="color:#aaa; font-size:12px; line-height:1.6; margin-bottom:12px;">
+          <label data-i18n="localLibrary">Biblioteca local del dispositivo</label>
+          <div style="color:#aaa; font-size:12px; line-height:1.6; margin-bottom:12px;" data-i18n="localLibraryHint">
             Selecciona una carpeta de tu dispositivo/computadora para escanear archivos de audio (mp3, flac, ogg, m4a, wav, opus).
           </div>
-          <button class="btn" onclick="pickLocalFolder()">Elegir carpeta de música</button>
+          <button class="btn" onclick="pickLocalFolder()" data-i18n="chooseFolder">Elegir carpeta de música</button>
           <input type="file" id="local-folder-input" webkitdirectory multiple style="display:none;" onchange="handleLocalFolderInput(event)">
         </div>
         <div id="local-status" class="plex-status" style="display:none;"></div>
       </div>
 
       <div id="library-selector" class="input-group" style="display:none; margin-top: 15px;">
-        <label>Selecciona la Biblioteca Musical</label>
+        <label data-i18n="selectMusicLibrary">Selecciona la Biblioteca Musical</label>
         <select id="emby-libraries" onchange="selectLibrary()"></select>
       </div>
     </div>
@@ -2965,19 +3001,19 @@
       </div>
       <div class="context-menu-option" onclick="ctxPlayNext()">
         <span class="material-icons">skip_next</span>
-        <span>Reproducir siguiente</span>
+        <span data-i18n="playNext">Reproducir siguiente</span>
       </div>
       <div class="context-menu-option" onclick="ctxAddToQueue()">
         <span class="material-icons">queue_music</span>
-        <span>Añadir a la cola</span>
+        <span data-i18n="addToQueue">Añadir a la cola</span>
       </div>
       <div class="context-menu-option" id="ctx-remove-option" onclick="ctxRemoveFromQueue()" style="color:#ff5555; display:none;">
         <span class="material-icons">delete</span>
-        <span>Eliminar de la cola</span>
+        <span data-i18n="removeFromQueue">Eliminar de la cola</span>
       </div>
       <div class="context-menu-option" onclick="ctxShowInfo()">
         <span class="material-icons">info_outline</span>
-        <span>Información de la música</span>
+        <span data-i18n="musicInfo">Información de la música</span>
       </div>
       <div id="ctx-menu-info" class="context-menu-info" style="display:none;"></div>
     </div>
@@ -2988,8 +3024,251 @@
   <audio id="audio-player" crossorigin="anonymous"></audio>
 
   <script>
-    let embyConfig = { host: '', token: '', userId: '', libraryId: '', user: '', serverType: 'emby' };
+    // ---- Sistema de idiomas (i18n) ----
+    const I18N = {
+      en: {
+        settings: 'Settings', accentColor: 'Accent color', dynamic: 'Dynamic', custom: 'Custom',
+        pickColor: 'Choose a color', walkmanBarSize: 'Walkman bar size', albumCarouselSize: 'Album carousel size',
+        slideshow: 'Album slideshow', slideshowSize: 'Slideshow size', beatGlow: 'Beat glow',
+        glowIntensity: 'Glow intensity', low: 'Low', medium: 'Medium', high: 'High',
+        xpspLeds: 'Xperia SP LEDs', sensitivity: 'Sensitivity', changeLibrary: 'Change music library',
+        clearCache: 'Clear cache', connectServer: 'Connect to Server', serverUrl: 'Server URL',
+        user: 'User', password: 'Password', connect: 'Connect', localLibrary: 'Device local library',
+        localLibraryHint: 'Select a folder on your device/computer to scan audio files (mp3, flac, ogg, m4a, wav, opus).',
+        chooseFolder: 'Choose music folder', selectMusicLibrary: 'Select the Music Library',
+        playing: 'Playing', myMusic: 'My music', visualizer: 'Visualizer', search: 'Search',
+        myMusicHome: 'My Music', songs: 'Songs', albums: 'Albums', artists: 'Artists', playlists: 'Playlists',
+        soundEnhancements: 'Sound Enhancements / EQ', serverSettings: 'Server Settings',
+        selectTrack: 'Select a song', lyrics: 'Lyrics', original: 'Original', spanish: 'Spanish',
+        english: 'English', german: 'German', french: 'French', italian: 'Italian', portuguese: 'Portuguese',
+        japanese: 'Japanese', chinese: 'Chinese', russian: 'Russian', arabic: 'Arabic',
+        language: 'Language', searchingLyrics: 'Searching lyrics...', translating: 'Translating...',
+        noLyrics: 'No lyrics found for this song', noSyncedLyrics: 'This song has no synced lyrics',
+        noSyncedFound: 'No synced lyrics found', noTrackPlaying: 'No song currently playing',
+        lyricsError: 'Error connecting to the lyrics server', emptyQueue: 'No songs in queue',
+        noTracks: 'No songs', back: 'Back', repeat: 'Repeat', shuffle: 'Shuffle',
+        equalizer: 'Equalizer', eqVptTab: 'Settings / VPT', vptAmbient: 'Ambient sound (VPT)',
+        vptOff: 'Off', vptOffDesc: 'No immersive ambient sound effects',
+        vptStudio: 'Studio', vptStudioDesc: 'Creates the sound of an acoustic recording studio',
+        vptClub: 'Club', vptClubDesc: 'Simulates the live sound of a music club',
+        vptAuditorium: 'Auditorium', vptAuditoriumDesc: 'Produces the wide resonance of a concert hall',
+        searchPlaceholder: 'Search songs, albums, artists...', searchHint: 'Type to search...',
+        visStyle: 'Visualizer style', visRings: 'Pulsing rings', visBars: 'Frequency bars',
+        visWave: 'Stereo wave', visPs3: 'PS3 waves', visCosmic: 'Cosmic Flow',
+        visParticles: 'Album particles', visBlocks: 'Rhythmic blocks',
+        playNext: 'Play next', addToQueue: 'Add to queue', removeFromQueue: 'Remove from queue',
+        musicInfo: 'Music information', noName: 'No name', noAvailable: 'Not available',
+        unknown: 'Unknown', infoName: 'Name', infoArtist: 'Artist', infoAlbum: 'Album', infoFile: 'File',
+        libraryChanged: 'Library changed', noResults: 'No results found',
+        addedToQueue: 'Added to queue', addedToQueueMany: '{kind} added ({n} songs)',
+        notInQueue: 'Not in the queue', removedFromQueueToast: 'Removed from queue',
+        kindArtist: 'Artist', kindAlbum: 'Album', kindPlaylist: 'Playlist',
+        coversReady: 'Covers ready ({n})', noEmbeddedCovers: 'No embedded covers',
+        loadingSongs: 'Loading songs...', refreshSlideshow: 'Refresh slideshow',
+        quotaExceeded: 'Translation temporarily unavailable (daily free limit reached)'
+      },
+      es: {
+        settings: 'Ajustes', accentColor: 'Color de acento', dynamic: 'Dinámico', custom: 'Personalizado',
+        pickColor: 'Elige un color', walkmanBarSize: 'Tamaño Barra Walkman', albumCarouselSize: 'Tamaño carrusel de álbumes',
+        slideshow: 'Side show de álbumes', slideshowSize: 'Tamaño del side show', beatGlow: 'Resplandor al ritmo',
+        glowIntensity: 'Intensidad del resplandor', low: 'Baja', medium: 'Media', high: 'Alta',
+        xpspLeds: 'LEDs Xperia SP', sensitivity: 'Sensibilidad', changeLibrary: 'Cambiar biblioteca de música',
+        clearCache: 'Borrar caché', connectServer: 'Conectarse al Servidor', serverUrl: 'URL del Servidor',
+        user: 'Usuario', password: 'Contraseña', connect: 'Conectar', localLibrary: 'Biblioteca local del dispositivo',
+        localLibraryHint: 'Selecciona una carpeta de tu dispositivo/computadora para escanear archivos de audio (mp3, flac, ogg, m4a, wav, opus).',
+        chooseFolder: 'Elegir carpeta de música', selectMusicLibrary: 'Selecciona la Biblioteca Musical',
+        playing: 'Reproduciendo', myMusic: 'Mi música', visualizer: 'Visualizador', search: 'Buscar',
+        myMusicHome: 'Mi Música', songs: 'Canciones', albums: 'Álbumes', artists: 'Artistas', playlists: 'Listas de reproducción',
+        soundEnhancements: 'Mejoras de Sonido / Ecualizador', serverSettings: 'Ajustes de Servidor',
+        selectTrack: 'Selecciona una canción', lyrics: 'Letras', original: 'Original', spanish: 'Español',
+        english: 'Inglés', german: 'Alemán', french: 'Francés', italian: 'Italiano', portuguese: 'Portugués',
+        japanese: 'Japonés', chinese: 'Chino', russian: 'Ruso', arabic: 'Árabe',
+        language: 'Idioma', searchingLyrics: 'Buscando letras...', translating: 'Traduciendo...',
+        noLyrics: 'No se encontraron letras para esta canción', noSyncedLyrics: 'Esta canción no tiene letras sincronizadas',
+        noSyncedFound: 'No se encontraron letras sincronizadas', noTrackPlaying: 'Sin canción en reproducción',
+        lyricsError: 'Error al conectar con el servidor de letras', emptyQueue: 'Sin canciones en la cola',
+        noTracks: 'Sin canciones', back: 'Volver', repeat: 'Repetir', shuffle: 'Aleatorio',
+        equalizer: 'Ecualizador', eqVptTab: 'Ajustes / VPT', vptAmbient: 'Sonido de ambiente (VPT)',
+        vptOff: 'Desactivado', vptOffDesc: 'Sin efectos de sonido ambiente envolvente',
+        vptStudio: 'Estudio', vptStudioDesc: 'Crea el sonido de un estudio de grabación acústico',
+        vptClub: 'Club', vptClubDesc: 'Simula el sonido en vivo de un club de música',
+        vptAuditorium: 'Auditorio', vptAuditoriumDesc: 'Produce la resonancia amplia de una sala de conciertos',
+        searchPlaceholder: 'Buscar canciones, álbumes, artistas...', searchHint: 'Escribe para buscar...',
+        visStyle: 'Estilo del Visualizador', visRings: 'Anillos pulsantes', visBars: 'Barras de frecuencia',
+        visWave: 'Onda estéreo', visPs3: 'Ondas PS3', visCosmic: 'Cosmic Flow',
+        visParticles: 'Partículas del álbum', visBlocks: 'Bloques rítmicos',
+        playNext: 'Reproducir siguiente', addToQueue: 'Añadir a la cola', removeFromQueue: 'Eliminar de la cola',
+        musicInfo: 'Información de la música', noName: 'Sin nombre', noAvailable: 'No disponible',
+        unknown: 'Desconocido', infoName: 'Nombre', infoArtist: 'Artista', infoAlbum: 'Álbum', infoFile: 'Fichero',
+        libraryChanged: 'Biblioteca cambiada', noResults: 'No se encontraron resultados',
+        addedToQueue: 'Añadida a la cola', addedToQueueMany: '{kind} añadido ({n} canciones)',
+        notInQueue: 'No está en la cola', removedFromQueueToast: 'Eliminada de la cola',
+        kindArtist: 'Artista', kindAlbum: 'Álbum', kindPlaylist: 'Playlist',
+        coversReady: 'Portadas listas ({n})', noEmbeddedCovers: 'Sin portadas incrustadas',
+        loadingSongs: 'Cargando canciones...', refreshSlideshow: 'Recargar side show',
+        quotaExceeded: 'Traducción no disponible temporalmente (límite gratuito diario alcanzado)'
+      },
+      fr: {
+        settings: 'Réglages', accentColor: 'Couleur d\'accent', dynamic: 'Dynamique', custom: 'Personnalisé',
+        beatGlow: 'Lueur au rythme', xpspLeds: 'LEDs Xperia SP', sensitivity: 'Sensibilité', low: 'Faible',
+        medium: 'Moyenne', high: 'Élevée', changeLibrary: 'Changer la bibliothèque musicale',
+        clearCache: 'Vider le cache', connectServer: 'Se connecter au Serveur', serverUrl: 'URL du Serveur',
+        user: 'Utilisateur', password: 'Mot de passe', connect: 'Connecter', chooseFolder: 'Choisir le dossier musique',
+        selectMusicLibrary: 'Sélectionner la bibliothèque musicale', visualizer: 'Visualiseur', search: 'Rechercher',
+        myMusicHome: 'Ma musique', songs: 'Chansons', albums: 'Albums', artists: 'Artistes', playlists: 'Listes de lecture',
+        serverSettings: 'Paramètres du Serveur', language: 'Langue', original: 'Original', spanish: 'Espagnol',
+        english: 'Anglais', french: 'Français', german: 'Allemand', italian: 'Italien', portuguese: 'Portugais',
+        lyrics: 'Paroles', translating: 'Traduction...', noLyrics: 'Aucune parole trouvée pour cette chanson',
+        equalizer: 'Égaliseur', eqVptTab: 'Réglages / VPT', vptAmbient: 'Son ambiant (VPT)',
+        vptOff: 'Désactivé', vptOffDesc: 'Aucun effet sonore ambiant immersif',
+        vptStudio: 'Studio', vptStudioDesc: 'Crée le son d\'un studio d\'enregistrement acoustique',
+        vptClub: 'Club', vptClubDesc: 'Simule le son en direct d\'un club de musique',
+        vptAuditorium: 'Auditorium', vptAuditoriumDesc: 'Produit la résonance large d\'une salle de concert',
+        searchPlaceholder: 'Rechercher chansons, albums, artistes...', searchHint: 'Écrivez pour rechercher...',
+        visStyle: 'Style du visualiseur', visRings: 'Anneaux pulsants', visBars: 'Barres de fréquence',
+        visWave: 'Onde stéréo', visPs3: 'Ondes PS3', visCosmic: 'Cosmic Flow',
+        visParticles: 'Particules d\'album', visBlocks: 'Blocs rythmiques',
+        playNext: 'Lire ensuite', addToQueue: 'Ajouter à la file', removeFromQueue: 'Retirer de la file',
+        musicInfo: 'Informations musicales', noName: 'Sans nom', noAvailable: 'Indisponible',
+        unknown: 'Inconnu', infoName: 'Nom', infoArtist: 'Artiste', infoAlbum: 'Album', infoFile: 'Fichier',
+        libraryChanged: 'Bibliothèque changée', noResults: 'Aucun résultat trouvé',
+        addedToQueue: 'Ajouté à la file', addedToQueueMany: '{kind} ajouté ({n} chansons)',
+        notInQueue: 'Pas dans la file', removedFromQueueToast: 'Retiré de la file',
+        kindArtist: 'Artiste', kindAlbum: 'Album', kindPlaylist: 'Playlist',
+        coversReady: 'Pochettes prêtes ({n})', noEmbeddedCovers: 'Aucune pochette intégrée',
+        loadingSongs: 'Chargement des chansons...', refreshSlideshow: 'Actualiser le diaporama',
+        quotaExceeded: 'Traduction temporairement indisponible (limite gratuite quotidienne atteinte)'
+      },
+      de: {
+        settings: 'Einstellungen', accentColor: 'Akzentfarbe', dynamic: 'Dynamisch', custom: 'Benutzerdefiniert',
+        beatGlow: 'Rhythmus-Glow', xpspLeds: 'Xperia SP LEDs', sensitivity: 'Empfindlichkeit', low: 'Niedrig',
+        medium: 'Mittel', high: 'Hoch', changeLibrary: 'Musikbibliothek ändern', clearCache: 'Cache leeren',
+        connectServer: 'Mit Server verbinden', serverUrl: 'Server-URL', user: 'Benutzer', password: 'Passwort',
+        connect: 'Verbinden', chooseFolder: 'Musikordner wählen', selectMusicLibrary: 'Musikbibliothek wählen',
+        visualizer: 'Visualizer', search: 'Suchen', serverSettings: 'Server-Einstellungen', language: 'Sprache',
+        myMusicHome: 'Meine Musik', songs: 'Songs', albums: 'Alben', artists: 'Künstler', playlists: 'Wiedergabelisten',
+        original: 'Original', spanish: 'Spanisch', english: 'Englisch', german: 'Deutsch', french: 'Französisch',
+        italian: 'Italienisch', portuguese: 'Portugiesisch', lyrics: 'Liedtexte', translating: 'Übersetzen...',
+        equalizer: 'Equalizer', eqVptTab: 'Einstellungen / VPT', vptAmbient: 'Umgebungsklang (VPT)',
+        vptOff: 'Deaktiviert', vptOffDesc: 'Keine immersiven Umgebungsklang-Effekte',
+        vptStudio: 'Studio', vptStudioDesc: 'Erzeugt den Klang eines akustischen Aufnahmestudios',
+        vptClub: 'Club', vptClubDesc: 'Simuliert den Live-Sound eines Musikclubs',
+        vptAuditorium: 'Auditorium', vptAuditoriumDesc: 'Erzeugt die weite Resonanz eines Konzertsaals',
+        searchPlaceholder: 'Songs, Alben, Künstler suchen...', searchHint: 'Zum Suchen tippen...',
+        visStyle: 'Visualizer-Stil', visRings: 'Pulsierende Ringe', visBars: 'Frequenzbalken',
+        visWave: 'Stereo-Welle', visPs3: 'PS3-Wellen', visCosmic: 'Cosmic Flow',
+        visParticles: 'Album-Partikel', visBlocks: 'Rhythmische Blöcke',
+        playNext: 'Als Nächstes abspielen', addToQueue: 'Zur Warteschlange hinzufügen',
+        removeFromQueue: 'Aus der Warteschlange entfernen', musicInfo: 'Musikinformationen', noName: 'Ohne Namen',
+        noAvailable: 'Nicht verfügbar', unknown: 'Unbekannt', infoName: 'Name', infoArtist: 'Künstler',
+        infoAlbum: 'Album', infoFile: 'Datei', libraryChanged: 'Bibliothek geändert', noResults: 'Keine Ergebnisse gefunden',
+        addedToQueue: 'Zur Warteschlange hinzugefügt', addedToQueueMany: '{kind} hinzugefügt ({n} Songs)',
+        notInQueue: 'Nicht in der Warteschlange', removedFromQueueToast: 'Aus der Warteschlange entfernt',
+        kindArtist: 'Künstler', kindAlbum: 'Album', kindPlaylist: 'Playlist',
+        coversReady: 'Cover bereit ({n})', noEmbeddedCovers: 'Keine eingebetteten Cover',
+        loadingSongs: 'Songs werden geladen...', refreshSlideshow: 'Diashow aktualisieren',
+        quotaExceeded: 'Übersetzung vorübergehend nicht verfügbar (tägliches kostenloses Limit erreicht)'
+      },
+      it: {
+        settings: 'Impostazioni', accentColor: 'Colore accento', dynamic: 'Dinamico', custom: 'Personalizzato',
+        beatGlow: 'Bagliore a ritmo', xpspLeds: 'LED Xperia SP', sensitivity: 'Sensibilità', low: 'Bassa',
+        medium: 'Media', high: 'Alta', changeLibrary: 'Cambia libreria musicale', clearCache: 'Svuota cache',
+        connectServer: 'Connetti al Server', serverUrl: 'URL del Server', user: 'Utente', password: 'Password',
+        connect: 'Connetti', chooseFolder: 'Scegli cartella musicale', selectMusicLibrary: 'Seleziona libreria musicale',
+        visualizer: 'Visualizzatore', search: 'Cerca', serverSettings: 'Impostazioni Server', language: 'Lingua',
+        myMusicHome: 'La mia musica', songs: 'Canzoni', albums: 'Album', artists: 'Artisti', playlists: 'Playlist',
+        original: 'Originale', spanish: 'Spagnolo', english: 'Inglese', german: 'Tedesco', french: 'Francese',
+        italian: 'Italiano', portuguese: 'Portoghese', lyrics: 'Testi', translating: 'Traduzione...',
+        equalizer: 'Equalizzatore', eqVptTab: 'Impostazioni / VPT', vptAmbient: 'Audio ambientale (VPT)',
+        vptOff: 'Disattivato', vptOffDesc: 'Nessun effetto sonoro ambientale immersivo',
+        vptStudio: 'Studio', vptStudioDesc: 'Crea il suono di uno studio di registrazione acustico',
+        vptClub: 'Club', vptClubDesc: 'Simula il suono dal vivo di un club musicale',
+        vptAuditorium: 'Auditorium', vptAuditoriumDesc: 'Produce l\'ampia risonanza di una sala da concerto',
+        searchPlaceholder: 'Cerca canzoni, album, artisti...', searchHint: 'Digita per cercare...',
+        visStyle: 'Stile visualizzatore', visRings: 'Anelli pulsanti', visBars: 'Barre di frequenza',
+        visWave: 'Onda stereo', visPs3: 'Onde PS3', visCosmic: 'Cosmic Flow',
+        visParticles: 'Particelle dell\'album', visBlocks: 'Blocchi ritmici',
+        playNext: 'Riproduci successiva', addToQueue: 'Aggiungi alla coda', removeFromQueue: 'Rimuovi dalla coda',
+        musicInfo: 'Informazioni musicali', noName: 'Senza nome', noAvailable: 'Non disponibile',
+        unknown: 'Sconosciuto', infoName: 'Nome', infoArtist: 'Artista', infoAlbum: 'Album', infoFile: 'File',
+        libraryChanged: 'Libreria cambiata', noResults: 'Nessun risultato trovato',
+        addedToQueue: 'Aggiunto alla coda', addedToQueueMany: '{kind} aggiunto ({n} canzoni)',
+        notInQueue: 'Non è in coda', removedFromQueueToast: 'Rimosso dalla coda',
+        kindArtist: 'Artista', kindAlbum: 'Album', kindPlaylist: 'Playlist',
+        coversReady: 'Copertine pronte ({n})', noEmbeddedCovers: 'Nessuna copertina incorporata',
+        loadingSongs: 'Caricamento canzoni...', refreshSlideshow: 'Aggiorna presentazione',
+        quotaExceeded: 'Traduzione temporaneamente non disponibile (limite gratuito giornaliero raggiunto)'
+      },
+      pt: {
+        settings: 'Configurações', accentColor: 'Cor de destaque', dynamic: 'Dinâmico', custom: 'Personalizado',
+        beatGlow: 'Brilho no ritmo', xpspLeds: 'LEDs Xperia SP', sensitivity: 'Sensibilidade', low: 'Baixa',
+        medium: 'Média', high: 'Alta', changeLibrary: 'Alterar biblioteca musical', clearCache: 'Limpar cache',
+        connectServer: 'Conectar ao Servidor', serverUrl: 'URL do Servidor', user: 'Utilizador', password: 'Senha',
+        connect: 'Conectar', chooseFolder: 'Escolher pasta de música', selectMusicLibrary: 'Selecionar biblioteca musical',
+        visualizer: 'Visualizador', search: 'Pesquisar', serverSettings: 'Configurações do Servidor', language: 'Idioma',
+        myMusicHome: 'Minha música', songs: 'Músicas', albums: 'Álbuns', artists: 'Artistas', playlists: 'Listas de reprodução',
+        original: 'Original', spanish: 'Espanhol', english: 'Inglês', german: 'Alemão', french: 'Francês',
+        italian: 'Italiano', portuguese: 'Português', lyrics: 'Letras', translating: 'A traduzir...',
+        equalizer: 'Equalizador', eqVptTab: 'Configurações / VPT', vptAmbient: 'Som ambiente (VPT)',
+        vptOff: 'Desativado', vptOffDesc: 'Sem efeitos de som ambiente imersivos',
+        vptStudio: 'Estúdio', vptStudioDesc: 'Cria o som de um estúdio de gravação acústico',
+        vptClub: 'Clube', vptClubDesc: 'Simula o som ao vivo de um clube de música',
+        vptAuditorium: 'Auditório', vptAuditoriumDesc: 'Produz a ampla ressonância de uma sala de concertos',
+        searchPlaceholder: 'Pesquisar músicas, álbuns, artistas...', searchHint: 'Escreva para pesquisar...',
+        visStyle: 'Estilo do visualizador', visRings: 'Anéis pulsantes', visBars: 'Barras de frequência',
+        visWave: 'Onda estéreo', visPs3: 'Ondas PS3', visCosmic: 'Cosmic Flow',
+        visParticles: 'Partículas do álbum', visBlocks: 'Blocos rítmicos',
+        playNext: 'Reproduzir a seguir', addToQueue: 'Adicionar à fila', removeFromQueue: 'Remover da fila',
+        musicInfo: 'Informações da música', noName: 'Sem nome', noAvailable: 'Indisponível',
+        unknown: 'Desconhecido', infoName: 'Nome', infoArtist: 'Artista', infoAlbum: 'Álbum', infoFile: 'Arquivo',
+        libraryChanged: 'Biblioteca alterada', noResults: 'Nenhum resultado encontrado',
+        addedToQueue: 'Adicionado à fila', addedToQueueMany: '{kind} adicionado ({n} músicas)',
+        notInQueue: 'Não está na fila', removedFromQueueToast: 'Removido da fila',
+        kindArtist: 'Artista', kindAlbum: 'Álbum', kindPlaylist: 'Playlist',
+        coversReady: 'Capas prontas ({n})', noEmbeddedCovers: 'Sem capas incorporadas',
+        loadingSongs: 'A carregar músicas...', refreshSlideshow: 'Atualizar apresentação',
+        quotaExceeded: 'Tradução temporariamente indisponível (limite gratuito diário atingido)'
+      }
+    };
 
+    let currentLang = 'en';
+    function t(key) {
+      const dict = I18N[currentLang] || I18N.en;
+      return dict[key] !== undefined ? dict[key] : (I18N.en[key] !== undefined ? I18N.en[key] : key);
+    }
+    function getLang() {
+      try { return localStorage.getItem('walkman_lang') || 'en'; } catch (e) { return 'en'; }
+    }
+    function setLang(lang) {
+      currentLang = I18N[lang] ? lang : 'en';
+      try { localStorage.setItem('walkman_lang', currentLang); } catch (e) {}
+      applyI18n();
+      syncLangSelectors();
+    }
+    function syncLangSelectors() {
+      document.querySelectorAll('.lang-select').forEach(sel => { sel.value = currentLang; });
+      document.querySelectorAll('.lang-select').forEach(sel => { if (sel.value !== currentLang) sel.value = currentLang; });
+    }
+    function applyI18n() {
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        el.textContent = t(key);
+      });
+      document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        el.setAttribute('placeholder', t(key));
+      });
+      document.querySelectorAll('[data-i18n-title]').forEach(el => {
+        const key = el.getAttribute('data-i18n-title');
+        el.setAttribute('title', t(key));
+      });
+      if (typeof renderVptCards === 'function' && document.getElementById('vpt-current-name')) {
+        renderVptCards();
+      }
+    }
+    currentLang = getLang();
+
+    let embyConfig = { host: '', token: '', userId: '', libraryId: '', user: '', serverType: 'emby' };
     // Mapeo de tipos por servidor
     const SERVER_TYPES = {
       emby:    { Audio: 'Audio', Album: 'MusicAlbum', Artist: 'MusicArtist', Playlist: 'Playlist' },
@@ -3015,6 +3294,9 @@
     // Perfiles VPT
     let currentVptIndex = 0; // Por defecto "Estudio"
     const vptProfiles = ['Desactivado', 'Estudio', 'Club', 'Auditorio'];
+    const vptNameKeys = { 'Desactivado': 'vptOff', 'Estudio': 'vptStudio', 'Club': 'vptClub', 'Auditorio': 'vptAuditorium' };
+    const categoryKeys = { 'Songs': 'songs', 'Albums': 'albums', 'Artists': 'artists', 'Playlists': 'playlists', 'Playlist': 'playlists' };
+    function tCategory(category) { return t(categoryKeys[category] || category); }
 
     // ---- Server Adapter ----
     function switchServerType(type) {
@@ -3373,7 +3655,7 @@
       await Promise.all(Array.from({ length: Math.min(CONCURRENCY, pending.length) }, worker));
 
       console.log(`[WALKMAN] portadas extraídas: ${coversFound}/${pending.length}`);
-      toast.textContent = coversFound > 0 ? `Portadas listas (${coversFound})` : 'Sin portadas incrustadas';
+      toast.textContent = coversFound > 0 ? t('coversReady').replace('{n}', coversFound) : t('noEmbeddedCovers');
       setTimeout(() => toast.classList.remove('show'), 1500);
       hideLocalImportBanner();
 
@@ -4590,7 +4872,7 @@
         }
       });
 
-      document.getElementById('vpt-current-name').textContent = vptProfiles[currentVptIndex];
+      document.getElementById('vpt-current-name').textContent = t(vptNameKeys[vptProfiles[currentVptIndex]] || vptProfiles[currentVptIndex]);
     }
 
     function selectVptProfile(index) {
@@ -4910,7 +5192,7 @@
       const btn = document.getElementById('beatglow-btn');
       if (btn) btn.classList.toggle('on', beatGlowEnabled);
       const label = document.getElementById('beatglow-btn-label');
-      if (label) label.textContent = beatGlowEnabled ? 'Resplandor al ritmo: ON' : 'Resplandor al ritmo';
+      if (label) label.textContent = beatGlowEnabled ? t('beatGlow') + ': ON' : t('beatGlow');
       const wrap = document.getElementById('beatglow-sens-wrap');
       if (wrap) wrap.style.display = beatGlowEnabled ? '' : 'none';
       const opts = document.querySelectorAll('#beatglow-sens-options .accent-option');
@@ -5040,7 +5322,7 @@
       const btn = document.getElementById('xpsp-led-btn');
       if (btn) btn.classList.toggle('on', xpspLedEnabled);
       const label = document.getElementById('xpsp-led-btn-label');
-      if (label) label.textContent = xpspLedEnabled ? 'LEDs Xperia SP: ON' : 'LEDs Xperia SP';
+      if (label) label.textContent = xpspLedEnabled ? t('xpspLeds') + ': ON' : t('xpspLeds');
       const wrap = document.getElementById('xpsp-sens-wrap');
       if (wrap) wrap.style.display = xpspLedEnabled ? '' : 'none';
       const opts = document.querySelectorAll('#xpsp-sens-options .accent-option');
@@ -5240,10 +5522,10 @@
 
     async function loadLyrics() {
       const body = document.getElementById('lyrics-body');
-      body.innerHTML = '<div class="lyrics-loading">Buscando letras...</div>';
+      body.innerHTML = '<div class="lyrics-loading">' + t('searchingLyrics') + '</div>';
       const track = playlist[currentTrackIndex];
       if (!track) {
-        body.innerHTML = '<div class="lyrics-empty">Sin canción en reproducción</div>';
+        body.innerHTML = '<div class="lyrics-empty">' + t('noTrackPlaying') + '</div>';
         return;
       }
       const artist = (track.Artists && track.Artists.length) ? track.Artists.join(' ') : '';
@@ -5262,22 +5544,24 @@
         if (match) {
           displayLrc(match.syncedLyrics || match.plainLyrics, title);
         } else {
-          body.innerHTML = '<div class="lyrics-empty">No se encontraron letras para esta canción</div>';
+          body.innerHTML = '<div class="lyrics-empty">' + t('noLyrics') + '</div>';
         }
       } catch (e) {
-        body.innerHTML = '<div class="lyrics-error">Error al conectar con el servidor de letras</div>';
+        body.innerHTML = '<div class="lyrics-error">' + t('lyricsError') + '</div>';
       }
     }
 
     function displayLrc(lrc, title) {
       const body = document.getElementById('lyrics-body');
       lrcLines.length = 0;
-      document.getElementById('lyrics-title').textContent = title;
+      const titleEl = document.getElementById('lyrics-title');
+      titleEl.textContent = title;
+      titleEl.removeAttribute('data-i18n'); // el título es dinámico, no se traduce
       // Reiniciar selector de idioma a "Original" al cambiar de canción
       const sel = document.getElementById('lyrics-lang');
       if (sel) sel.value = '';
       if (!lrc || !String(lrc).trim()) {
-        body.innerHTML = '<div class="lyrics-empty">Esta canción no tiene letras sincronizadas</div>';
+        body.innerHTML = '<div class="lyrics-empty">' + t('noSyncedLyrics') + '</div>';
         return;
       }
       const lineRe = /\[(\d+):(\d+)(?:[.:](\d+))?\](.*)/;
@@ -5291,7 +5575,7 @@
       });
       lrcLines.sort((a, b) => a.time - b.time);
       if (!lrcLines.length) {
-        body.innerHTML = '<div class="lyrics-empty">No se encontraron letras sincronizadas</div>';
+        body.innerHTML = '<div class="lyrics-empty">' + t('noSyncedFound') + '</div>';
         return;
       }
       renderLyricsBody();
@@ -5307,6 +5591,10 @@
     }
 
     // Detecta el idioma de origen de las letras (Google, gratuito y con CORS).
+    // MyMemory requiere "de" (email) para levantar el límite diario por IP;
+    // sin él la cuota anónima se agota pronto y devuelve 429. Cámbialo por tu email real.
+    const MYMEMORY_EMAIL = 'walkman.myanri@gmail.com';
+
     function detectSourceLang(probe) {
       return fetch(
         `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=` +
@@ -5314,9 +5602,49 @@
         .then(r => r.ok ? r.json() : null)
         .then(d => {
           if (d && Array.isArray(d) && d[2]) return String(d[2]).substring(0, 2).toUpperCase();
-          return 'en';
+          return null;
         })
-        .catch(() => 'en');
+        .catch(() => null);
+    }
+
+    // Traduce una línea con Google Translate (endpoint gtx, sin API key).
+    // Devuelve el texto o lanza si no se puede (bloqueado/error).
+    function translateWithGoogle(text, src, target) {
+      const tl = target === 'zh' ? 'zh-CN' : target;
+      return fetch(
+        `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${encodeURIComponent(src)}&tl=${encodeURIComponent(tl)}&dt=t&q=` +
+        encodeURIComponent(text))
+        .then(r => { if (!r.ok) throw new Error('http'); return r.json(); })
+        .then(d => {
+          if (Array.isArray(d) && Array.isArray(d[0]) && d[0].length) {
+            const parts = d[0].map(x => x && x[0]).filter(x => x);
+            if (parts.length) return parts.join('');
+          }
+          throw new Error('bad');
+        });
+    }
+
+    // Si la detección externa (Google) no responde, probamos fuentes candidatas
+    // vía MyMemory y nos quedamos con la de mayor confianza (matches[0].match).
+    async function detectSourceLangFallback(probe, target) {
+      const candidates = ['es', 'en', 'de', 'fr', 'it', 'pt'];
+      const q = String(probe).slice(0, 120);
+      let best = 'en';
+      let bestScore = 0;
+      const settled = await Promise.allSettled(candidates.filter(c => c !== target).map(async (c) => {
+        try {
+          const r = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(q)}&langpair=${c}|${target || 'en'}&de=${encodeURIComponent(MYMEMORY_EMAIL)}`);
+          if (!r.ok) throw new Error('http');
+          const d = await r.json();
+          if (!d || Number(d.responseStatus) !== 200) return { c, score: 0 };
+          const score = (d.matches && d.matches[0] && Number(d.matches[0].match)) || (d.responseData && Number(d.responseData.match)) || 0;
+          return { c, score };
+        } catch (e) { return { c, score: 0 }; }
+      }));
+      settled.forEach(x => {
+        if (x.status === 'fulfilled' && x.value.score > bestScore) { bestScore = x.value.score; best = x.value.c; }
+      });
+      return best;
     }
 
     // Traduce las letras al idioma seleccionado. MyMemory limita cada query a
@@ -5338,24 +5666,45 @@
         const original = lrcLines.map(l => l._orig || l.text);
         const detTitle = document.getElementById('lyrics-title').textContent;
         const probe = original.filter(x => x).slice(0, 15).join(' ') || detTitle || 'music';
-        const src = await detectSourceLang(probe);
+        let src = await detectSourceLang(probe);
+        if (!src) src = await detectSourceLangFallback(probe, lang);
 
         const results = new Array(original.length);
         let cursor = 0;
+        let quotaHit = false;
         const concurrency = 4;
+
+        const fetchTx = (url, ms) => {
+          const ctl = new AbortController();
+          const timer = setTimeout(() => ctl.abort(), ms);
+          return fetch(url, { signal: ctl.signal }).finally(() => clearTimeout(timer));
+        };
+
         const worker = async () => {
-          while (cursor < original.length) {
+          while (cursor < original.length && !quotaHit) {
             const idx = cursor++;
-            const line = original[idx].slice(0, 480);
+            let line = original[idx];
+            try { while (new TextEncoder().encode(line).length > 480) line = line.slice(0, -1); } catch (e) {}
             if (!line.trim()) { results[idx] = original[idx]; continue; }
+            let tr = null;
             try {
-              const r = await fetch(
+              tr = await translateWithGoogle(line, src, lang);
+            } catch (e) { tr = null; }
+            if (tr) { results[idx] = tr; continue; }
+            try {
+              const r = await fetchTx(
                 `https://api.mymemory.translated.net/get?q=${encodeURIComponent(line)}` +
-                `&langpair=${src}|${encodeURIComponent(lang)}`);
+                `&langpair=${src}|${encodeURIComponent(lang)}&de=${encodeURIComponent(MYMEMORY_EMAIL)}`, 12000);
               if (!r.ok) throw new Error('http');
               const d = await r.json();
-              const tr = d.responseData && d.responseData.translatedText;
-              results[idx] = (tr && tr.trim()) ? tr : original[idx];
+              if (d && d.quotaFinished) {
+                quotaHit = true;
+                results[idx] = original[idx];
+              } else if (d && Number(d.responseStatus) === 200 && d.responseData && d.responseData.translatedText && d.responseData.translatedText.trim()) {
+                results[idx] = d.responseData.translatedText;
+              } else {
+                results[idx] = original[idx];
+              }
             } catch (e) {
               results[idx] = original[idx];
             }
@@ -5365,6 +5714,7 @@
 
         lrcLines.forEach((l, i) => { if (results[i]) l.text = results[i]; });
         renderLyricsBody();
+        if (quotaHit) showToast(t('quotaExceeded'));
       } catch (e) {
         // Mantener texto actual si falla la traducción
       } finally {
@@ -5463,7 +5813,7 @@
       saveServerSettings();
       closeLibraryPicker();
       await updateCategoryCounts();
-      showToast('Biblioteca cambiada');
+      showToast(t('libraryChanged'));
     }
 
     function clearCache() {
@@ -5655,7 +6005,7 @@
 
           container.innerHTML = '';
           if (items.length === 0) {
-            container.innerHTML = '<div style="color: #888; font-size: 13px; text-align: center;">No se encontraron resultados</div>';
+            container.innerHTML = '<div style="color: #888; font-size: 13px; text-align: center;">' + t('noResults') + '</div>';
             return;
           }
 
@@ -5830,7 +6180,8 @@
 
       const titleStrip = document.createElement('div');
       titleStrip.className = 'featured-title-strip';
-      titleStrip.textContent = 'My Music';
+      titleStrip.setAttribute('data-i18n', 'myMusicHome');
+      titleStrip.textContent = t('myMusicHome');
       container.appendChild(titleStrip);
 
       featuredSlides.forEach((slide, i) => {
@@ -6007,7 +6358,7 @@
     async function loadCategory(category) {
       document.getElementById('category-view').style.display = 'none';
       document.getElementById('list-view').style.display = 'block';
-      document.getElementById('selected-category-title').textContent = category;
+      document.getElementById('selected-category-title').textContent = tCategory(category);
 
       // Nivel actual = categoría; desde aquí se accede a sub-elementos
       navStack = [{ type: 'category', category: category }];
@@ -6028,6 +6379,7 @@
       }
 
       container.innerHTML = '';
+      const catLabel = tCategory(category);
 
       data.Items.forEach((item, index) => {
         const div = document.createElement('div');
@@ -6038,7 +6390,7 @@
           <img src="${imgUrl}" onerror="this.onerror=null;this.src='${defaultPlaceholder}';">
           <div class="list-item-info">
             <div class="list-item-title">${item.Name}</div>
-            <div class="list-item-sub">${item.AlbumArtist || (item.Artists ? item.Artists.join(', ') : category)}</div>
+            <div class="list-item-sub">${item.AlbumArtist || (item.Artists ? item.Artists.join(', ') : catLabel)}</div>
           </div>
           <button class="list-item-more" onclick="event.stopPropagation(); openContextMenu(event, ${JSON.stringify(item).replace(/"/g, '&quot;')})"><span class="material-icons">more_vert</span></button>
         `;
@@ -6070,7 +6422,7 @@
       navStack.push({ type: 'subitems', category: navStack.length ? navStack[navStack.length - 1].category : '' });
 
       const container = document.getElementById('items-container');
-      container.innerHTML = '<div style="color:#aaa;">Cargando canciones...</div>';
+      container.innerHTML = '<div style="color:#aaa;">' + t('loadingSongs') + '</div>';
 
       const st = embyConfig.serverType;
       const types = SERVER_TYPES[st];
@@ -6087,7 +6439,7 @@
           <img src="${imgUrl}" onerror="this.onerror=null;this.src='${defaultPlaceholder}';">
           <div class="list-item-info">
             <div class="list-item-title">${track.Name}</div>
-            <div class="list-item-sub">${track.Artists ? track.Artists.join(', ') : 'Desconocido'}</div>
+            <div class="list-item-sub">${track.Artists ? track.Artists.join(', ') : t('unknown')}</div>
           </div>
           <button class="list-item-more" onclick="event.stopPropagation(); openContextMenu(event, ${JSON.stringify(track).replace(/"/g, '&quot;')})"><span class="material-icons">more_vert</span></button>
         `;
@@ -6135,7 +6487,7 @@
       const info = document.getElementById('ctx-menu-info');
       const removeOpt = document.getElementById('ctx-remove-option');
 
-      title.textContent = item.Name || 'Sin nombre';
+      title.textContent = item.Name || t('noName');
       sub.textContent = item.Artists ? item.Artists.join(', ') : (item.AlbumArtist || '');
       info.style.display = 'none';
       // Solo mostrar "Eliminar de la cola" cuando el menú sale de la Play Queue
@@ -6202,8 +6554,8 @@
       originalPlaylist.push(...items);
       renderQueueList();
       refreshCarouselImages();
-      const kind = isArtistItem(ctxMenuItem) ? 'Artista' : (isPlaylistItem(ctxMenuItem) ? 'Playlist' : 'Álbum');
-      showToast(items.length === 1 ? 'Añadida a la cola' : kind + ' añadido (' + items.length + ' canciones)');
+      const kind = isArtistItem(ctxMenuItem) ? t('kindArtist') : (isPlaylistItem(ctxMenuItem) ? t('kindPlaylist') : t('kindAlbum'));
+      showToast(items.length === 1 ? t('addedToQueue') : t('addedToQueueMany').replace('{kind}', kind).replace('{n}', String(items.length)));
       closeContextMenu();
     }
 
@@ -6216,7 +6568,7 @@
         idx = playlist.findIndex(t => t && (t.Id === ctxMenuItem.Id || t.Name === ctxMenuItem.Name));
       }
       if (idx < 0) {
-        showToast('No está en la cola');
+        showToast(t('notInQueue'));
         closeContextMenu();
         return;
       }
@@ -6240,7 +6592,7 @@
 
       renderQueueList();
       refreshCarouselImages();
-      showToast('Eliminada de la cola');
+      showToast(t('removedFromQueueToast'));
       closeContextMenu();
     }
 
@@ -6248,10 +6600,10 @@
       if (!ctxMenuItem) return;
       const info = document.getElementById('ctx-menu-info');
       const item = ctxMenuItem;
-      const fileName = item.Path ? item.Path.split(/[/\\]/).pop() : 'No disponible';
-      const artist = item.Artists ? item.Artists.join(', ') : (item.AlbumArtist || 'Desconocido');
-      const album = item.Album || 'Desconocido';
-      info.innerHTML = `<strong>Nombre:</strong> ${item.Name}<br><strong>Artista:</strong> ${artist}<br><strong>Álbum:</strong> ${album}<br><strong>Fichero:</strong> ${fileName}`;
+      const fileName = item.Path ? item.Path.split(/[/\\]/).pop() : t('noAvailable');
+      const artist = item.Artists ? item.Artists.join(', ') : (item.AlbumArtist || t('unknown'));
+      const album = item.Album || t('unknown');
+      info.innerHTML = `<strong>${t('infoName')}:</strong> ${item.Name}<br><strong>${t('infoArtist')}:</strong> ${artist}<br><strong>${t('infoAlbum')}:</strong> ${album}<br><strong>${t('infoFile')}:</strong> ${fileName}`;
       info.style.display = 'block';
     }
 
@@ -6314,7 +6666,7 @@
       container.innerHTML = '';
 
       if (playlist.length === 0) {
-        container.innerHTML = '<div style="color: #aaa; font-size: 13px; text-align: center; margin-top: 20px;">Sin canciones en la cola</div>';
+        container.innerHTML = '<div style="color: #aaa; font-size: 13px; text-align: center; margin-top: 20px;">' + t('emptyQueue') + '</div>';
         return;
       }
 
@@ -6665,6 +7017,9 @@
     }
 
     window.onload = async () => {
+      currentLang = getLang();
+      applyI18n();
+      syncLangSelectors();
       initZoom();
       initCarouselZoom();
       initFeaturedZoom();
