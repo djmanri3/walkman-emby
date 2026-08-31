@@ -7,7 +7,7 @@
 
   <!-- PWA Meta Tags -->
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#3a0007">
+  <meta name="theme-color" content="#000000">
   
   <!-- Soporte para iOS (Apple Safari) -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -25,7 +25,7 @@
   
   <style>
     :root {
-      --bg-color-1: #3a0007;
+      --bg-color-1: #000000;
       --bg-color-2: #050505;
       --accent-color: #aa00ff;
       --walkman-green: #76c02a;
@@ -5596,7 +5596,9 @@
         }
       } catch (e) {}
 
-      if (analyserNode) {
+      // Sin audio reproduciéndose (pausa o sin pista): no repintar nada,
+      // solo mantener el reloj RAF para reanudar en cuanto suene.
+      if (analyserNode && audio && !audio.paused) {
         try {
           const bin = analyserNode.frequencyBinCount;
           if (bin > 0) {
@@ -5737,7 +5739,8 @@
 
       // Ajusta la altura de los haces para que lleguen justo debajo de la barra
       // de progreso, recalculando periódicamente para seguir al reproductor.
-      if (--xpspLedHeightFrame <= 0) {
+      // Solo tiene sentido mientras hay audio sonando (los haces están visibles).
+      if (audio && !audio.paused && --xpspLedHeightFrame <= 0) {
         xpspLedHeightFrame = 15;
         const prog = document.querySelector('.progress-container');
         let h = 160;
