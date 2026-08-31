@@ -4501,6 +4501,11 @@
 
     // Array conveniente de pares (frecuencia media, valor 0-1)
     let visBands = new Uint8Array(0);
+    // Buffer reutilizable normalizado (evita asignar un array nuevo cada frame)
+    let visBinsNorm = new Float32Array(0);
+    // Caché del color de acento (getComputedStyle es caro; se refresca cada 500ms)
+    let visAccentCache = '';
+    let visAccentCacheTime = 0;
 
     // Buffers reutilizables para el shader del Cosmic Flow (render a baja resolución)
     let cosmicCanvas = null;
@@ -4567,20 +4572,19 @@
 
     function getVisData() {
       if (!analyserNode) return null;
-      const fftSize = analyserNode.fftSize || 256;
-      if (visBands.length !== analyserNode.frequencyBinCount) {
-        visBands = new Uint8Array(analyserNode.frequencyBinCount);
+      const n = analyserNode.frequencyBinCount;
+      if (visBands.length !== n) {
+        visBands = new Uint8Array(n);
+        visBinsNorm = new Float32Array(n);
       }
       analyserNode.getByteFrequencyData(visBands);
-      const bins = [];
-      const n = visBands.length;
-      for (let i = 0; i < n; i++) {
-        bins.push(visBands[i] / 255);
-      }
       let sum = 0;
-      for (let i = 0; i < n; i++) sum += visBands[i];
+      for (let i = 0; i < n; i++) {
+        sum += visBands[i];
+        visBinsNorm[i] = visBands[i] / 255;
+      }
       const avg = (sum / n) / 255;
-      return { bins, avg, n };
+      return { bins: visBinsNorm, avg, n };
     }
 
     function initParticles() {
@@ -4617,7 +4621,12 @@
 
       const centerX = canvas.width / 2;
       const centerY = canvas.height / 2 - 40;
-      const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim() || '#aa00ff';
+      const now = performance.now();
+      if (now - visAccentCacheTime > 500) {
+        visAccentCache = getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim() || '#aa00ff';
+        visAccentCacheTime = now;
+      }
+      const accent = visAccentCache;
 
       if (visStyle === 'rings') {
         drawVisRings(centerX, centerY, audioIntensity, accent);
@@ -5758,18 +5767,20 @@
             // Frecuencias medias: del final de los graves hasta ~40 bins (~0-7kHz),
             // donde están la voz, guitarras y melodía; colaboran en el brillo.
             const mid = Math.min(40, bin);
-            let sumLow = 0;
-            for (let i = 0; i < low; i++) sumLow += visBands[i];
-            const bassEnergy = (sumLow / low) / 255;
-            let sumMid = 0;
             const midBins = mid - low;
-            for (let i = low; i < mid; i++) sumMid += visBands[i];
+            // Un solo recorrido para sumar graves, medias y el espectro completo
+            let sumLow = 0, sumMid = 0, sumAll = 0;
+            for (let i = 0; i < bin; i++) {
+              const v = visBands[i];
+              sumAll += v;
+              if (i < low) sumLow += v;
+              else if (i < mid) sumMid += v;
+            }
+            const bassEnergy = low > 0 ? (sumLow / low) / 255 : 0;
             const midEnergy = midBins > 0 ? (sumMid / midBins) / 255 : 0;
             // Proporción de graves frente al espectro completo: hace que los LEDs
             // brillen según el contenido de bajos, no según el volumen total.
-            let sumAll = 0;
-            for (let i = 0; i < bin; i++) sumAll += visBands[i];
-            const totalAvg = (sumAll / bin) / 255 || 0;
+            const totalAvg = bin > 0 ? (sumAll / bin) / 255 || 0 : 0;
             const bassRatio = totalAvg > 0.03
               ? Math.min(1.6, bassEnergy / Math.max(0.04, totalAvg))
               : bassEnergy;
@@ -5839,6 +5850,7 @@
     const lrcLines = [];            // { time (s), text }
     let lrcLoadedTitle = '';
     let lrcInterval = null;
+    let lastLrcIdx = -1;            // línea activa ya resaltada (evita trabajo redundante)
 
     function escapeHtml(s) {
       return String(s == null ? '' : s)
@@ -5939,6 +5951,7 @@
     }
 
     function renderLyricsBody() {
+      lastLrcIdx = -1;
       const body = document.getElementById('lyrics-body');
       body.innerHTML = lrcLines
         .map((l, i) => `<div class="lyrics-line" id="lrc-line-${i}">${escapeHtml(l.text)}</div>`)
@@ -6086,6 +6099,9 @@
       for (let i = lrcLines.length - 1; i >= 0; i--) {
         if (t >= lrcLines[i].time) { idx = i; break; }
       }
+      // Si la línea activa no ha cambiado, no hay nada que resaltar ni scrollear
+      if (idx === lastLrcIdx) return;
+      lastLrcIdx = idx;
       const prev = document.querySelector('.lyrics-line.active');
       if (prev) prev.classList.remove('active');
       if (idx >= 0) {
@@ -7456,14 +7472,22 @@
 
     audio.addEventListener('timeupdate', () => {
       if (isNaN(audio.duration)) return;
-      const progress = (audio.currentTime / audio.duration) * 100;
-      document.getElementById('progress-bar').value = progress;
-      document.getElementById('time-current').textContent = formatTime(audio.currentTime);
-      document.getElementById('time-total').textContent = formatTime(audio.duration);
-      // Barra de progreso del Visualizador
-      document.getElementById('vis-progress-bar').value = progress;
-      document.getElementById('vis-time-current').textContent = formatTime(audio.currentTime);
-      document.getElementById('vis-time-total').textContent = formatTime(audio.duration);
+      const cur = audio.currentTime;
+      if (cur === audio._lastTimeUpdate) return;
+      audio._lastTimeUpdate = cur;
+      const progress = ((cur / audio.duration) * 100).toFixed(2);
+      const progressBar = document.getElementById('progress-bar');
+      const timeCurrent = document.getElementById('time-current');
+      const timeTotal = document.getElementById('time-total');
+      progressBar.value = progress;
+      timeCurrent.textContent = formatTime(cur);
+      timeTotal.textContent = formatTime(audio.duration);
+      // Barra de progreso del Visualizador (solo si está visible)
+      if (document.getElementById('visualizer-overlay').classList.contains('open')) {
+        document.getElementById('vis-progress-bar').value = progress;
+        document.getElementById('vis-time-current').textContent = formatTime(cur);
+        document.getElementById('vis-time-total').textContent = formatTime(audio.duration);
+      }
     });
 
     audio.addEventListener('ended', () => {
