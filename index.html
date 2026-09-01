@@ -3236,7 +3236,7 @@
     </div>
   </div>
 
-  <audio id="audio-player" crossorigin="anonymous"></audio>
+  <audio id="audio-player" crossorigin="anonymous" playsinline webkit-playsinline preload="auto"></audio>
 
   <script>
     // ---- Sistema de idiomas (i18n) ----
@@ -4400,6 +4400,13 @@
 
 
     // WEB AUDIO API - ECUALIZADOR, CLEAR BASS, VPT REVERB Y ANALYZER DE VISUALIZADOR
+    // En iOS el AudioContext se suspende al minimizar la app, cortando el sonido
+    // (ya que el audio va enrutado a través de él). Para poder reproducir en
+    // background, en iOS desactivamos el procesado Web Audio y dejamos que el
+    // elemento <audio> reproduzca de forma nativa directamente.
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const audioProcessingEnabled = !isIOS;
     let audioCtx = null;
     let trackSource = null;
     let analyserNode = null;
@@ -4411,7 +4418,8 @@
 
     function initAudioContext() {
       if (audioCtx) return;
-      
+      if (!audioProcessingEnabled) return;
+
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       audioCtx = new AudioContext();
       trackSource = audioCtx.createMediaElementSource(audio);
@@ -4620,7 +4628,25 @@
     }
 
     function getVisData() {
-      if (!analyserNode) return null;
+      if (!analyserNode) {
+        // Sin AudioContext (p. ej. iOS con procesado Web Audio desactivado):
+        // enviamos bins de relleno con intensidad suave para que el visualizador
+        // no se quede en negro ni rompa.
+        const n = 64;
+        if (visBands.length !== n) {
+          visBands = new Uint8Array(n);
+          visBinsNorm = new Float32Array(n);
+        }
+        const now = performance.now();
+        const base = (Math.sin(now / 300) * 0.5 + 0.5) * 0.25 + 0.15;
+        for (let i = 0; i < n; i++) {
+          const wave = (Math.sin(now / 120 + i * 0.6) * 0.5 + 0.5) * 0.2;
+          const v = (base + wave) * 255;
+          visBands[i] = Math.min(255, Math.max(0, v));
+          visBinsNorm[i] = visBands[i] / 255;
+        }
+        return { bins: visBinsNorm, avg: base + 0.1, n };
+      }
       const n = analyserNode.frequencyBinCount;
       if (visBands.length !== n) {
         visBands = new Uint8Array(n);
@@ -7533,6 +7559,7 @@
           ? `${embyConfig.host}/library/parts/${track._plexPartId}/stream?X-Plex-Token=${embyConfig.token}`
           : `${embyConfig.host}/Audio/${track.Id}/stream?static=true&api_key=${embyConfig.token}`;
       audio.src = streamUrl;
+      audio._userPaused = false;
       audio.play();
 
       document.getElementById('play-icon').textContent = 'pause';
@@ -7550,10 +7577,12 @@
         audioCtx.resume();
       }
       if (audio.paused) {
+        audio._userPaused = false;
         audio.play();
         document.getElementById('play-icon').textContent = 'pause';
         document.getElementById('vis-play-icon').textContent = 'pause';
       } else {
+        audio._userPaused = true;
         audio.pause();
         document.getElementById('play-icon').textContent = 'play_arrow';
         document.getElementById('vis-play-icon').textContent = 'play_arrow';
@@ -7712,6 +7741,94 @@
       console.log('WALKMAN PWA: App instalada correctamente');
     });
 
+    // ---- Audio en background / reanudado al volver (iOS Safari) ----
+    // En iOS, al minimizar la web app Safari pausa la reproducción (o suspende
+    // el AudioContext). Este bloque guarda el estado y reanuda automáticamente
+    // al volver a primer plano, además de manejar las interrupciones de iOS
+    // (Siri, llamadas, bloqueo de pantalla).
+    function initBackgroundAudio() {
+      if (!audio) return;
+      let wasPlaying = false;
+
+      function captureState() {
+        wasPlaying = !!audio.src && !audio.paused && !audio.ended && !audio._userPaused;
+      }
+
+      function resumePlayback() {
+        if (!wasPlaying || !audio.src || audio._userPaused) return;
+        if (audioCtx && audioCtx.state !== 'running' && audioCtx.resume) {
+          try { audioCtx.resume().catch(function() {}); } catch (e) {}
+        }
+        if (audio.paused) {
+          const p = audio.play();
+          if (p && p.catch) p.catch(function() {});
+        }
+      }
+
+      // Algunos iOS requieren un gesto del usuario para reanudar el audio;
+      // reintentamos la reproducción sobre el primer toque tras volver.
+      function armGestureRetry() {
+        if (window.__walkmanRetryArmed) return;
+        window.__walkmanRetryArmed = true;
+        const retry = function() {
+          window.__walkmanRetryArmed = false;
+          window.removeEventListener('pointerdown', retry);
+          document.removeEventListener('touchstart', retry);
+          if (wasPlaying && !audio._userPaused) {
+            if (audioCtx && audioCtx.state !== 'running' && audioCtx.resume) {
+              try { audioCtx.resume().catch(function() {}); } catch (e) {}
+            }
+            if (audio.paused && audio.src) {
+              const p = audio.play();
+              if (p && p.catch) p.catch(function() {});
+            }
+          }
+        };
+        window.addEventListener('pointerdown', retry);
+        document.addEventListener('touchstart', retry);
+      }
+
+      function onHidden() {
+        captureState();
+      }
+
+      function onVisible() {
+        resumePlayback();
+        armGestureRetry();
+      }
+
+      document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'hidden') onHidden();
+        else onVisible();
+      });
+      document.addEventListener('webkitvisibilitychange', function() {
+        if (document.visibilityState === 'hidden') onHidden();
+        else onVisible();
+      });
+      window.addEventListener('pageshow', function(e) {
+        if (e.persisted) onVisible();
+      });
+      window.addEventListener('pagehide', onHidden);
+      window.addEventListener('blur', onHidden);
+
+      // Interrupciones de iOS Safari (llamada, Siri, bloqueo de pantalla)
+      audio.addEventListener('webkitbegininterruption', onHidden);
+      audio.addEventListener('webkitendinterruption', function() {
+        captureState();
+        resumePlayback();
+      });
+
+      // Si Safari pausa el elemento por una interrupción involuntaria,
+      // capturamos que estaba sonando para poder reanudarla al volver.
+      audio.addEventListener('pause', function() {
+        wasPlaying = !!audio.src && !audio.ended && !audio._userPaused && !document.hidden;
+      });
+
+      // Estado inicial
+      wasPlaying = !!audio.src && !audio.paused;
+    }
+
+    initBackgroundAudio();
   </script>
 
   <div id="local-banner" class="local-wait-banner" style="display:none;">
