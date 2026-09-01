@@ -1,21 +1,55 @@
 {
+  "id": "./index.html",
   "short_name": "WALKMAN",
   "name": "WALKMAN Xperia Player",
+  "description": "Un reproductor de música estilo WALKMAN que conecta con Emby, Jellyfin, Plex o reproduce archivos locales.",
+  "scope": "./",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#050505",
+  "theme_color": "#000000",
+  "categories": ["music", "entertainment"],
   "icons": [
     {
-      "src": "Walkman.png",
+      "src": "icons/Walkman.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "Walkman.png",
+      "src": "icons/Walkman.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/Walkman_maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
-  "start_url": "./index.html",
-  "background_color": "#050505",
-  "theme_color": "#3a0007",
-  "display": "standalone",
-  "orientation": "any"
+  "screenshots": [
+    {
+      "src": "screenshots/Player.png",
+      "sizes": "1918x955",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Reproductor de música WALKMAN"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Abrir WALKMAN",
+      "short_name": "WALKMAN",
+      "url": "./index.html",
+      "icons": [
+        {
+          "src": "icons/Walkman.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
 }

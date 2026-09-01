@@ -8,12 +8,21 @@
   <!-- PWA Meta Tags -->
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#000000">
-  
+  <meta name="description" content="WALKMAN Xperia Player - Reproductor de música estilo WALKMAN">
+  <meta name="mobile-web-app-capable" content="yes">
+
   <!-- Soporte para iOS (Apple Safari) -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="WALKMAN">
+  <link rel="apple-touch-icon" href="icons/Walkman_180.png" sizes="180x180">
+  <link rel="apple-touch-icon" href="icons/Walkman_167.png" sizes="167x167">
+  <link rel="apple-touch-icon" href="icons/Walkman_152.png" sizes="152x152">
+  <link rel="apple-touch-icon" href="icons/Walkman_120.png" sizes="120x120">
   <link rel="apple-touch-icon" href="icons/Walkman.png">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="msapplication-tap-highlight" content="no">
+  <meta name="apple-touch-fullscreen" content="yes">
 
   <!-- ColorThief para el color dinámico -->
   <script src="https://unpkg.com/colorthief@3/dist/umd/color-thief.global.js"></script>
@@ -103,6 +112,9 @@
       font-size: 15px;
       font-weight: 500;
       color: #888;
+      flex-shrink: 1;
+      min-width: 0;
+      white-space: nowrap;
     }
 
     .top-nav div {
@@ -129,6 +141,7 @@
       display: flex;
       gap: 16px;
       color: #ccc;
+      flex-shrink: 0;
     }
 
     .header-icons span {
@@ -498,6 +511,32 @@
       .extra-controls-right { bottom: 46px; }
       .visualizer-controls { gap: 20px; margin-top: 4px; }
       .vis-progress-side { min-width: 90px; }
+    }
+
+    /* MÓVILES: compactar el header para que los iconos (ajustes) no se corten */
+    @media (max-width: 520px) {
+      header { padding: 0 8px; }
+      .top-nav { gap: 14px; font-size: 14px; }
+      .header-icons { gap: 12px; }
+    }
+
+    @media (max-width: 430px) {
+      .top-nav { gap: 10px; font-size: 13px; }
+      .header-icons { gap: 8px; }
+    }
+
+    @media (max-width: 380px) {
+      .top-nav { gap: 8px; font-size: 12px; }
+      .top-nav div { padding-bottom: 4px; }
+      .header-icons { gap: 5px; }
+      .header-icons span { font-size: 21px; }
+    }
+
+    @media (max-width: 340px) {
+      header > div:first-child { font-size: 13px; letter-spacing: 0; }
+      .top-nav { font-size: 11px; gap: 6px; }
+      .header-icons { gap: 4px; }
+      .header-icons span { font-size: 20px; }
     }
 
     .track-info.transitioning {
@@ -7583,10 +7622,33 @@
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')
-          .then(reg => console.log('WALKMAN PWA Service Worker registrado con éxito:', reg.scope))
+          .then(reg => {
+            console.log('WALKMAN PWA Service Worker registrado con éxito:', reg.scope);
+            reg.addEventListener('updatefound', () => {
+              const newWorker = reg.installing;
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'activated') {
+                  console.log('WALKMAN PWA actualizado. Recarga para ver los cambios.');
+                }
+              });
+            });
+          })
           .catch(err => console.error('Error al registrar Service Worker:', err));
       });
-    };
+    }
+
+    // Capturar evento de instalación PWA para mejor UX
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      console.log('WALKMAN PWA: App instalable detectada');
+    });
+
+    window.addEventListener('appinstalled', () => {
+      deferredPrompt = null;
+      console.log('WALKMAN PWA: App instalada correctamente');
+    });
 
   </script>
 

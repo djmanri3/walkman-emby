@@ -1,24 +1,23 @@
-const CACHE_NAME = 'walkman-v2';
-const ASSETS = [
+const CACHE_NAME = 'walkman-v4';
+const SHELL_ASSETS = [
   './',
   './index.html',
   './manifest.json',
-  './Walkman.png',
+  './icons/Walkman.png',
+  './screenshots/Player.png',
   'https://unpkg.com/colorthief@3/dist/umd/color-thief.global.js',
   'https://fonts.googleapis.com/icon?family=Material+Icons'
 ];
 
-// Instalación del Service Worker
 self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS);
+      return cache.addAll(SHELL_ASSETS);
     })
   );
   self.skipWaiting();
 });
 
-// Activación
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then((keys) => {
@@ -32,28 +31,62 @@ self.addEventListener('activate', (e) => {
   self.clients.claim();
 });
 
-// Estrategia de red/caché
 self.addEventListener('fetch', (e) => {
   const url = e.request.url;
 
-  // Emby / Jellyfin: streaming y API
+  if (e.request.method !== 'GET') return;
+
   if (url.includes('/Audio/') || url.includes('/Items/') || url.includes('/Users/') || url.includes('/Views')) {
     return;
   }
 
-  // Plex: streaming, library y search
   if (url.includes('/library/parts/') || url.includes('/library/sections/') || url.includes('/search?')) {
     return;
   }
 
-  // Plex TV auth
   if (url.includes('plex.tv/api/')) {
+    return;
+  }
+
+  if (url.includes('plex.tv/devices/')) {
+    return;
+  }
+
+  if (url.includes('emby.auth') || url.includes('Connect/Validate')) {
+    return;
+  }
+
+  if (e.request.mode === 'navigate') {
+    e.respondWith(
+      fetch(e.request).catch(() => {
+        return caches.match('./index.html');
+      })
+    );
     return;
   }
 
   e.respondWith(
     caches.match(e.request).then((cachedResponse) => {
-      return cachedResponse || fetch(e.request);
+      if (cachedResponse) {
+        fetch(e.request).then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(e.request, networkResponse);
+            });
+          }
+        }).catch(() => {});
+        return cachedResponse;
+      }
+
+      return fetch(e.request).then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200) {
+          const responseClone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(e.request, responseClone);
+          });
+        }
+        return networkResponse;
+      });
     })
   );
 });
