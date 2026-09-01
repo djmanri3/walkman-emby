@@ -2685,6 +2685,10 @@
     </div>
 
     <div class="settings-group">
+      <div class="settings-btn" id="fullscreen-btn" onclick="toggleFullscreen()">
+        <span class="material-icons">fullscreen</span>
+        <span id="fullscreen-btn-label" data-i18n="fullscreen">Pantalla completa</span>
+      </div>
       <div class="settings-btn" onclick="changeLibrary()">
         <span class="material-icons">library_music</span>
         <span data-i18n="changeLibrary">Cambiar biblioteca de música</span>
@@ -3243,7 +3247,7 @@
         slideshow: 'Album slideshow', slideshowSize: 'Slideshow size', beatGlow: 'Beat glow',
         glowIntensity: 'Glow intensity', low: 'Low', medium: 'Medium', high: 'High',
         xpspLeds: 'Xperia SP LEDs', sensitivity: 'Sensitivity', changeLibrary: 'Change music library',
-        clearCache: 'Clear cache', connectServer: 'Connect to Server', serverUrl: 'Server URL',
+        clearCache: 'Clear cache', fullscreen: 'Fullscreen', connectServer: 'Connect to Server', serverUrl: 'Server URL',
         user: 'User', password: 'Password', connect: 'Connect', localLibrary: 'Device local library',
         localLibraryHint: 'Select a folder on your device/computer to scan audio files (mp3, flac, ogg, m4a, wav, opus).',
         chooseFolder: 'Choose music folder', selectMusicLibrary: 'Select the Music Library',
@@ -3286,7 +3290,7 @@
         slideshow: 'Side show de álbumes', slideshowSize: 'Tamaño del side show', beatGlow: 'Resplandor al ritmo',
         glowIntensity: 'Intensidad del resplandor', low: 'Baja', medium: 'Media', high: 'Alta',
         xpspLeds: 'LEDs Xperia SP', sensitivity: 'Sensibilidad', changeLibrary: 'Cambiar biblioteca de música',
-        clearCache: 'Borrar caché', connectServer: 'Conectarse al Servidor', serverUrl: 'URL del Servidor',
+        clearCache: 'Borrar caché', fullscreen: 'Pantalla completa', connectServer: 'Conectarse al Servidor', serverUrl: 'URL del Servidor',
         user: 'Usuario', password: 'Contraseña', connect: 'Conectar', localLibrary: 'Biblioteca local del dispositivo',
         localLibraryHint: 'Selecciona una carpeta de tu dispositivo/computadora para escanear archivos de audio (mp3, flac, ogg, m4a, wav, opus).',
         chooseFolder: 'Elegir carpeta de música', selectMusicLibrary: 'Selecciona la Biblioteca Musical',
@@ -3327,7 +3331,7 @@
         settings: 'Réglages', accentColor: 'Couleur d\'accent', dynamic: 'Dynamique', custom: 'Personnalisé',
         beatGlow: 'Lueur au rythme', xpspLeds: 'LEDs Xperia SP', sensitivity: 'Sensibilité', low: 'Faible',
         medium: 'Moyenne', high: 'Élevée', changeLibrary: 'Changer la bibliothèque musicale',
-        clearCache: 'Vider le cache', connectServer: 'Se connecter au Serveur', serverUrl: 'URL du Serveur',
+        clearCache: 'Vider le cache', fullscreen: 'Plein écran', connectServer: 'Se connecter au Serveur', serverUrl: 'URL du Serveur',
         user: 'Utilisateur', password: 'Mot de passe', connect: 'Connecter', chooseFolder: 'Choisir le dossier musique',
         selectMusicLibrary: 'Sélectionner la bibliothèque musicale', visualizer: 'Visualiseur', search: 'Rechercher',
         myMusicHome: 'Ma musique', songs: 'Chansons', albums: 'Albums', artists: 'Artistes', playlists: 'Listes de lecture',
@@ -3359,7 +3363,7 @@
       de: {
         settings: 'Einstellungen', accentColor: 'Akzentfarbe', dynamic: 'Dynamisch', custom: 'Benutzerdefiniert',
         beatGlow: 'Rhythmus-Glow', xpspLeds: 'Xperia SP LEDs', sensitivity: 'Empfindlichkeit', low: 'Niedrig',
-        medium: 'Mittel', high: 'Hoch', changeLibrary: 'Musikbibliothek ändern', clearCache: 'Cache leeren',
+        medium: 'Mittel', high: 'Hoch', changeLibrary: 'Musikbibliothek ändern', clearCache: 'Cache leeren', fullscreen: 'Vollbild',
         connectServer: 'Mit Server verbinden', serverUrl: 'Server-URL', user: 'Benutzer', password: 'Passwort',
         connect: 'Verbinden', chooseFolder: 'Musikordner wählen', selectMusicLibrary: 'Musikbibliothek wählen',
         visualizer: 'Visualizer', search: 'Suchen', serverSettings: 'Server-Einstellungen', language: 'Sprache',
@@ -3391,7 +3395,7 @@
       it: {
         settings: 'Impostazioni', accentColor: 'Colore accento', dynamic: 'Dinamico', custom: 'Personalizzato',
         beatGlow: 'Bagliore a ritmo', xpspLeds: 'LED Xperia SP', sensitivity: 'Sensibilità', low: 'Bassa',
-        medium: 'Media', high: 'Alta', changeLibrary: 'Cambia libreria musicale', clearCache: 'Svuota cache',
+        medium: 'Media', high: 'Alta', changeLibrary: 'Cambia libreria musicale', clearCache: 'Svuota cache', fullscreen: 'Schermo intero',
         connectServer: 'Connetti al Server', serverUrl: 'URL del Server', user: 'Utente', password: 'Password',
         connect: 'Connetti', chooseFolder: 'Scegli cartella musicale', selectMusicLibrary: 'Seleziona libreria musicale',
         visualizer: 'Visualizzatore', search: 'Cerca', serverSettings: 'Impostazioni Server', language: 'Lingua',
@@ -3423,7 +3427,7 @@
       pt: {
         settings: 'Configurações', accentColor: 'Cor de destaque', dynamic: 'Dinâmico', custom: 'Personalizado',
         beatGlow: 'Brilho no ritmo', xpspLeds: 'LEDs Xperia SP', sensitivity: 'Sensibilidade', low: 'Baixa',
-        medium: 'Média', high: 'Alta', changeLibrary: 'Alterar biblioteca musical', clearCache: 'Limpar cache',
+        medium: 'Média', high: 'Alta', changeLibrary: 'Alterar biblioteca musical', clearCache: 'Limpar cache', fullscreen: 'Tela cheia',
         connectServer: 'Conectar ao Servidor', serverUrl: 'URL do Servidor', user: 'Utilizador', password: 'Senha',
         connect: 'Conectar', chooseFolder: 'Escolher pasta de música', selectMusicLibrary: 'Selecionar biblioteca musical',
         visualizer: 'Visualizador', search: 'Pesquisar', serverSettings: 'Configurações do Servidor', language: 'Idioma',
@@ -5609,6 +5613,57 @@
       opts.forEach(o => o.classList.toggle('active', Number(o.dataset.bsens) === beatGlowSens));
     }
 
+    // ---- Pantalla completa ----
+    let fullscreenEnabled = false;
+
+    function getFullscreenSetting() {
+      try { return localStorage.getItem('walkman_fullscreen') === 'on'; } catch (e) { return false; }
+    }
+
+    function applyFullscreenUI() {
+      const btn = document.getElementById('fullscreen-btn');
+      if (btn) btn.classList.toggle('on', fullscreenEnabled);
+      const label = document.getElementById('fullscreen-btn-label');
+      if (label) label.textContent = fullscreenEnabled ? t('fullscreen') + ': ON' : t('fullscreen');
+    }
+
+    function isFullscreen() {
+      return !!(document.fullscreenElement || document.webkitFullscreenElement);
+    }
+
+    function toggleFullscreen() {
+      fullscreenEnabled = !isFullscreen();
+      try { localStorage.setItem('walkman_fullscreen', fullscreenEnabled ? 'on' : 'off'); } catch (e) {}
+      if (fullscreenEnabled) {
+        const el = document.documentElement;
+        if (el.requestFullscreen) { el.requestFullscreen().catch(() => {}); }
+        else if (el.webkitRequestFullscreen) { el.webkitRequestFullscreen(); }
+        else if (el.msRequestFullscreen) { el.msRequestFullscreen(); }
+      } else {
+        if (document.exitFullscreen) { document.exitFullscreen().catch(() => {}); }
+        else if (document.webkitExitFullscreen) { document.webkitExitFullscreen(); }
+      }
+    }
+
+    function initFullscreen() {
+      fullscreenEnabled = getFullscreenSetting();
+      applyFullscreenUI();
+      document.addEventListener('fullscreenchange', syncFullscreenUI);
+      document.addEventListener('webkitfullscreenchange', syncFullscreenUI);
+      if (fullscreenEnabled) {
+        const el = document.documentElement;
+        if (el.requestFullscreen) { el.requestFullscreen().catch(() => {}); }
+        else if (el.webkitRequestFullscreen) { el.webkitRequestFullscreen(); }
+      }
+    }
+
+    function syncFullscreenUI() {
+      const fs = isFullscreen();
+      fullscreenEnabled = fs;
+      applyFullscreenUI();
+      try { localStorage.setItem('walkman_fullscreen', fs ? 'on' : 'off'); } catch (e) {}
+    }
+
     function setBeatGlowSens(v) {
       beatGlowSens = Number(v) || 2;
       try { localStorage.setItem('walkman_beatglow_sens', String(beatGlowSens)); } catch (e) {}
@@ -7574,6 +7629,7 @@
       restoreAccentSettings();
       initBeatGlow();
       initXpspLeds();
+      initFullscreen();
       const connected = await restoreServerConfig();
       if (!connected) {
         showServerModal();
