@@ -1,11 +1,38 @@
 # walkman-server
-Small music player for Emby Jellyfin ande Plex with style Walkman app of Xpetia NXT series
+Small music player for Emby, Jellyfin, and Plex with the style of the Walkman app of Xpetia NXT series
 
-# Acces without install on presise
+# Access without install on presmise
 You can access in this link: https://djmanri3.github.io/walkman-server/
 
-# How install on premise
-- Do you need install docker and docker-compose
+## Recommended Web Browsers
+### Windows
+- Google Chrome
+- Microsoft Edge
+- Firefox
+- Zen Browser
+- Samsung Internet Browser
+  
+### Android
+- Google Chrome
+- Google Chrome (WebApp)
+- Samsung Internet Browser
+- Samsung Internet Browser (WebApp)
+
+### MacOs
+- Firefox
+- Zen Browser
+- Chrome (not working music widget correctly)
+- Safari (no button to next/previous song, only advance or rewind 30 seconds)
+
+### iOS and iPadOS (iPad and iPhone) [NO VIEW ALBUM ART]
+- Safari (WebApp) (not show album art but gets next and previous buttons)
+- Google Chrome (not button to next or previous song, only advance or rewind 30 seconds)
+- Brave (not button to next/previous song, only advance or rewind 30 seconds)
+- Firefox (not button to next/previous song, only advance or rewind 30 seconds)
+- Opera Browser (not button to next/previous song, only advance or rewind 30 seconds)
+
+# How to install on premise
+- Do you need to install Docker and docker-compose
 - Only download docker-compose.yaml file and exec in the same folder you donwload it
 ```
 docker-compose up -d
@@ -13,9 +40,9 @@ docker-compose up -d
 - And acces to <ip server or locahost>:8081
 
 # Features
-- Native equalizer with 5 bands
-- Add Clear bass feature
-- Add equalizer space (VPT) with 3 profiles
+- Native equaliser with 5 bands [not working on iPad and iPhone]
+- Add Clear bass feature [not working on iPad and iPhone]
+- Add equaliser space (VPT) with 3 profiles [not working on iPad and iPhone]
 - Add song visualizer
   - Anillos pulsantes
   - Barras de frecuencia
@@ -25,26 +52,26 @@ docker-compose up -d
   - Particulas del álbum
   - Bloques ritmicos
 - Fix search
-- Add botons of playlist, repeat, repeat playlist and shuffle
-- View on carrusel mode
-- Background color adpat to album cover
-- Add install on smarthphone with web app
+- Add buttons of playlist, repeat, repeat playlist and shuffle
+- View in carousel mode
+- Background colour adapts to album cover
+- Add install on smartphone with web app
 - Compatible with medIa widget browser 
 - Add connection with Emby, Jellyfin, Plex AND LOCAL!!!
 - FIX LIST ALBUM COVERS ON EMBY SERVERS!!!!!
 - Add Side Show of albums on tab My Music (can be disable on settings)
 - Add reorder song on play queue
-- Fix auto close Ecualizer when clic or touch on another part
+- Fix auto-close equaliser when clic or touch on another part
 - Fix clean cache
-- Add settings to resize some thigns
+- Add settings to resize some things
 - Fix add song by Album on play queue
-- Add banner when add local music on Android to wait ready
+- Add banner when adding local music on Android to wait ready
 - Update lib of get album color
 - Add a glow adjustment based on the song's rhythm on settings.
-- Add option on settings to simulate led effect of Xperia SP leds
-- Add option to view lyris, lyris get on service LRCLIB and translate in your language use api.memory.translated.net
-- Fix onnection to Plex servers and fix get data of them (Songs, Artists, Albums and Playlists)
-- Add menu when clic or touch on album cover is playing with this options:
+- Add option on settings to simulate LED effect of Xperia SP LEDs
+- Add option to view lyrics, lyrics get from service LRCLIB and translated into your language use api.memory.translated.net
+- Fix connection to Plex servers and fix getting data from them (Songs, Artists, Albums and Playlists)
+- Add menu when clic or touch on an album cover is playing with these options:
   - Search song on YouTube
   - Search album on Google
   - Search artist on Google
@@ -52,7 +79,7 @@ docker-compose up -d
 - Add config parameters on docker-compose
   - DEFAULT_LANGUAGE: English, Español, Français, Deutsch, Italiano or Português
   - DEFAULT_SERVER_TYPE: Emby, Jellyfin, Plex or Local
-  - DEFAULT_SERVER_URL: your url of server
+  - DEFAULT_SERVER_URL: your server URL
 
 
 # Bugs
@@ -66,14 +93,14 @@ docker-compose up -d
 ## Player search
 <img width="1915" height="952" alt="image" src="https://github.com/djmanri3/walkman-server/blob/main/Demo_images/Playing_search.png?raw=true" />
 
-## Lyris
+## lyrics
 <img width="1915" height="952" alt="image" src="https://github.com/djmanri3/walkman-server/blob/main/Demo_images/Lyris.png?raw=true" />
 
 ## Ecualizer
 ### Clear bass
 <img width="1915" height="952" alt="image" src="https://github.com/djmanri3/walkman-emby/blob/main/Demo_images/Ecualizer_clear_bass.png?raw=true" />
 
-### Spacial Ecualizer (VTP)
+### Spatial Equaliser (VTP)
 <img width="1915" height="952" alt="image" src="https://github.com/djmanri3/walkman-emby/blob/main/Demo_images/Ecualizer_VPT.png?raw=true" />
 
 ## Visualizer
