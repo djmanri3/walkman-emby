@@ -22,7 +22,7 @@ You can access in this link: https://djmanri3.github.io/walkman-server/
 - Firefox
 - Zen Browser
 - Chrome (not working music widget correctly)
-- Safari (no button to next/previous song, only advance or rewind 30 seconds)
+- Safari
 
 ### iOS and iPadOS (iPad and iPhone) [NO VIEW ALBUM ART]
 - Safari (WebApp) (not show album art but gets next and previous buttons)
