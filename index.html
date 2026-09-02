@@ -31,6 +31,8 @@
   <!-- Material Icons -->
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <link rel="icon" href="icons/Walkman.png" type="image/x-icon">
+  <!-- Config generada por docker-entrypoint.sh (DEFAULT_LANGUAGE / DEFAULT_SERVER_TYPE / DEFAULT_SERVER_URL) -->
+  <script src="config.js"></script>
   
   <style>
     :root {
@@ -3470,12 +3472,35 @@
     };
 
     let currentLang = 'en';
+    // Mapeo de nombres de idioma (DEFAULT_LANGUAGE) a códigos
+    const LANG_CODES = {
+      'English': 'en', 'Español': 'es', 'Français': 'fr',
+      'Deutsch': 'de', 'Italiano': 'it', 'Português': 'pt'
+    };
+    // Mapeo de tipos de servidor (DEFAULT_SERVER_TYPE) a minúsculas
+    const SERVER_TYPE_CODES = {
+      'Emby': 'emby', 'Jellyfin': 'jellyfin', 'Plex': 'plex', 'Local': 'local'
+    };
+    function normalizeServerType(v) {
+      if (!v) return '';
+      const key = String(v).trim();
+      return SERVER_TYPE_CODES[key]
+        || SERVER_TYPE_CODES[key.charAt(0).toUpperCase() + key.slice(1).toLowerCase()]
+        || '';
+    }
     function t(key) {
       const dict = I18N[currentLang] || I18N.en;
       return dict[key] !== undefined ? dict[key] : (I18N.en[key] !== undefined ? I18N.en[key] : key);
     }
     function getLang() {
-      try { return localStorage.getItem('walkman_lang') || 'en'; } catch (e) { return 'en'; }
+      try {
+        const saved = localStorage.getItem('walkman_lang');
+        if (saved) return saved;
+      } catch (e) {}
+      // Fallback al idioma por defecto desde WALKMAN_CONFIG (DEFAULT_LANGUAGE)
+      const langName = (window.WALKMAN_CONFIG && window.WALKMAN_CONFIG.language) || '';
+      const code = LANG_CODES[langName] || '';
+      return code || 'en';
     }
     function setLang(lang) {
       currentLang = I18N[lang] ? lang : 'en';
@@ -6571,6 +6596,23 @@
       await updateCategoryCounts();
     }
 
+    // Aplica como valores por defecto los de WALKMAN_CONFIG (DEFAULT_LANGUAGE,
+    // DEFAULT_SERVER_TYPE, DEFAULT_SERVER_URL) solo si no hay config guardada.
+    function applyDefaultServerConfig() {
+      try { if (localStorage.getItem('walkman_server_config')) return; } catch (e) {}
+      const cfg = window.WALKMAN_CONFIG;
+      if (!cfg) return;
+      const st = normalizeServerType(cfg.serverType);
+      if (st) embyConfig.serverType = st;
+      if (cfg.serverUrl) {
+        embyConfig.host = cfg.serverUrl;
+        const hostInput = document.getElementById('emby-host');
+        if (hostInput) hostInput.value = cfg.serverUrl;
+        const plexInput = document.getElementById('plex-host');
+        if (plexInput) plexInput.value = cfg.serverUrl;
+      }
+    }
+
     async function restoreServerConfig() {
       const saved = localStorage.getItem('walkman_server_config');
       if (!saved) return false;
@@ -7721,6 +7763,7 @@
       initXpspLeds();
       initFullscreen();
       fitHeader();
+      applyDefaultServerConfig();
       const connected = await restoreServerConfig();
       if (!connected) {
         showServerModal();

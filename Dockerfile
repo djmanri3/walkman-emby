@@ -10,7 +10,6 @@ COPY ./manifest.json /usr/share/nginx/html
 COPY ./sw.js /usr/share/nginx/html
 COPY ./icons /usr/share/nginx/html/icons
 COPY ./backgrounds /usr/share/nginx/html/backgrounds
-COPY ./.env /usr/share/nginx/html/.env
 COPY ./config.js.template /usr/share/nginx/html/config.js.template
 COPY ./docker-entrypoint.sh /docker-entrypoint-walkman.sh
 
