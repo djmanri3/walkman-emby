@@ -7622,6 +7622,9 @@
       updateVisualizerOverlayData();
       renderQueueList();
       notifyAndroidMedia();
+      showNowPlayingNotification(track);
+      setupMediaSessionHandlers();
+      setMediaSessionPlayback(true);
     }
 
     function togglePlay() {
@@ -7635,11 +7638,13 @@
         audio.play();
         document.getElementById('play-icon').textContent = 'pause';
         document.getElementById('vis-play-icon').textContent = 'pause';
+        setMediaSessionPlayback(true);
       } else {
         audio._userPaused = true;
         audio.pause();
         document.getElementById('play-icon').textContent = 'play_arrow';
         document.getElementById('vis-play-icon').textContent = 'play_arrow';
+        setMediaSessionPlayback(false);
       }
       notifyAndroidMedia();
     }
@@ -7764,6 +7769,7 @@
       initFullscreen();
       fitHeader();
       applyDefaultServerConfig();
+      requestNotificationPermission();
       const connected = await restoreServerConfig();
       if (!connected) {
         showServerModal();
@@ -7774,22 +7780,38 @@
     };
 
     // --- NUEVO: Media Session API Controles ---
+    function setupMediaSessionHandlers() {
+      if (!('mediaSession' in navigator)) return;
+      // Sincronizar los botones del widget con tus funciones existentes
+      try { navigator.mediaSession.setActionHandler('play', () => { if (audio.paused) togglePlay(); }); } catch (e) {}
+      try { navigator.mediaSession.setActionHandler('pause', () => { if (!audio.paused) togglePlay(); }); } catch (e) {}
+      try { navigator.mediaSession.setActionHandler('previoustrack', prevTrack); } catch (e) {}
+      try { navigator.mediaSession.setActionHandler('nexttrack', nextTrack); } catch (e) {}
+      try { navigator.mediaSession.setActionHandler('seekbackward', (d) => { audio.currentTime = Math.max(0, audio.currentTime - ((d && d.seekOffset) || 15)); }); } catch (e) {}
+      try { navigator.mediaSession.setActionHandler('seekforward', (d) => { audio.currentTime = Math.min(audio.duration || Infinity, audio.currentTime + ((d && d.seekOffset) || 15)); }); } catch (e) {}
+      try { navigator.mediaSession.setActionHandler('seekto', (details) => {
+        if (details.fastSeek && 'fastSeek' in audio) {
+          audio.fastSeek(details.seekTime);
+        } else {
+          audio.currentTime = details.seekTime;
+        }
+      }); } catch (e) {}
+    }
+
+    function setMediaSessionPlayback(playing) {
+      if (!('mediaSession' in navigator)) return;
+      try { navigator.mediaSession.playbackState = playing ? 'playing' : 'paused'; } catch (e) {}
+      try {
+        if (playing && audio.duration && !isNaN(audio.duration)) {
+          navigator.mediaSession.setPositionState({ duration: audio.duration, playbackRate: audio.playbackRate || 1, position: audio.currentTime || 0 });
+        }
+      } catch (e) {}
+    }
+
     function setupMediaSession() {
       if ('mediaSession' in navigator) {
-        // Sincronizar los botones del widget con tus funciones existentes
-        navigator.mediaSession.setActionHandler('play', togglePlay);
-        navigator.mediaSession.setActionHandler('pause', togglePlay);
-        navigator.mediaSession.setActionHandler('previoustrack', prevTrack);
-        navigator.mediaSession.setActionHandler('nexttrack', nextTrack);
-
-        // Permitir avanzar o retroceder desde la barra de progreso del widget
-        navigator.mediaSession.setActionHandler('seekto', (details) => {
-          if (details.fastSeek && 'fastSeek' in audio) {
-            audio.fastSeek(details.seekTime);
-          } else {
-            audio.currentTime = details.seekTime;
-          }
-        });
+        setupMediaSessionHandlers();
+        setMediaSessionPlayback(!audio.paused);
       }
     };
 
@@ -7812,6 +7834,55 @@
         };
         AndroidBridge.setMediaState(JSON.stringify(payload));
       } catch (e) { /* la app Android puede no existir en la web */ }
+    }
+
+    // Pide permiso de notificaciones la primera vez que arranca un cliente.
+    // Compatible con Safari: soporta tanto la API moderna (Promesa) como el
+    // callback antiguo. Solo muestra el diálogo si el navegador soporta
+    // Notification y aún no se ha preguntado antes.
+    function requestNotificationPermission() {
+      try {
+        if (!('Notification' in window)) return;
+        let asked = false;
+        try { asked = localStorage.getItem('walkman_notif_asked') === '1'; } catch (e) {}
+        if (asked || Notification.permission !== 'default') return;
+
+        const markAsked = () => {
+          try { localStorage.setItem('walkman_notif_asked', '1'); } catch (e) {}
+        };
+
+        if (typeof Notification.requestPermission === 'function') {
+          // Callback (Safari antiguo). En navegadores modernos, además, se devuelve una promesa.
+          const result = Notification.requestPermission(() => markAsked());
+          if (result && typeof result.then === 'function') {
+            result.then(perm => { if (perm) markAsked(); }).catch(() => {});
+          }
+        }
+      } catch (e) {}
+    }
+
+    // Notificación local al cambiar de canción (web / fuera de la app Android).
+    function showNowPlayingNotification(track) {
+      try {
+        if (!('Notification' in window) || Notification.permission !== 'granted') return;
+        if (!track) return;
+        const artist = (track.Artists && track.Artists.length)
+          ? track.Artists.join(', ')
+          : (track.AlbumArtist || '');
+        const imgEl = document.getElementById('img-current');
+        let icon = '';
+        if (imgEl && imgEl.src && !imgEl.src.startsWith('data:') && !imgEl.src.startsWith('blob:')) {
+          icon = imgEl.src;
+        }
+        const n = new Notification(track.Name || 'Reproduciendo', {
+          body: artist ? `${artist}${track.Album ? ' — ' + track.Album : ''}` : (track.Album || ''),
+          icon: icon || undefined,
+          silent: true,
+          tag: 'now-playing'
+        });
+        n.onclick = () => { try { window.focus(); n.close(); } catch (e) {} };
+        window.setTimeout(() => { try { n.close(); } catch (e) {} }, 8000);
+      } catch (e) {}
     }
 
     // Registrar el Service Worker para PWA
