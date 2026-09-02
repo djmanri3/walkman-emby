@@ -153,6 +153,17 @@
       color: var(--accent-color);
     }
 
+    #app-logo {
+      font-weight: bold;
+      letter-spacing: 1px;
+      cursor: default;
+      line-height: 1;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      white-space: nowrap;
+    }
+
     /* Vistas principales */
     .view {
       flex: 1;
@@ -2566,7 +2577,7 @@
 
   <!-- Header Xperia -->
   <header>
-    <div style="font-weight: bold; letter-spacing: 1px; cursor: default;" onclick="walkmanTap()">WALKMAN</div>
+    <div id="app-logo" onclick="walkmanTap()">WALKMAN</div>
     <div class="top-nav">
       <div id="nav-playing" class="active" onclick="switchTab('playing')" data-i18n="playing">Playing</div>
       <div id="nav-music" onclick="switchTab('music')" data-i18n="myMusic">My music</div>
@@ -6379,6 +6390,7 @@
 
     function setZoom(z) {
       applyZoom(z);
+      fitHeader(z);
       try { localStorage.setItem('walkman_zoom', String(z)); } catch (e) {}
     }
 
@@ -7643,6 +7655,55 @@
       return `${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
     }
 
+    // Si el logo (app-logo) ya no cabe en el header (pantallas muy pequeñas), lo oculta.
+    // Solo aplica en la versión móvil; en escritorio el logo siempre permanece visible.
+    function fitHeader(zoom) {
+      const header = document.querySelector('header');
+      const appLogo = document.getElementById('app-logo');
+      if (!header || !appLogo) return;
+
+      const isMobile = window.innerWidth <= 768;
+      if (!isMobile) {
+        appLogo.style.display = '';
+        return;
+      }
+
+      if (zoom === undefined) {
+        try { zoom = Number(localStorage.getItem('walkman_zoom')) || 100; } catch (e) { zoom = 100; }
+      }
+      const forceHide = Number(zoom) >= 125;
+      appLogo.style.display = forceHide ? 'none' : '';
+
+      if (forceHide) return;
+
+      // Medir el ancho natural de cada hijo del header (sin que se encojan en flexbox)
+      const children = [...header.children].map(el => ({
+        el,
+        flex: el.style.flex || '',
+        minWidth: el.style.minWidth || ''
+      }));
+      children.forEach(({ el }) => {
+        el.style.flex = '0 0 auto';
+        el.style.minWidth = 'auto';
+      });
+
+      const gaps = (children.length - 1) * 16;
+      const totalWidth = children.reduce((sum, { el }) => sum + el.offsetWidth, 0) + gaps;
+      const available = header.clientWidth - (parseFloat(getComputedStyle(header).paddingLeft) || 0)
+                                              - (parseFloat(getComputedStyle(header).paddingRight) || 0);
+
+      children.forEach(({ el, flex, minWidth }) => {
+        el.style.flex = flex;
+        el.style.minWidth = minWidth;
+      });
+
+      if (totalWidth > available - 10) {
+        appLogo.style.display = 'none';
+      }
+    }
+
+    window.addEventListener('resize', fitHeader);
+
     window.onload = async () => {
       currentLang = getLang();
       applyI18n();
@@ -7659,6 +7720,7 @@
       initBeatGlow();
       initXpspLeds();
       initFullscreen();
+      fitHeader();
       const connected = await restoreServerConfig();
       if (!connected) {
         showServerModal();
