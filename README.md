@@ -21,8 +21,8 @@ You can access in this link: https://djmanri3.github.io/walkman-server/
 ### MacOs
 - Firefox
 - Zen Browser
-- Chrome (not working music widget correctly)
-- Safari
+- Chrome
+- Safari (only rewind and ast-forward)
 
 ### iOS and iPadOS (iPad and iPhone) [NO VIEW ALBUM ART]
 - Safari (WebApp) (not show album art but gets next and previous buttons)
