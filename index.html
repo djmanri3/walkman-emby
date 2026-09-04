@@ -2180,6 +2180,79 @@
       text-transform: uppercase;
     }
 
+    .settings-section-btn {
+      width: 100%;
+    }
+
+    .settings-section-btn .section-caret {
+      margin-left: auto;
+      transition: transform 0.25s;
+    }
+
+    .settings-section-btn.open .section-caret {
+      transform: rotate(180deg);
+    }
+
+    .settings-submenu {
+      position: fixed;
+      top: 56px; right: 12px;
+      width: 280px;
+      max-height: calc(100vh - 70px);
+      max-height: calc(100dvh - 70px);
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      background: rgba(12, 14, 18, 0.92);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 10px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.08);
+      z-index: 402;
+      display: none;
+      flex-direction: column;
+      padding: 14px 16px;
+      gap: 12px;
+    }
+
+    .settings-submenu.open {
+      display: flex;
+    }
+
+    .submenu-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .submenu-back {
+      color: #fff;
+      cursor: pointer;
+      font-size: 22px;
+      padding: 4px;
+      display: flex;
+      border-radius: 50%;
+      transition: color 0.2s, background 0.2s;
+    }
+
+    .submenu-back:hover {
+      color: var(--accent-color);
+      background: rgba(255,255,255,0.08);
+    }
+
+    .submenu-icon {
+      font-size: 18px;
+      color: var(--accent-color);
+    }
+
+    .submenu-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+    }
+
     .accent-options {
       display: flex;
       gap: 8px;
@@ -2700,6 +2773,54 @@
       </select>
     </div>
 
+    <button class="settings-btn settings-section-btn" id="section-btn-customization" onclick="openSettingsSection('customization')" type="button">
+      <span class="material-icons">palette</span>
+      <span data-i18n="customization">Personalización</span>
+      <span class="material-icons section-caret">chevron_right</span>
+    </button>
+
+    <button class="settings-btn settings-section-btn" id="section-btn-effects" onclick="openSettingsSection('effects')" type="button">
+      <span class="material-icons">auto_awesome</span>
+      <span data-i18n="effects">Efectos</span>
+      <span class="material-icons section-caret">chevron_right</span>
+    </button>
+
+    <button class="settings-btn settings-section-btn" id="section-btn-soundControl" onclick="openSettingsSection('soundControl')" type="button">
+      <span class="material-icons">tune</span>
+      <span data-i18n="soundControl">Control del sonido</span>
+      <span class="material-icons section-caret">chevron_right</span>
+    </button>
+
+    <div class="settings-group">
+      <div class="settings-btn" id="fullscreen-btn" onclick="toggleFullscreen()">
+        <span class="material-icons">fullscreen</span>
+        <span id="fullscreen-btn-label" data-i18n="fullscreen">Pantalla completa</span>
+      </div>
+      <div class="settings-btn" onclick="changeLibrary()">
+        <span class="material-icons">library_music</span>
+        <span data-i18n="changeLibrary">Cambiar biblioteca de música</span>
+      </div>
+      <div class="settings-btn" onclick="clearCache()">
+        <span class="material-icons">delete_sweep</span>
+        <span data-i18n="clearCache">Borrar caché</span>
+      </div>
+    </div>
+
+    <a class="settings-link" href="https://github.com/djmanri3/walkman-server" target="_blank" rel="noopener">
+      <span class="material-icons">code</span>
+      GitHub: djmanri3/walkman-server
+    </a>
+  </div>
+
+
+  <!-- SUBMENÚS DE AJUSTES -->
+<div class="settings-submenu" id="settings-submenu-customization">
+    <div class="submenu-header">
+      <span class="material-icons submenu-back" onclick="closeSettingsSection('customization')" role="button" tabindex="0" aria-label="Atrás" data-i18n-title="back">arrow_back</span>
+      <span class="material-icons submenu-icon">palette</span>
+      <span class="submenu-title" data-i18n="customization">Personalización</span>
+    </div>
+    
     <div class="settings-group">
       <div class="settings-group-label" data-i18n="accentColor">Color de acento</div>
       <div class="accent-options">
@@ -2754,10 +2875,19 @@
       </div>
     </div>
 
+  </div>
+
+<div class="settings-submenu" id="settings-submenu-effects">
+    <div class="submenu-header">
+      <span class="material-icons submenu-back" onclick="closeSettingsSection('effects')" role="button" tabindex="0" aria-label="Atrás" data-i18n-title="back">arrow_back</span>
+      <span class="material-icons submenu-icon">auto_awesome</span>
+      <span class="submenu-title" data-i18n="effects">Efectos</span>
+    </div>
+    
     <div class="settings-group">
       <div class="settings-btn" id="beatglow-btn" onclick="toggleBeatGlow()">
         <span class="material-icons">auto_awesome</span>
-        <span id="beatglow-btn-label">Resplandor al ritmo</span>
+        <span id="beatglow-btn-label" data-i18n="beatGlow">Resplandor al ritmo</span>
       </div>
       <div class="featured-size-wrap" id="beatglow-sens-wrap" style="display:none;">
         <div class="settings-group-label" data-i18n="glowIntensity">Intensidad del resplandor</div>
@@ -2772,7 +2902,7 @@
     <div class="settings-group">
       <div class="settings-btn" id="xpsp-led-btn" onclick="toggleXpspLeds()">
         <span class="material-icons">lightbulb</span>
-        <span id="xpsp-led-btn-label">LEDs Xperia SP</span>
+        <span id="xpsp-led-btn-label" data-i18n="xpspLeds">LEDs Xperia SP</span>
       </div>
       <div class="featured-size-wrap" id="xpsp-sens-wrap" style="display:none;">
         <div class="settings-group-label" data-i18n="sensitivity">Sensibilidad</div>
@@ -2784,6 +2914,15 @@
       </div>
     </div>
 
+  </div>
+
+<div class="settings-submenu" id="settings-submenu-soundControl">
+    <div class="submenu-header">
+      <span class="material-icons submenu-back" onclick="closeSettingsSection('soundControl')" role="button" tabindex="0" aria-label="Atrás" data-i18n-title="back">arrow_back</span>
+      <span class="material-icons submenu-icon">tune</span>
+      <span class="submenu-title" data-i18n="soundControl">Control del sonido</span>
+    </div>
+    
     <div class="settings-group">
       <div class="settings-btn" id="sleeptimer-btn" onclick="toggleSleepTimer()">
         <span class="material-icons">bedtime</span>
@@ -2817,26 +2956,6 @@
         </div>
       </div>
     </div>
-
-    <div class="settings-group">
-      <div class="settings-btn" id="fullscreen-btn" onclick="toggleFullscreen()">
-        <span class="material-icons">fullscreen</span>
-        <span id="fullscreen-btn-label" data-i18n="fullscreen">Pantalla completa</span>
-      </div>
-      <div class="settings-btn" onclick="changeLibrary()">
-        <span class="material-icons">library_music</span>
-        <span data-i18n="changeLibrary">Cambiar biblioteca de música</span>
-      </div>
-      <div class="settings-btn" onclick="clearCache()">
-        <span class="material-icons">delete_sweep</span>
-        <span data-i18n="clearCache">Borrar caché</span>
-      </div>
-    </div>
-
-    <a class="settings-link" href="https://github.com/djmanri3/walkman-server" target="_blank" rel="noopener">
-      <span class="material-icons">code</span>
-      GitHub: djmanri3/walkman-server
-    </a>
   </div>
 
   <!-- CAMBIAR BIBLIOTECA (desplegable independiente) -->
@@ -2990,8 +3109,8 @@
         <span id="vpt-current-name" style="font-size: 11px; font-weight: 600; color: #fff;">Estudio</span>
         <button class="vpt-nav-btn" onclick="nextVptProfile()"><span class="material-icons">chevron_right</span></button>
       </div>
-    </div>
   </div>
+    </div>
 
   <!-- Overlay para cerrar las Mejoras de Sonido pulsando fuera -->
   <div id="eq-overlay" class="eq-overlay" onclick="closeEqualizer()"></div>
@@ -3005,8 +3124,8 @@
     </div>
     <div class="search-results" id="search-results-container">
       <div style="color: #888; font-size: 13px; text-align: center; padding: 10px;" data-i18n="searchHint">Escribe para buscar...</div>
-    </div>
   </div>
+    </div>
 
   <!-- OVERLAY DE VISUALIZADOR ESTILO XPERIA DE LAS CAPTURAS -->
   <div id="visualizer-overlay" class="visualizer-overlay">
@@ -3070,8 +3189,8 @@
         <div class="vis-control-btn" onclick="togglePlay()"><span class="material-icons" id="vis-play-icon">pause</span></div>
         <div class="vis-control-btn" onclick="nextTrack()"><span class="material-icons">skip_next</span></div>
       </div>
-    </div>
   </div>
+    </div>
 
   <!-- VISTA: PLAYING -->
   <div id="view-playing" class="view active">
@@ -3216,8 +3335,8 @@
         <span class="material-icons" id="volume-icon" onclick="toggleMute()" title="Silenciar / Activar sonido" role="button" tabindex="0" aria-label="Silenciar / Activar sonido">volume_up</span>
         <input type="range" id="volume-bar" class="progress-bar volume-bar" value="100" min="0" max="100" oninput="setVolume(this.value)" aria-label="Volumen">
       </div>
-    </div>
   </div>
+    </div>
 
   <!-- VISTA: MY MUSIC -->
   <div id="view-music" class="view">
@@ -3262,8 +3381,8 @@
       </div>
       <div class="menu-header" id="selected-category-title">Categoría</div>
       <div class="items-list" id="items-container"></div>
-    </div>
   </div>
+    </div>
 
   <!-- MODAL CONEXIÓN SERVIDOR -->
   <div id="emby-modal" class="modal" data-type="emby" onclick="closeServerModal()">
@@ -3334,8 +3453,8 @@
         <label data-i18n="selectMusicLibrary">Selecciona la Biblioteca Musical</label>
         <select id="emby-libraries" onchange="selectLibrary()"></select>
       </div>
-    </div>
   </div>
+    </div>
 
   <!-- POPUP GITHUB -->
   <div id="github-popup-overlay" class="context-menu-overlay" onclick="closeGithubPopup()" style="display:none;">
@@ -3344,8 +3463,8 @@
       <div style="font-size: 16px; font-weight: 600; color: #fff; margin-bottom: 4px;">Walkman Server</div>
       <div style="font-size: 12px; color: #aaa; margin-bottom: 18px;">by djmanri3</div>
       <a href="https://github.com/djmanri3/walkman-server/tree/main" target="_blank" rel="noopener" style="display: inline-block; background: #fff; color: #000; padding: 10px 24px; border-radius: 20px; text-decoration: none; font-size: 14px; font-weight: 500;">Ver en GitHub</a>
-    </div>
   </div>
+    </div>
 
   <!-- MENÚ CONTEXTUAL -->
   <div id="context-menu-overlay" class="context-menu-overlay" onclick="closeContextMenu()">
@@ -3371,8 +3490,8 @@
         <span data-i18n="musicInfo">Información de la música</span>
       </div>
       <div id="ctx-menu-info" class="context-menu-info" style="display:none;"></div>
-    </div>
   </div>
+    </div>
 
   <div id="context-toast" class="context-menu-toast"></div>
 
@@ -3399,8 +3518,8 @@
         <span class="material-icons">queue_music</span>
         <span data-i18n="moreFromArtist">Más canciones del artista</span>
       </div>
-    </div>
   </div>
+    </div>
 
   <audio id="audio-player" crossorigin="anonymous" playsinline webkit-playsinline preload="auto"></audio>
 
@@ -3450,7 +3569,7 @@
         coversReady: 'Covers ready ({n})', noEmbeddedCovers: 'No embedded covers',
         loadingSongs: 'Loading songs...', refreshSlideshow: 'Refresh slideshow',
         quotaExceeded: 'Translation temporarily unavailable (daily free limit reached)',
-        followLyrics: 'Follow the song'
+        followLyrics: 'Follow the song', customization: 'Customization', effects: 'Effects', soundControl: 'Sound control'
       },
       es: {
         settings: 'Ajustes', accentColor: 'Color de acento', dynamic: 'Dinámico', custom: 'Personalizado',
@@ -3495,7 +3614,7 @@
         coversReady: 'Portadas listas ({n})', noEmbeddedCovers: 'Sin portadas incrustadas',
         loadingSongs: 'Cargando canciones...', refreshSlideshow: 'Recargar side show',
         quotaExceeded: 'Traducción no disponible temporalmente (límite gratuito diario alcanzado)',
-        followLyrics: 'Seguir la canción'
+        followLyrics: 'Seguir la canción', customization: 'Personalización', effects: 'Efectos', soundControl: 'Control del sonido'
       },
       fr: {
         settings: 'Réglages', accentColor: 'Couleur d\'accent', dynamic: 'Dynamique', custom: 'Personnalisé',
@@ -3530,7 +3649,7 @@
         coversReady: 'Pochettes prêtes ({n})', noEmbeddedCovers: 'Aucune pochette intégrée',
         loadingSongs: 'Chargement des chansons...', refreshSlideshow: 'Actualiser le diaporama',
         quotaExceeded: 'Traduction temporairement indisponible (limite gratuite quotidienne atteinte)',
-        followLyrics: 'Suivre la chanson'
+        followLyrics: 'Suivre la chanson', customization: 'Personnalisation', effects: 'Effets', soundControl: 'Contrôle du son'
       },
       de: {
         settings: 'Einstellungen', accentColor: 'Akzentfarbe', dynamic: 'Dynamisch', custom: 'Benutzerdefiniert',
@@ -3564,7 +3683,7 @@
         coversReady: 'Cover bereit ({n})', noEmbeddedCovers: 'Keine eingebetteten Cover',
         loadingSongs: 'Songs werden geladen...', refreshSlideshow: 'Diashow aktualisieren',
         quotaExceeded: 'Übersetzung vorübergehend nicht verfügbar (tägliches kostenloses Limit erreicht)',
-        followLyrics: 'Dem Lied folgen'
+        followLyrics: 'Dem Lied folgen', customization: 'Anpassung', effects: 'Effekte', soundControl: 'Tonsteuerung'
       },
       it: {
         settings: 'Impostazioni', accentColor: 'Colore accento', dynamic: 'Dinamico', custom: 'Personalizzato',
@@ -3598,7 +3717,7 @@
         coversReady: 'Copertine pronte ({n})', noEmbeddedCovers: 'Nessuna copertina incorporata',
         loadingSongs: 'Caricamento canzoni...', refreshSlideshow: 'Aggiorna presentazione',
         quotaExceeded: 'Traduzione temporaneamente non disponibile (limite gratuito giornaliero raggiunto)',
-        followLyrics: 'Segui la canzone'
+        followLyrics: 'Segui la canzone', customization: 'Personalizzazione', effects: 'Effetti', soundControl: 'Controllo del suono'
       },
       pt: {
         settings: 'Configurações', accentColor: 'Cor de destaque', dynamic: 'Dinâmico', custom: 'Personalizado',
@@ -3632,7 +3751,7 @@
         coversReady: 'Capas prontas ({n})', noEmbeddedCovers: 'Sem capas incorporadas',
         loadingSongs: 'A carregar músicas...', refreshSlideshow: 'Atualizar apresentação',
         quotaExceeded: 'Tradução temporariamente indisponível (limite gratuito diário atingido)',
-        followLyrics: 'Seguir a música'
+        followLyrics: 'Seguir a música', customization: 'Personalização', effects: 'Efeitos', soundControl: 'Controle de som'
       }
     };
 
@@ -5983,18 +6102,41 @@
     let customAccentHex = '#aa00ff';
 
     function toggleSettingsMenu() {
-      document.getElementById('settings-overlay').classList.toggle('open');
-      document.getElementById('settings-menu').classList.toggle('open');
+      const overlay = document.getElementById('settings-overlay');
+      const menu = document.getElementById('settings-menu');
+      const opening = !overlay.classList.contains('open');
+      if (opening) {
+        overlay.classList.add('open');
+        menu.classList.add('open');
+      } else {
+        overlay.classList.remove('open');
+        menu.classList.remove('open');
+        document.querySelectorAll('.settings-submenu.open').forEach(s => s.classList.remove('open'));
+      }
       const btn = document.getElementById('settings-btn');
-      const open = document.getElementById('settings-menu').classList.contains('open');
-      if (btn) btn.setAttribute('aria-expanded', String(open));
+      if (btn) btn.setAttribute('aria-expanded', String(opening));
       // Cerrar el menú EQ si está abierto
       closeEqualizer();
+    }
+
+    // Abre el submenú de una sección de ajustes (cierra el menú principal detrás)
+    function openSettingsSection(name) {
+      document.getElementById('settings-menu').classList.remove('open');
+      const sub = document.getElementById('settings-submenu-' + name);
+      if (sub) sub.classList.add('open');
+    }
+
+    // Vuelve al menú principal desde un submenú de ajustes
+    function closeSettingsSection(name) {
+      const sub = document.getElementById('settings-submenu-' + name);
+      if (sub) sub.classList.remove('open');
+      document.getElementById('settings-menu').classList.add('open');
     }
 
     function closeSettingsMenu() {
       document.getElementById('settings-overlay').classList.remove('open');
       document.getElementById('settings-menu').classList.remove('open');
+      document.querySelectorAll('.settings-submenu.open').forEach(s => s.classList.remove('open'));
     }
 
     function applyAccent() {
@@ -8675,7 +8817,7 @@
         <div class="local-wait-sub">Esto puede tardar un rato según la cantidad de canciones.<br>Se paciente, no cierres la ventana.</div>
       </div>
       <span class="local-wait-close material-icons" onclick="hideLocalImportBanner()">close</span>
-    </div>
   </div>
+    </div>
 </body>
 </html>
