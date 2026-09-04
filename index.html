@@ -7799,10 +7799,10 @@
       if (!item) return false;
       // Emby/Jellyfin
       const embyInfo = getEmbyMediaInfo(item);
-      if (embyInfo && embyInfo.sampleRate && Number(embyInfo.sampleRate) > 48000) return true;
+      if (embyInfo && embyInfo.sampleRate && Number(embyInfo.sampleRate) > 44000) return true;
       // Plex
       if (item._audioQuality && item._audioQuality.sampleRate) {
-        if (Number(item._audioQuality.sampleRate) > 48000) return true;
+        if (Number(item._audioQuality.sampleRate) > 44000) return true;
       }
       // Local: inferir de la extensión del archivo (DSD/DSF/DFF siempre Hi-Res)
       if (item.IsLocal && item.Path) {
