@@ -49,10 +49,6 @@
       padding: 0;
       user-select: none;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    }
-
-    /* Barra de scroll moderna e integrada con la UI */
-    * {
       scrollbar-width: thin;
       scrollbar-color: color-mix(in srgb, var(--accent-color) 55%, transparent) rgba(255, 255, 255, 0.06);
     }
@@ -3493,10 +3489,8 @@
       return dict[key] !== undefined ? dict[key] : (I18N.en[key] !== undefined ? I18N.en[key] : key);
     }
     function getLang() {
-      try {
-        const saved = localStorage.getItem('walkman_lang');
-        if (saved) return saved;
-      } catch (e) {}
+      const saved = loadLS('walkman_lang');
+      if (saved) return saved;
       // Fallback al idioma por defecto desde WALKMAN_CONFIG (DEFAULT_LANGUAGE)
       const langName = (window.WALKMAN_CONFIG && window.WALKMAN_CONFIG.language) || '';
       const code = LANG_CODES[langName] || '';
@@ -3504,13 +3498,12 @@
     }
     function setLang(lang) {
       currentLang = I18N[lang] ? lang : 'en';
-      try { localStorage.setItem('walkman_lang', currentLang); } catch (e) {}
+      saveLS('walkman_lang', currentLang);
       applyI18n();
       syncLangSelectors();
     }
     function syncLangSelectors() {
       document.querySelectorAll('.lang-select').forEach(sel => { sel.value = currentLang; });
-      document.querySelectorAll('.lang-select').forEach(sel => { if (sel.value !== currentLang) sel.value = currentLang; });
     }
     function applyI18n() {
       document.querySelectorAll('[data-i18n]').forEach(el => {
@@ -3530,6 +3523,14 @@
       }
     }
     currentLang = getLang();
+
+    // --- LocalStorage helpers (try/catch centralizado) ---
+    function saveLS(key, val) { try { localStorage.setItem(key, typeof val === 'object' ? JSON.stringify(val) : String(val)); } catch (e) {} }
+    function loadLS(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
+
+    // --- DOM element cache (evita getElementById repetido en hot paths) ---
+    const DOM = {};
+    function $(id) { return DOM[id] || (DOM[id] = document.getElementById(id)); }
 
     let embyConfig = { host: '', token: '', userId: '', libraryId: '', user: '', serverType: 'emby' };
     // Mapeo de tipos por servidor
@@ -3668,7 +3669,7 @@
               let p = pos + 4; // skip picture type(4)
               const mimeLen = (bytes[p] << 24) | (bytes[p+1] << 16) | (bytes[p+2] << 8) | bytes[p+3];
               p += 4;
-              const mime = String.fromCharCode(...bytes.slice(p, p + mimeLen));
+              const mime = new TextDecoder().decode(bytes.slice(p, p + mimeLen));
               p += mimeLen;
               const descLen = (bytes[p] << 24) | (bytes[p+1] << 16) | (bytes[p+2] << 8) | bytes[p+3];
               p += 4 + descLen;
@@ -3708,7 +3709,7 @@
                 let p = frameData + 1;
                 let mimeEnd = p;
                 while (mimeEnd < frameData + size && bytes[mimeEnd] !== 0) mimeEnd++;
-                const mime = String.fromCharCode(...bytes.slice(p, mimeEnd));
+              const mime = new TextDecoder().decode(bytes.slice(p, mimeEnd));
                 p = mimeEnd + 1; // picture type
                 p++; // skip pic type
                 if (enc === 0 || enc === 3) {
@@ -4206,7 +4207,7 @@
 
     function populateLibrarySelect(items) {
       availableLibraries = items;
-      try { localStorage.setItem('walkman_libraries', JSON.stringify(items)); } catch (e) {}
+      saveLS('walkman_libraries', JSON.stringify(items));
       const select = document.getElementById('emby-libraries');
       select.innerHTML = '<option value="">-- Seleccionar --</option>';
       items.forEach(item => {
@@ -4516,7 +4517,7 @@
       const vol = value / 100;
       audio.volume = vol;
       updateVolumeIcon(vol);
-      localStorage.setItem('walkman_volume', vol);
+      saveLS('walkman_volume', vol);
     }
 
     function updateVolumeIcon(vol) {
@@ -4545,7 +4546,7 @@
     }
 
     function initVolume() {
-      const savedVol = localStorage.getItem('walkman_volume');
+      const savedVol = loadLS('walkman_volume');
       const volBar = document.getElementById('volume-bar');
       if (savedVol !== null) {
         const volVal = parseFloat(savedVol);
@@ -4564,7 +4565,7 @@
     let visParticles = [];
     let visStyle = 'rings';
     try {
-      let savedStyle = localStorage.getItem('walkman_vis_style');
+      let savedStyle = loadLS('walkman_vis_style');
       if (savedStyle) {
         if (savedStyle === 'fire') savedStyle = 'ps3';
         if (savedStyle === 'circular') savedStyle = 'cosmic';
@@ -4589,7 +4590,7 @@
       document.querySelectorAll('#vis-style-menu .vis-style-option').forEach(o => {
         o.classList.toggle('active', o.dataset.vis === style);
       });
-      try { localStorage.setItem('walkman_vis_style', style); } catch (e) {}
+      saveLS('walkman_vis_style', style);
     }
 
     // Array conveniente de pares (frecuencia media, valor 0-1)
@@ -5377,11 +5378,11 @@
       const preset = document.getElementById('eq-preset-select').value;
 
       const audioSettings = { bands, cbValue, preset, vptIndex: currentVptIndex };
-      localStorage.setItem('walkman_eq_settings', JSON.stringify(audioSettings));
+      saveLS('walkman_eq_settings', JSON.stringify(audioSettings));
     }
 
     function applySavedAudioSettings() {
-      const saved = localStorage.getItem('walkman_eq_settings');
+      const saved = loadLS('walkman_eq_settings');
       if (!saved) {
         applyVptProfile(currentVptIndex);
         return;
@@ -5571,7 +5572,7 @@
           visAlbumColor = { r: r, g: g, b: b };
 
           // El fondo SIEMPRE se adapta al color de la carátula, independientemente del modo
-          document.getElementById('bg-container').style.background = 
+          $('bg-container').style.background = 
             `radial-gradient(circle at 50% 60%, ${colorHex} 0%, #050505 85%)`;
           
           // Solo el color de acento depende del modo
@@ -5632,13 +5633,13 @@
 
     function saveAccentSettings() {
       try {
-        localStorage.setItem('walkman_accent', JSON.stringify({ mode: accentMode, custom: customAccentHex }));
+        saveLS('walkman_accent', JSON.stringify({ mode: accentMode, custom: customAccentHex }));
       } catch (e) {}
     }
 
     function restoreAccentSettings() {
       try {
-        const saved = localStorage.getItem('walkman_accent');
+        const saved = loadLS('walkman_accent');
         if (saved) {
           const parsed = JSON.parse(saved);
           if (parsed.mode) accentMode = parsed.mode;
@@ -5657,11 +5658,11 @@
     let beatGlowAvg = 0;
 
     function getBeatGlow() {
-      try { return localStorage.getItem('walkman_beatglow') === 'on'; } catch (e) { return false; }
+      return loadLS('walkman_beatglow') === 'on';
     }
 
     function getBeatGlowSens() {
-      try { return Number(localStorage.getItem('walkman_beatglow_sens')) || 2; } catch (e) { return 2; }
+      return Number(loadLS('walkman_beatglow_sens')) || 2;
     }
 
     function applyBeatGlowUI() {
@@ -5679,7 +5680,7 @@
     let fullscreenEnabled = false;
 
     function getFullscreenSetting() {
-      try { return localStorage.getItem('walkman_fullscreen') === 'on'; } catch (e) { return false; }
+      return loadLS('walkman_fullscreen') === 'on';
     }
 
     function applyFullscreenUI() {
@@ -5695,7 +5696,7 @@
 
     function toggleFullscreen() {
       fullscreenEnabled = !isFullscreen();
-      try { localStorage.setItem('walkman_fullscreen', fullscreenEnabled ? 'on' : 'off'); } catch (e) {}
+      saveLS('walkman_fullscreen', fullscreenEnabled ? 'on' : 'off');
       if (fullscreenEnabled) {
         const el = document.documentElement;
         if (el.requestFullscreen) { el.requestFullscreen().catch(() => {}); }
@@ -5723,18 +5724,18 @@
       const fs = isFullscreen();
       fullscreenEnabled = fs;
       applyFullscreenUI();
-      try { localStorage.setItem('walkman_fullscreen', fs ? 'on' : 'off'); } catch (e) {}
+      saveLS('walkman_fullscreen', fs ? 'on' : 'off');
     }
 
     function setBeatGlowSens(v) {
       beatGlowSens = Number(v) || 2;
-      try { localStorage.setItem('walkman_beatglow_sens', String(beatGlowSens)); } catch (e) {}
+      saveLS('walkman_beatglow_sens', String(beatGlowSens));
       applyBeatGlowUI();
     }
 
     function toggleBeatGlow() {
       beatGlowEnabled = !beatGlowEnabled;
-      try { localStorage.setItem('walkman_beatglow', beatGlowEnabled ? 'on' : 'off'); } catch (e) {}
+      saveLS('walkman_beatglow', beatGlowEnabled ? 'on' : 'off');
       applyBeatGlowUI();
       if (beatGlowEnabled) {
         beatGlowPulse = 0; beatGlowAvg = 0;
@@ -5822,16 +5823,16 @@
     const XPSP_LED_COUNT = 3;
 
     function getXpspLeds() {
-      try { return localStorage.getItem('walkman_xpsp_leds') === 'on'; } catch (e) { return false; }
+      return loadLS('walkman_xpsp_leds') === 'on';
     }
 
     function getXpspLedSens() {
-      try { return Number(localStorage.getItem('walkman_xpsp_leds_sens')) || 2; } catch (e) { return 2; }
+      return Number(loadLS('walkman_xpsp_leds_sens')) || 2;
     }
 
     function setXpspLedSens(v) {
       xpspLedSens = Number(v) || 2;
-      try { localStorage.setItem('walkman_xpsp_leds_sens', String(xpspLedSens)); } catch (e) {}
+      saveLS('walkman_xpsp_leds_sens', String(xpspLedSens));
       applyXpspLedUI();
     }
 
@@ -5865,7 +5866,7 @@
 
     function toggleXpspLeds() {
       xpspLedEnabled = !xpspLedEnabled;
-      try { localStorage.setItem('walkman_xpsp_leds', xpspLedEnabled ? 'on' : 'off'); } catch (e) {}
+      saveLS('walkman_xpsp_leds', xpspLedEnabled ? 'on' : 'off');
       applyXpspLedUI();
       if (xpspLedEnabled) {
         buildXpspLedStrip();
@@ -6306,7 +6307,7 @@
           const data = await res.json();
           if (data.Items && data.Items.length) {
             availableLibraries = data.Items;
-            try { localStorage.setItem('walkman_libraries', JSON.stringify(data.Items)); } catch (e) {}
+            saveLS('walkman_libraries', JSON.stringify(data.Items));
             return true;
           }
         } else if (st === 'plex') {
@@ -6316,7 +6317,7 @@
             .map(s => ({ Id: s.key, Name: s.title }));
           if (sections.length) {
             availableLibraries = sections;
-            try { localStorage.setItem('walkman_libraries', JSON.stringify(sections)); } catch (e) {}
+            saveLS('walkman_libraries', JSON.stringify(sections));
             return true;
           }
         }
@@ -6416,12 +6417,12 @@
     function setZoom(z) {
       applyZoom(z);
       fitHeader(z);
-      try { localStorage.setItem('walkman_zoom', String(z)); } catch (e) {}
+      saveLS('walkman_zoom', String(z));
     }
 
     function initZoom() {
       let saved = 100;
-      try { saved = Number(localStorage.getItem('walkman_zoom')) || 100; } catch (e) {}
+      saved = Number(loadLS('walkman_zoom')) || 100;
       applyZoom(saved);
     }
 
@@ -6436,12 +6437,12 @@
 
     function setCarouselZoom(z) {
       applyCarouselZoom(z);
-      try { localStorage.setItem('walkman_zoom_carousel', String(z)); } catch (e) {}
+      saveLS('walkman_zoom_carousel', String(z));
     }
 
     function initCarouselZoom() {
       let saved = 100;
-      try { saved = Number(localStorage.getItem('walkman_zoom_carousel')) || 100; } catch (e) {}
+      saved = Number(loadLS('walkman_zoom_carousel')) || 100;
       applyCarouselZoom(saved);
     }
 
@@ -6556,7 +6557,7 @@
                 <div class="list-item-title">${item.Name}</div>
                 <div class="list-item-sub">${item.Type} • ${item.AlbumArtist || item.Artists ? (item.Artists || []).join(', ') : ''}</div>
               </div>
-              <button class="list-item-more" onclick="event.stopPropagation(); openContextMenu(event, ${JSON.stringify(item).replace(/"/g, '&quot;')})"><span class="material-icons">more_vert</span></button>
+              <button class="list-item-more"><span class="material-icons">more_vert</span></button>
             `;
 
             div.onclick = () => {
@@ -6572,6 +6573,10 @@
                 loadSubItems(item.Id, item.Name, item.Type);
               }
             };
+            div.querySelector('.list-item-more').onclick = (e) => {
+              e.stopPropagation();
+              openContextMenu(e, item);
+            };
 
             container.appendChild(div);
           });
@@ -6582,7 +6587,7 @@
     }
 
     function saveServerSettings() {
-      localStorage.setItem('walkman_server_config', JSON.stringify(embyConfig));
+      saveLS('walkman_server_config', JSON.stringify(embyConfig));
     }
 
     async function selectLibrary() {
@@ -6599,7 +6604,7 @@
     // Aplica como valores por defecto los de WALKMAN_CONFIG (DEFAULT_LANGUAGE,
     // DEFAULT_SERVER_TYPE, DEFAULT_SERVER_URL) solo si no hay config guardada.
     function applyDefaultServerConfig() {
-      try { if (localStorage.getItem('walkman_server_config')) return; } catch (e) {}
+      if (loadLS('walkman_server_config')) return;
       const cfg = window.WALKMAN_CONFIG;
       if (!cfg) return;
       const st = normalizeServerType(cfg.serverType);
@@ -6614,11 +6619,11 @@
     }
 
     async function restoreServerConfig() {
-      const saved = localStorage.getItem('walkman_server_config');
+      const saved = loadLS('walkman_server_config');
       if (!saved) return false;
 
       try {
-        const savedLibs = localStorage.getItem('walkman_libraries');
+        const savedLibs = loadLS('walkman_libraries');
         if (savedLibs) availableLibraries = JSON.parse(savedLibs);
 
         const parsed = JSON.parse(saved);
@@ -6673,7 +6678,7 @@
     let featuredIndex = 0;
 
     function isFeaturedEnabled() {
-      try { return localStorage.getItem('walkman_featured') !== 'off'; } catch (e) { return true; }
+      return loadLS('walkman_featured') !== 'off';
     }
 
     function applyFeaturedVisibility() {
@@ -6690,7 +6695,7 @@
 
     function toggleFeatured() {
       const enabled = !isFeaturedEnabled();
-      try { localStorage.setItem('walkman_featured', enabled ? 'on' : 'off'); } catch (e) {}
+      saveLS('walkman_featured', enabled ? 'on' : 'off');
       applyFeaturedVisibility();
       if (enabled) {
         updateCategoryCounts();
@@ -6713,12 +6718,12 @@
     }
 
     function setFeaturedZoom(z) {
-      try { localStorage.setItem('walkman_featured_zoom', String(z)); } catch (e) {}
+      saveLS('walkman_featured_zoom', String(z));
       applyFeaturedZoom();
     }
 
     function getFeaturedZoom() {
-      try { return Number(localStorage.getItem('walkman_featured_zoom')) || 100; } catch (e) { return 100; }
+      return Number(loadLS('walkman_featured_zoom')) || 100;
     }
 
     function initFeaturedZoom() {
@@ -6940,6 +6945,7 @@
 
       container.innerHTML = '';
       const catLabel = tCategory(category);
+      const fragment = document.createDocumentFragment();
 
       data.Items.forEach((item, index) => {
         const div = document.createElement('div');
@@ -6952,7 +6958,7 @@
             <div class="list-item-title">${item.Name}</div>
             <div class="list-item-sub">${item.AlbumArtist || (item.Artists ? item.Artists.join(', ') : catLabel)}</div>
           </div>
-          <button class="list-item-more" onclick="event.stopPropagation(); openContextMenu(event, ${JSON.stringify(item).replace(/"/g, '&quot;')})"><span class="material-icons">more_vert</span></button>
+          <button class="list-item-more"><span class="material-icons">more_vert</span></button>
         `;
 
         div.onclick = () => {
@@ -6969,9 +6975,14 @@
             loadSubItems(item.Id, item.Name, kindMap[category]);
           }
         };
+        div.querySelector('.list-item-more').onclick = (e) => {
+          e.stopPropagation();
+          openContextMenu(e, item);
+        };
 
-        container.appendChild(div);
+        fragment.appendChild(div);
       });
+      container.appendChild(fragment);
     }
 
     async function loadSubItems(parentId, title, parentKind) {
@@ -6990,6 +7001,7 @@
       const data = await fetchItems(types.Audio, parentId, parentKind);
       const albumTracks = data.Items;
       container.innerHTML = '';
+      const fragment = document.createDocumentFragment();
 
       albumTracks.forEach((track, index) => {
         const div = document.createElement('div');
@@ -7002,7 +7014,7 @@
             <div class="list-item-title">${track.Name}</div>
             <div class="list-item-sub">${track.Artists ? track.Artists.join(', ') : t('unknown')}</div>
           </div>
-          <button class="list-item-more" onclick="event.stopPropagation(); openContextMenu(event, ${JSON.stringify(track).replace(/"/g, '&quot;')})"><span class="material-icons">more_vert</span></button>
+          <button class="list-item-more"><span class="material-icons">more_vert</span></button>
         `;
 
         div.onclick = () => {
@@ -7014,9 +7026,14 @@
           playTrack(index);
           switchTab('playing');
         };
+        div.querySelector('.list-item-more').onclick = (e) => {
+          e.stopPropagation();
+          openContextMenu(e, track);
+        };
 
-        container.appendChild(div);
+        fragment.appendChild(div);
       });
+      container.appendChild(fragment);
     }
 
     function backToCategories() {
@@ -7340,6 +7357,8 @@
         return;
       }
 
+      const fragment = document.createDocumentFragment();
+
       playlist.forEach((item, idx) => {
         const div = document.createElement('div');
         div.className = `queue-item ${idx === currentTrackIndex ? 'active' : ''}`;
@@ -7353,7 +7372,7 @@
             <div class="queue-item-title">${item.Name}</div>
             <div class="queue-item-artist">${item.Artists ? item.Artists.join(', ') : 'Artista'}</div>
           </div>
-          <button class="list-item-more" onclick="event.stopPropagation(); openContextMenu(event, ${JSON.stringify(item).replace(/"/g, '&quot;')}, ${idx})"><span class="material-icons">more_vert</span></button>
+          <button class="list-item-more"><span class="material-icons">more_vert</span></button>
         `;
 
         div.onclick = () => {
@@ -7361,11 +7380,16 @@
           playTrack(idx, true);
           renderQueueList();
         };
+        div.querySelector('.list-item-more').onclick = (e) => {
+          e.stopPropagation();
+          openContextMenu(e, item, idx);
+        };
 
-        container.appendChild(div);
+        fragment.appendChild(div);
         const dragBtn = div.querySelector('.queue-drag');
         setupQueueDrag(dragBtn, div, idx, container);
       });
+      container.appendChild(fragment);
     }
 
     function setCardImg(imgEl, src) {
@@ -7636,14 +7660,14 @@
       if (audio.paused) {
         audio._userPaused = false;
         audio.play();
-        document.getElementById('play-icon').textContent = 'pause';
-        document.getElementById('vis-play-icon').textContent = 'pause';
+        $('play-icon').textContent = 'pause';
+        $('vis-play-icon').textContent = 'pause';
         setMediaSessionPlayback(true);
       } else {
         audio._userPaused = true;
         audio.pause();
-        document.getElementById('play-icon').textContent = 'play_arrow';
-        document.getElementById('vis-play-icon').textContent = 'play_arrow';
+        $('play-icon').textContent = 'play_arrow';
+        $('vis-play-icon').textContent = 'play_arrow';
         setMediaSessionPlayback(false);
       }
       notifyAndroidMedia();
@@ -7667,17 +7691,14 @@
       if (cur === audio._lastTimeUpdate) return;
       audio._lastTimeUpdate = cur;
       const progress = ((cur / audio.duration) * 100).toFixed(2);
-      const progressBar = document.getElementById('progress-bar');
-      const timeCurrent = document.getElementById('time-current');
-      const timeTotal = document.getElementById('time-total');
-      progressBar.value = progress;
-      timeCurrent.textContent = formatTime(cur);
-      timeTotal.textContent = formatTime(audio.duration);
+      $('progress-bar').value = progress;
+      $('time-current').textContent = formatTime(cur);
+      $('time-total').textContent = formatTime(audio.duration);
       // Barra de progreso del Visualizador (solo si está visible)
-      if (document.getElementById('visualizer-overlay').classList.contains('open')) {
-        document.getElementById('vis-progress-bar').value = progress;
-        document.getElementById('vis-time-current').textContent = formatTime(cur);
-        document.getElementById('vis-time-total').textContent = formatTime(audio.duration);
+      if ($('visualizer-overlay').classList.contains('open')) {
+        $('vis-progress-bar').value = progress;
+        $('vis-time-current').textContent = formatTime(cur);
+        $('vis-time-total').textContent = formatTime(audio.duration);
       }
     });
 
@@ -7716,7 +7737,7 @@
       }
 
       if (zoom === undefined) {
-        try { zoom = Number(localStorage.getItem('walkman_zoom')) || 100; } catch (e) { zoom = 100; }
+        zoom = Number(loadLS('walkman_zoom')) || 100;
       }
       const forceHide = Number(zoom) >= 125;
       appLogo.style.display = forceHide ? 'none' : '';
@@ -7843,12 +7864,11 @@
     function requestNotificationPermission() {
       try {
         if (!('Notification' in window)) return;
-        let asked = false;
-        try { asked = localStorage.getItem('walkman_notif_asked') === '1'; } catch (e) {}
+        let asked = loadLS('walkman_notif_asked') === '1';
         if (asked || Notification.permission !== 'default') return;
 
         const markAsked = () => {
-          try { localStorage.setItem('walkman_notif_asked', '1'); } catch (e) {}
+          saveLS('walkman_notif_asked', '1');
         };
 
         if (typeof Notification.requestPermission === 'function') {
