@@ -9,59 +9,39 @@ const SHELL_ASSETS = [
   'https://fonts.googleapis.com/icon?family=Material+Icons'
 ];
 
+const CACHE_OPEN_PROMISE = caches.open(CACHE_NAME);
+
+const BYPASS_PATTERNS = [
+  '/Audio/', '/Items/', '/Users/', '/Views',
+  '/library/parts/', '/library/sections/', '/search?',
+  'plex.tv/api/', 'plex.tv/devices/',
+  'emby.auth', 'Connect/Validate'
+];
+
 self.addEventListener('install', (e) => {
   e.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(SHELL_ASSETS);
-    })
+    CACHE_OPEN_PROMISE.then((cache) => cache.addAll(SHELL_ASSETS))
   );
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (e) => {
   e.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) return caches.delete(key);
-        })
-      );
-    })
+    caches.keys().then((keys) =>
+      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
+    )
   );
   self.clients.claim();
 });
 
 self.addEventListener('fetch', (e) => {
-  const url = e.request.url;
-
   if (e.request.method !== 'GET') return;
 
-  if (url.includes('/Audio/') || url.includes('/Items/') || url.includes('/Users/') || url.includes('/Views')) {
-    return;
-  }
-
-  if (url.includes('/library/parts/') || url.includes('/library/sections/') || url.includes('/search?')) {
-    return;
-  }
-
-  if (url.includes('plex.tv/api/')) {
-    return;
-  }
-
-  if (url.includes('plex.tv/devices/')) {
-    return;
-  }
-
-  if (url.includes('emby.auth') || url.includes('Connect/Validate')) {
-    return;
-  }
+  const url = e.request.url;
+  if (BYPASS_PATTERNS.some((p) => url.includes(p))) return;
 
   if (e.request.mode === 'navigate') {
-    e.respondWith(
-      fetch(e.request).catch(() => {
-        return caches.match('./index.html');
-      })
-    );
+    e.respondWith(fetch(e.request).catch(() => caches.match('./index.html')));
     return;
   }
 
@@ -70,9 +50,7 @@ self.addEventListener('fetch', (e) => {
       if (cachedResponse) {
         fetch(e.request).then((networkResponse) => {
           if (networkResponse && networkResponse.status === 200) {
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(e.request, networkResponse);
-            });
+            CACHE_OPEN_PROMISE.then((cache) => cache.put(e.request, networkResponse));
           }
         }).catch(() => {});
         return cachedResponse;
@@ -81,9 +59,7 @@ self.addEventListener('fetch', (e) => {
       return fetch(e.request).then((networkResponse) => {
         if (networkResponse && networkResponse.status === 200) {
           const responseClone = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(e.request, responseClone);
-          });
+          CACHE_OPEN_PROMISE.then((cache) => cache.put(e.request, responseClone));
         }
         return networkResponse;
       });
