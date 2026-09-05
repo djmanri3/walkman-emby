@@ -25,7 +25,7 @@
   <meta name="apple-touch-fullscreen" content="yes">
 
   <!-- Content Security Policy -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' blob: https:; connect-src 'self' https://lrclib.net https://api.memory.translated.net https://plex.tv http: https:; frame-src 'none';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com https://cdnjs.cloudflare.com https://api.deezer.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: http: https:; media-src 'self' blob: http: https:; connect-src 'self' https://lrclib.net https://api.memory.translated.net https://plex.tv http: https:; frame-src 'none';">
 
   <!-- ColorThief para el color dinámico -->
   <script src="https://unpkg.com/colorthief@3/dist/umd/color-thief.global.js"></script>
@@ -3474,11 +3474,15 @@
         <button class="server-tab" data-type="local" onclick="switchServerType('local')">Local</button>
       </div>
 
+      <div id="http-warning" style="display:none; margin-top:10px; padding:8px 10px; border-radius:6px; background:rgba(234,179,8,0.08); border:1px solid rgba(234,179,8,0.35); color:#eab308; font-size:11px; line-height:1.5;" data-i18n="httpWarning">
+        Aviso: todo el tráfico que sea http a partir de ahora será permitido, pero es muy inseguro, ya que todo puede llegar a ser visible para otros usuarios de la red.
+      </div>
+
       <!-- Emby / Jellyfin -->
       <div id="form-emby" class="server-form active">
         <div class="input-group">
           <label data-i18n="serverUrl">URL del Servidor</label>
-          <input type="text" id="emby-host" placeholder="http://192.168.1.50:8096">
+          <input type="text" id="emby-host" placeholder="http://192.168.1.50:8096" oninput="onServerUrlInput(this.value)">
         </div>
         <div class="input-group">
           <label data-i18n="user">Usuario</label>
@@ -3495,7 +3499,7 @@
       <div id="form-plex" class="server-form">
         <div class="input-group">
           <label data-i18n="serverUrl">URL del Servidor</label>
-          <input type="text" id="plex-host" placeholder="http://192.168.1.50:32400">
+          <input type="text" id="plex-host" placeholder="http://192.168.1.50:32400" oninput="onServerUrlInput(this.value)">
         </div>
         <button class="btn" onclick="connectServer()" data-i18n="connect">Conectar</button>
         <div id="plex-status" class="plex-status" style="display:none;"></div>
@@ -3639,7 +3643,8 @@
         coversReady: 'Covers ready ({n})', noEmbeddedCovers: 'No embedded covers',
         loadingSongs: 'Loading songs...', refreshSlideshow: 'Refresh slideshow',
         quotaExceeded: 'Translation temporarily unavailable (daily free limit reached)',
-        followLyrics: 'Follow the song', customization: 'Customization', effects: 'Effects', soundControl: 'Sound control'
+        followLyrics: 'Follow the song', customization: 'Customization', effects: 'Effects', soundControl: 'Sound control',
+        httpWarning: 'Warning: all HTTP traffic will be allowed, but it is very insecure, since everything may become visible to other users on the network.'
       },
       es: {
         settings: 'Ajustes', accentColor: 'Color de acento', dynamic: 'Dinámico', custom: 'Personalizado',
@@ -3685,7 +3690,8 @@
         coversReady: 'Portadas listas ({n})', noEmbeddedCovers: 'Sin portadas incrustadas',
         loadingSongs: 'Cargando canciones...', refreshSlideshow: 'Recargar side show',
         quotaExceeded: 'Traducción no disponible temporalmente (límite gratuito diario alcanzado)',
-        followLyrics: 'Seguir la canción', customization: 'Personalización', effects: 'Efectos', soundControl: 'Control del sonido'
+        followLyrics: 'Seguir la canción', customization: 'Personalización', effects: 'Efectos', soundControl: 'Control del sonido',
+        httpWarning: 'Aviso: todo el tráfico que sea http a partir de ahora será permitido, pero es muy inseguro, ya que todo puede llegar a ser visible para otros usuarios de la red.'
       },
       fr: {
         settings: 'Réglages', accentColor: 'Couleur d\'accent', dynamic: 'Dynamique', custom: 'Personnalisé',
@@ -3720,7 +3726,8 @@
         coversReady: 'Pochettes prêtes ({n})', noEmbeddedCovers: 'Aucune pochette intégrée',
         loadingSongs: 'Chargement des chansons...', refreshSlideshow: 'Actualiser le diaporama',
         quotaExceeded: 'Traduction temporairement indisponible (limite gratuite quotidienne atteinte)',
-        followLyrics: 'Suivre la chanson', customization: 'Personnalisation', effects: 'Effets', soundControl: 'Contrôle du son'
+        followLyrics: 'Suivre la chanson', customization: 'Personnalisation', effects: 'Effets', soundControl: 'Contrôle du son',
+        httpWarning: 'Attention : tout le trafic HTTP sera autorisé, mais c\'est très peu sûr, car tout peut devenir visible pour d\'autres utilisateurs du réseau.'
       },
       de: {
         settings: 'Einstellungen', accentColor: 'Akzentfarbe', dynamic: 'Dynamisch', custom: 'Benutzerdefiniert',
@@ -3754,7 +3761,8 @@
         coversReady: 'Cover bereit ({n})', noEmbeddedCovers: 'Keine eingebetteten Cover',
         loadingSongs: 'Songs werden geladen...', refreshSlideshow: 'Diashow aktualisieren',
         quotaExceeded: 'Übersetzung vorübergehend nicht verfügbar (tägliches kostenloses Limit erreicht)',
-        followLyrics: 'Dem Lied folgen', customization: 'Anpassung', effects: 'Effekte', soundControl: 'Tonsteuerung'
+        followLyrics: 'Dem Lied folgen', customization: 'Anpassung', effects: 'Effekte', soundControl: 'Tonsteuerung',
+        httpWarning: 'Warnung: Der gesamte HTTP-Verkehr wird erlaubt, aber das ist sehr unsicher, da alles für andere Benutzer im Netzwerk sichtbar werden kann.'
       },
       it: {
         settings: 'Impostazioni', accentColor: 'Colore accento', dynamic: 'Dinamico', custom: 'Personalizzato',
@@ -3788,7 +3796,8 @@
         coversReady: 'Copertine pronte ({n})', noEmbeddedCovers: 'Nessuna copertina incorporata',
         loadingSongs: 'Caricamento canzoni...', refreshSlideshow: 'Aggiorna presentazione',
         quotaExceeded: 'Traduzione temporaneamente non disponibile (limite gratuito giornaliero raggiunto)',
-        followLyrics: 'Segui la canzone', customization: 'Personalizzazione', effects: 'Effetti', soundControl: 'Controllo del suono'
+        followLyrics: 'Segui la canzone', customization: 'Personalizzazione', effects: 'Effetti', soundControl: 'Controllo del suono',
+        httpWarning: 'Avviso: tutto il traffico HTTP sarà consentito, ma è molto insicuro, poiché tutto può diventare visibile ad altri utenti della rete.'
       },
       pt: {
         settings: 'Configurações', accentColor: 'Cor de destaque', dynamic: 'Dinâmico', custom: 'Personalizado',
@@ -3822,7 +3831,8 @@
         coversReady: 'Capas prontas ({n})', noEmbeddedCovers: 'Sem capas incorporadas',
         loadingSongs: 'A carregar músicas...', refreshSlideshow: 'Atualizar apresentação',
         quotaExceeded: 'Tradução temporariamente indisponível (limite gratuito diário atingido)',
-        followLyrics: 'Seguir a música', customization: 'Personalização', effects: 'Efeitos', soundControl: 'Controle de som'
+        followLyrics: 'Seguir a música', customization: 'Personalização', effects: 'Efeitos', soundControl: 'Controle de som',
+        httpWarning: 'Aviso: todo o tráfego HTTP será permitido, mas é muito inseguro, já que tudo pode tornar-se visível para outros utilizadores da rede.'
       }
     };
 
@@ -3922,7 +3932,9 @@
     const DEBUG = new URLSearchParams(window.location.search).has('debug');
 
     function walkmanDebug() {
-      if (DEBUG) console.debug.apply(console, arguments);
+      // Usamos console.log (no debug) para que Chrome no oculte estos mensajes
+      // aunque el filtro de consola tenga el nivel Debug desactivado.
+      if (DEBUG) console.log.apply(console, arguments);
     }
     // ---- Retry con backoff exponencial ----
     async function fetchWithRetry(url, options = {}, retries = 3, baseDelay = 800) {
@@ -3957,7 +3969,7 @@
     const DOM = {};
     function $(id) { return DOM[id] || (DOM[id] = document.getElementById(id)); }
 
-    let embyConfig = { host: '', token: '', userId: '', libraryId: '', user: '', serverType: 'emby' };
+    let embyConfig = { host: '', token: '', userId: '', libraryId: '', user: '', serverType: 'emby', allowHttp: false };
     // Mapeo de tipos por servidor
     const SERVER_TYPES = {
       emby:    { Audio: 'Audio', Album: 'MusicAlbum', Artist: 'MusicArtist', Playlist: 'Playlist' },
@@ -3994,6 +4006,7 @@
       document.getElementById('form-emby').classList.toggle('active', type !== 'plex' && type !== 'local');
       document.getElementById('form-plex').classList.toggle('active', type === 'plex');
       document.getElementById('form-local').classList.toggle('active', type === 'local');
+      syncHttpWarning();
       document.getElementById('library-selector').style.display = 'none';
       const logo = document.getElementById('server-modal-logo');
       if (logo) logo.setAttribute('data-type', type);
@@ -4004,6 +4017,27 @@
         const map = { emby: 'icons/Walkman_emby.png', jellyfin: 'icons/Walkman_jellyfin.png', plex: 'icons/Walkman_plex.png', local: 'icons/Walkman_monocolor.png' };
         logoImg.src = map[type] || 'icons/Walkman_monocolor.png';
       }
+    }
+
+    function onServerUrlInput(value) {
+      const val = String(value || '').trim().toLowerCase();
+      if (val.indexOf('http://') === 0 && !embyConfig.allowHttp) {
+        embyConfig.allowHttp = true;
+        saveServerSettings();
+      }
+      syncHttpWarning();
+    }
+
+    // El aviso aparece automáticamente cuando la URL del servidor es HTTP.
+    function syncHttpWarning() {
+      const warn = document.getElementById('http-warning');
+      if (!warn) return;
+      if (embyConfig.serverType === 'local') { warn.style.display = 'none'; return; }
+      const field = embyConfig.serverType === 'plex'
+        ? document.getElementById('plex-host')
+        : document.getElementById('emby-host');
+      const val = String(field && field.value || '').trim().toLowerCase();
+      warn.style.display = val.indexOf('http://') === 0 ? 'block' : 'none';
     }
 
     // ---- Biblioteca Local (File System Access API) ----
@@ -4562,8 +4596,15 @@
         let mm;
         const media = [];
         while ((mm = mediaMatches.exec(inner)) !== null) {
+          // Conservar atributos del propio <Media> (audioSampleRate, audioCodec,
+          // audioChannels, bitrate, container...) y de sus <Part>/<Stream>:
+          // sin ellos no se puede detectar la calidad/Hi-Res en Plex, y el
+          // servidor a veces solo reporta samplingRate/codec en los <Stream>.
+          const mediaTag = mm[0].match(/<Media\b[^>]*?>/);
+          const attrs = mediaTag ? parseAttrs(mediaTag[0]) : {};
           const parts = parsePlexObject('Part', mm[1] || '');
-          media.push({ Part: parts });
+          const streams = parsePlexObject('Stream', mm[1] || '');
+          media.push(Object.assign({ Part: parts, Stream: streams }, attrs));
         }
         if (media.length) item.Media = media;
         out.push(item);
@@ -4595,6 +4636,8 @@
       const rawHost = document.getElementById('plex-host').value;
       const host = sanitizeServerUrl(rawHost);
       if (!host) { showToast('URL del servidor Plex inválida. Usa http:// o https://', 'error'); return; }
+      // Plex se sirve normalmente por HTTP en la red local (sin TLS), así que no
+      // se aplica la puerta de "Permitir conexión por HTTP" como en Emby/Jellyfin.
       const statusEl = document.getElementById('plex-status');
       statusEl.style.display = 'block';
 
@@ -4659,8 +4702,22 @@
 
         if (!plexToken) throw new Error('Tiempo de espera agotado. Inténtalo de nuevo.');
 
-        // Paso 3: Obtener bibliotecas del servidor
-        const sectData = await fetchPlexJson(`${host}/library/sections?X-Plex-Token=${plexToken}`);
+        // Paso 3: Obtener bibliotecas del servidor.
+        // Si la URL es HTTP y la app va por HTTPS, el navegador bloquea esa
+        // petición (contenido mixto net::ERR_FAILED). Reintentamos por el
+        // puerto seguro de Plex (32443) por si el servidor lo tiene activo.
+        let sectData;
+        try {
+          sectData = await fetchPlexJson(`${host}/library/sections?X-Plex-Token=${plexToken}`);
+        } catch (e) {
+          if (host.indexOf('http://') === 0 && location.protocol === 'https:') {
+            const hostname = host.replace(/^[a-z]+:\/\//i, '').split(':')[0];
+            const httpsFallback = 'https://' + hostname + ':32443';
+            sectData = await fetchPlexJson(`${httpsFallback}/library/sections?X-Plex-Token=${plexToken}`);
+          } else {
+            throw e;
+          }
+        }
         const musicSections = (sectData.MediaContainer.Directory || []).filter(s => s.type === 'artist');
 
         if (musicSections.length === 0) throw new Error('No se encontraron bibliotecas de música en Plex.');
@@ -4677,7 +4734,10 @@
         document.getElementById('emby-modal').style.display = 'none';
         await updateCategoryCounts();
       } catch (err) {
-        statusEl.innerHTML = `<div style="color:#ff5555;">Error: ${err.message}</div>`;
+        const mixed = host.indexOf('http://') === 0 && location.protocol === 'https:'
+          && /Failed to fetch|Mixed Content|net::ERR/i.test(String(err && err.message || ''));
+        statusEl.innerHTML = `<div style="color:#ff5555;">Error: ${err.message}</div>` +
+          (mixed ? `<div style="color:#eab308;font-size:12px;margin-top:8px;">El navegador bloquea Plex por HTTP desde esta página HTTPS (contenido mixto). Para permitirlo: pulsa el candado de la barra de direcciones → Configuración del sitio → "Contenido no seguro" → Permitir, y vuelve a conectar. Alternativa: expón tu Plex por HTTPS (puerto 32443) y usa esa URL.</div>` : '');
       }
     }
 
@@ -4856,18 +4916,31 @@
     function normalizePlexItem(item) {
       const st = embyConfig.serverType;
       const typeMap = { 10: 'Audio', 9: 'MusicAlbum', 8: 'MusicArtist', 15: 'Playlist' };
-      // Extraer info de calidad de audio desde Media (Plex)
-      let audioQuality = null;
+      // Extraer info de calidad de audio desde Media (Plex). Como algunos
+      // servidores solo exponen el audio en los <Stream> del <Part>, usamos
+      // Media como fuente principal y los <Stream> de respaldo (Plex reporta
+      // samplingRate/bitrate en kbps en Stream, al igual que en Media).
+let audioQuality = null;
       const media = item.Media && item.Media[0];
       if (media) {
-        // Plex reporta bitrate general, audioCodec, container en Media
+        // Plex JSON anida los Streams bajo Part[0].Stream; el XML los pone
+        // directamente bajo <Media>. Buscamos en ambos sitios.
+        const stream = (media.Stream || []).find(s => s && String(s.streamType) === '2')
+          || (media.Part || []).reduce((a, p) => a.concat(p.Stream || []), []).find(s => s && String(s.streamType) === '2')
+          || (media.Stream || [])[0]
+          || (media.Part || []).reduce((a, p) => a.concat(p.Stream || []), [])[0]
+          || null;
+        const part = media.Part && media.Part[0] || null;
         audioQuality = {
-          bitrate: media.bitrate ? Number(media.bitrate) * 1000 : null,
-          audioCodec: media.audioCodec || (media.Part && media.Part[0] ? media.Part[0].audioCodec : null),
-          container: media.container || (media.Part && media.Part[0] ? media.Part[0].container : null),
-          channels: media.audioChannels || null,
-          sampleRate: media.audioSampleRate ? Number(media.audioSampleRate) : null
+          bitrate: media.bitrate != null ? Number(media.bitrate) * 1000
+            : (stream && stream.bitrate != null ? Number(stream.bitrate) * 1000 : null),
+          audioCodec: media.audioCodec || (part && part.audioCodec) || (stream && stream.codec) || null,
+          container: media.container || (part && part.container) || null,
+          channels: media.audioChannels || (stream && stream.channels) || null,
+          sampleRate: media.audioSampleRate != null ? Number(media.audioSampleRate)
+            : (stream && stream.samplingRate != null ? Number(stream.samplingRate) : null)
         };
+        walkmanDebug('[PlexDebug] audioQuality', audioQuality);
       }
       return {
         Id: plexItemId(item),
@@ -4924,6 +4997,133 @@
 
     const audio = document.getElementById('audio-player');
     const defaultPlaceholder = "data:image/svg+xml;base64," + btoa(`<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="#282828"/><circle cx="150" cy="130" r="60" fill="none" stroke="#535353" stroke-width="4"/><circle cx="150" cy="130" r="20" fill="#535353"/><path d="M165 130 L165 70 Q165 55 180 50 L180 60 Q170 65 170 70 L170 125" fill="#535353"/><rect x="130" y="210" width="40" height="6" rx="3" fill="#535353"/><rect x="110" y="222" width="80" height="6" rx="3" fill="#404040"/></svg>`);
+
+    // --- Fallback de imagen de artista: si Emby/Jellyfin no tiene foto, la
+    // buscamos en Deezer vía JSONP (Deezer no envía CORS, pero sí JSONP;
+    // iTunes devuelve 403 en muchos entornos, así que no lo usamos). ---
+    const artistImageCache = {};
+    // Cola limitada: Deezer limita el número de peticiones por instante, así
+    // que lanzamos como máximo 4 búsquedas a la vez y reintentamos una vez
+    // si una falla (por tiempo de espera, tasa limitada o error temporal).
+    const _extQueue = [];
+    let _extActive = 0;
+    const _extMaxConcurrent = 4;
+    const _extInFlight = {};
+
+    function jsonp(url) {
+      return new Promise((resolve, reject) => {
+        const cb = 'dz_cb_' + Date.now() + '_' + Math.floor(Math.random() * 1e6);
+        const script = document.createElement('script');
+        const cleanup = () => {
+          delete window[cb];
+          clearTimeout(timer);
+          script.remove();
+        };
+        const timer = setTimeout(() => { cleanup(); reject(new Error('JSONP timeout')); }, 8000);
+        window[cb] = (data) => { cleanup(); resolve(data); };
+        script.onerror = () => { cleanup(); reject(new Error('JSONP error: ' + url)); };
+        script.src = url + (url.includes('?') ? '&' : '?') + 'callback=' + cb;
+        document.head.appendChild(script);
+      });
+    }
+
+    function _extNext() {
+      while (_extActive < _extMaxConcurrent && _extQueue.length) {
+        const task = _extQueue.shift();
+        _extActive++;
+        task().then(() => { _extActive--; _extNext(); }, () => { _extActive--; _extNext(); });
+      }
+    }
+
+    function _queryDeezerImage(key) {
+      return jsonp(`https://api.deezer.com/search/artist?q=${encodeURIComponent(key)}&limit=10&output=jsonp`)
+        .then(ddata => {
+          const artists = ddata && ddata.data;
+          if (!Array.isArray(artists) || !artists.length) return '';
+          const exact = artists.find(a => String(a.name || '').trim().toLowerCase() === key);
+          const chosen = exact || artists[0];
+          return chosen.picture_big || chosen.picture_xl || chosen.picture_medium || '';
+        });
+    }
+
+    function _extTask(key) {
+      return async () => {
+        let url = '';
+        try { url = await _queryDeezerImage(key); } catch (e) {}
+        if (!url) {
+          await new Promise(r => setTimeout(r, 1500));
+          try { url = await _queryDeezerImage(key); } catch (e) {}
+        }
+        artistImageCache[key] = url || '';
+        delete _extInFlight[key];
+        return url;
+      };
+    }
+
+    function fetchExternalArtistImage(name) {
+      const key = String(name || '').trim().toLowerCase();
+      if (!key) return Promise.resolve('');
+      if (key in artistImageCache) return Promise.resolve(artistImageCache[key]);
+      if (_extInFlight[key]) return _extInFlight[key];
+      const p = new Promise(resolve => {
+        _extQueue.push(() => _extTask(key)().then(resolve, resolve));
+        _extNext();
+      });
+      _extInFlight[key] = p;
+      return p;
+    }
+
+    async function handleImageFallback(el, item) {
+      if (!el) return;
+      el.onerror = null;
+      if (!item) { el.src = defaultPlaceholder; return; }
+      if (item.Type !== 'MusicArtist' || el.dataset.extTried) {
+        el.src = defaultPlaceholder;
+        return;
+      }
+      el.dataset.extTried = '1';
+      el.referrerPolicy = 'no-referrer';
+      const name = String(item.Name || item.AlbumArtist || '').trim();
+      const url = await fetchExternalArtistImage(name);
+      el.src = url || defaultPlaceholder;
+    }
+
+    function hasServerImage(item) {
+      if (!item) return false;
+      if (embyConfig.serverType === 'local' || item.IsLocal) {
+        return !!item.coverUrl;
+      }
+      if (embyConfig.serverType === 'plex') {
+        return !!(item._plexThumb || item._plexGrandparentThumb);
+      }
+      return !!(item.ImageTags && item.ImageTags.Primary) || !!item.PrimaryImageTag;
+    }
+
+    // Imagen de artista: si Emby/Jellyfin ya tiene foto, se respeta y no se
+    // toca. Solo si el servidor no tiene imagen usamos la externa de Deezer
+    // (un artista sin foto devuelve un placeholder 200, por lo que el onerror
+    // no se dispara; por eso comprobamos ImageTags en vez de esperar el error).
+    function applyArtistImageFallback(imgEl, item) {
+      if (!imgEl || !item) return;
+      if (item.Type !== 'MusicArtist') {
+        imgEl.onerror = () => { imgEl.onerror = null; imgEl.src = defaultPlaceholder; };
+        return;
+      }
+      if (hasServerImage(item)) {
+        imgEl.onerror = () => handleImageFallback(imgEl, item);
+        return;
+      }
+      imgEl.referrerPolicy = 'no-referrer';
+      const name = String(item.Name || item.AlbumArtist || '').trim();
+      fetchExternalArtistImage(name).then(url => {
+        if (url && imgEl) {
+          imgEl.dataset.extTried = '1';
+          imgEl.onerror = () => { imgEl.onerror = null; imgEl.src = defaultPlaceholder; };
+          imgEl.src = url;
+        }
+      }).catch(() => {});
+      imgEl.onerror = () => handleImageFallback(imgEl, item);
+    }
 
     // WEB AUDIO API - ECUALIZADOR, CLEAR BASS, VPT REVERB Y ANALYZER DE VISUALIZADOR
     // En iOS el AudioContext se suspende al minimizar la app, cortando el sonido
@@ -7104,6 +7304,7 @@
       document.getElementById('emby-modal').style.display = 'flex';
       // Restaurar tab activa según config guardada
       switchServerType(embyConfig.serverType || 'emby');
+      syncHttpWarning();
 
       // Si ya hay bibliotecas guardadas del servidor conectado, mostrar el selector
       // para poder cambiar de biblioteca sin reconectar
@@ -7206,13 +7407,15 @@
             const imgUrl = getEmbyImageUrl(item);
             
             div.innerHTML = `
-              <img src="${imgUrl}" onerror="this.onerror=null;this.src='${defaultPlaceholder}';">
+              <img src="${imgUrl}">
               <div class="list-item-info">
                 <div class="list-item-title">${item.Name}</div>
                 <div class="list-item-sub">${item.Type} • ${item.AlbumArtist || item.Artists ? (item.Artists || []).join(', ') : ''}</div>
               </div>
               <button class="list-item-more"><span class="material-icons">more_vert</span></button>
             `;
+            const imgEl = div.querySelector('img');
+            applyArtistImageFallback(imgEl, item);
 
             div.onclick = () => {
               toggleSearchOverlay();
@@ -7269,6 +7472,7 @@
         if (hostInput) hostInput.value = cfg.serverUrl;
         const plexInput = document.getElementById('plex-host');
         if (plexInput) plexInput.value = cfg.serverUrl;
+        onServerUrlInput(cfg.serverUrl);
       }
     }
 
@@ -7293,6 +7497,7 @@
           document.getElementById('emby-host').value = embyConfig.host || '';
           document.getElementById('emby-user').value = embyConfig.user || '';
           document.getElementById('plex-host').value = embyConfig.host || '';
+          onServerUrlInput(embyConfig.host || '');
 
           await updateCategoryCounts();
           return true;
@@ -7661,13 +7866,15 @@
         const imgUrl = getEmbyImageUrl(item);
         
         div.innerHTML = `
-          <img loading="lazy" src="${imgUrl}" onerror="this.onerror=null;this.src='${defaultPlaceholder}';">
+          <img loading="lazy" src="${imgUrl}">
           <div class="list-item-info">
             <div class="list-item-title">${item.Name}${(item._hasHiRes || isHiResAudio(item)) ? hiresIconHtml() : ''}</div>
             <div class="list-item-sub">${item.AlbumArtist || (item.Artists ? item.Artists.join(', ') : catLabel)}</div>
           </div>
           <button class="list-item-more"><span class="material-icons">more_vert</span></button>
         `;
+        const imgEl = div.querySelector('img');
+        applyArtistImageFallback(imgEl, item);
 
         div.onclick = () => {
           if (category === 'Songs') {
@@ -7926,8 +8133,9 @@
       // Plex / Local
       if (item._audioQuality) {
         const q = item._audioQuality;
+        const qcodec = q.audioCodec || q.codec;
         let parts = [];
-        if (q.container || q.codec) parts.push((q.codec || q.container).toUpperCase());
+        if (q.container || qcodec) parts.push((qcodec || q.container).toUpperCase());
         if (q.bitrate) parts.push(formatBitrate(q.bitrate));
         if (q.sampleRate) parts.push(formatSampleRate(q.sampleRate));
         if (q.channels) parts.push(q.channels + ' ch');
@@ -7976,6 +8184,8 @@
     const LOSSLESS_EXTS = ['flac', 'wav', 'aiff', 'aif', 'ape', 'wv', 'dsf', 'dff', 'dsd'];
 
     function isHiresSampleRate(sampleRate) {
+      // Hi-Res genérico: > 44 kHz (44.1 CD también se considera, como antes).
+      // Plex tiene además un fallback propio para lossless sin sampleRate.
       return !!sampleRate && Number(sampleRate) > 44000;
     }
 
@@ -7997,9 +8207,12 @@
       // Plex
       if (item._audioQuality) {
         const q = item._audioQuality;
-        const codec = q.codec || q.container || '';
+        const codec = q.audioCodec || q.codec || q.container || '';
         if (codec && !isLosslessCodec(codec)) return false;
         if (isHiresSampleRate(q.sampleRate)) return true;
+        // Plex a veces no reporta sampleRate; si el códec es lossless
+        // mostramos el icono (mejor mostrar que ocultar en caso de duda).
+        if (codec && isLosslessCodec(codec) && q.sampleRate == null) return true;
       }
       // Local: inferir de la extensión del archivo (DSD/DSF/DFF siempre Hi-Res,
       // resto de lossless solo si la extensión lo sugiere)
@@ -8886,7 +9099,8 @@
       } catch (e) {}
     }
 
-    // Registrar el Service Worker para PWA
+    // Registrar el Service Worker para PWA (el SW navega siempre contra la red
+    // con cache: 'no-cache', así nunca sirve un index.html viejo).
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')
