@@ -30,15 +30,6 @@
       "purpose": "maskable"
     }
   ],
-  "screenshots": [
-    {
-      "src": "screenshots/Player.png",
-      "sizes": "1918x955",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Reproductor de música WALKMAN"
-    }
-  ],
   "shortcuts": [
     {
       "name": "Abrir WALKMAN",

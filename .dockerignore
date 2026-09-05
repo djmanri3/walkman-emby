@@ -1,11 +1,9 @@
 # Excluir metadatos de git y CI (el contexto llega a 126MB actualmente)
 .git
 .github
-android
 Demo_images
 README.md
 LICENSE
-Walkman.png
 
 # Ficheros locales
 *.log
