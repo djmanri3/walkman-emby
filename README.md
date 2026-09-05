@@ -80,6 +80,16 @@ docker-compose up -d
   - DEFAULT_LANGUAGE: English, Español, Français, Deutsch, Italiano or Português
   - DEFAULT_SERVER_TYPE: Emby, Jellyfin, Plex or Local
   - DEFAULT_SERVER_URL: your server URL
+- Add media controls with keyboard
+  - r: repeat song mode
+  - s: random song mode
+  - ->: next song
+  - <-: previous song
+  - space bar: play/pause
+- Enable or disable auto scroll on lyrics
+- Redesign settings menu
+- Add hi-res icon when music is hi-res
+- Application security improved
 
 
 # Bugs
@@ -88,7 +98,10 @@ docker-compose up -d
 # Screenshots
 
 ## Player
-<img width="1915" height="952" alt="image" src="https://github.com/djmanri3/walkman-emby/blob/main/Demo_images/Player.png?raw=true" />
+<img width="1915" height="952" alt="image" src="https://github.com/djmanri3/walkman-server/blob/dev/Demo_images/Player.png?raw=true" />
+
+### Settings
+<img width="1915" height="952" alt="image" src="https://github.com/djmanri3/walkman-server/blob/dev/Demo_images/Lyris.png?raw=true" />
 
 ## Player search
 <img width="1915" height="952" alt="image" src="https://github.com/djmanri3/walkman-server/blob/main/Demo_images/Playing_search.png?raw=true" />
@@ -124,8 +137,15 @@ docker-compose up -d
 ### Inside of playlists
 <img width="1915" height="952" alt="image" src="https://github.com/djmanri3/walkman-emby/blob/main/Demo_images/Inside_playlist.png?raw=true" />
 
-### Settings
-<img width="1915" height="952" alt="image" src="https://github.com/djmanri3/walkman-server/blob/main/Demo_images/Settings.png?raw=true" />
-
 ### Connect to server or local
-<img width="1915" height="952" alt="image" src="https://github.com/djmanri3/walkman-server/blob/main/Demo_images/Connect_to_server_or_local.png?raw=true" />
+#### Emby
+<img width="1915" height="952" alt="image" src="https://github.com/djmanri3/walkman-server/blob/main/Demo_images/Connect_to_server_or_local_Emby.png?raw=true" />
+
+#### Jellyfin
+<img width="1915" height="952" alt="image" src="https://github.com/djmanri3/walkman-server/blob/main/Demo_images/Connect_to_server_or_local_Jellyfin.png?raw=true" />
+
+#### Plex
+<img width="1915" height="952" alt="image" src="https://github.com/djmanri3/walkman-server/blob/main/Demo_images/Connect_to_server_or_local_Plex.png?raw=true" />
+
+#### Local
+<img width="1915" height="952" alt="image" src="https://github.com/djmanri3/walkman-server/blob/main/Demo_images/Connect_to_server_or_local_Local.png?raw=true" />
