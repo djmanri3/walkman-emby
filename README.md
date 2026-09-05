@@ -101,7 +101,7 @@ docker-compose up -d
 <img width="1915" height="952" alt="image" src="https://github.com/djmanri3/walkman-server/blob/dev/Demo_images/Player.png?raw=true" />
 
 ### Settings
-<img width="1915" height="952" alt="image" src="https://github.com/djmanri3/walkman-server/blob/dev/Demo_images/Settings.png?raw=true" />
+<img width="1915" height="952" alt="image" src="https://github.com/djmanri3/walkman-server/blob/dev/Demo_images/Lyris.png?raw=true" />
 
 ## Player search
 <img width="1915" height="952" alt="image" src="https://github.com/djmanri3/walkman-server/blob/main/Demo_images/Playing_search.png?raw=true" />
