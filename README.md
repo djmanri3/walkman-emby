@@ -81,6 +81,8 @@ docker-compose up -d
   - DEFAULT_SERVER_TYPE: Emby, Jellyfin, Plex or Local
   - DEFAULT_SERVER_URL: your server URL
 - Add media controls with keyboard
+  - r: repeat song mode
+  - s: random song mode
   - ->: next song
   - <-: previous song
   - space bar: play/pause
