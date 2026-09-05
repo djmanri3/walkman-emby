@@ -1440,6 +1440,26 @@
       font-size: 20px;
     }
 
+    .list-item-shuffle {
+      background: linear-gradient(135deg, rgba(30,60,114,0.5), rgba(42,82,152,0.5));
+      border: 1px solid rgba(255,255,255,0.12);
+      margin-bottom: 4px;
+    }
+    .list-item-shuffle-icon {
+      flex-shrink: 0;
+      width: 50px;
+      height: 50px;
+      border-radius: 3px;
+      background: #1e3c72;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .list-item-shuffle-icon .material-icons {
+      font-size: 24px;
+    }
+
     .context-menu-overlay {
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -3562,6 +3582,7 @@
         noSyncedFound: 'No synced lyrics found', noTrackPlaying: 'No song currently playing',
         lyricsError: 'Error connecting to the lyrics server', emptyQueue: 'No songs in queue',
         noTracks: 'No songs', back: 'Back', repeat: 'Repeat', shuffle: 'Shuffle',
+        shuffleAll: 'Shuffle all songs',
         equalizer: 'Equalizer', eqVptTab: 'Settings / VPT', vptAmbient: 'Ambient sound (VPT)',
         vptOff: 'Off', vptOffDesc: 'No immersive ambient sound effects',
         vptStudio: 'Studio', vptStudioDesc: 'Creates the sound of an acoustic recording studio',
@@ -3607,6 +3628,7 @@
         noSyncedFound: 'No se encontraron letras sincronizadas', noTrackPlaying: 'Sin canción en reproducción',
         lyricsError: 'Error al conectar con el servidor de letras', emptyQueue: 'Sin canciones en la cola',
         noTracks: 'Sin canciones', back: 'Volver', repeat: 'Repetir', shuffle: 'Aleatorio',
+        shuffleAll: 'Aleatorio de todas las canciones',
         equalizer: 'Ecualizador', eqVptTab: 'Ajustes / VPT', vptAmbient: 'Sonido de ambiente (VPT)',
         vptOff: 'Desactivado', vptOffDesc: 'Sin efectos de sonido ambiente envolvente',
         vptStudio: 'Estudio', vptStudioDesc: 'Crea el sonido de un estudio de grabación acústico',
@@ -5974,6 +5996,21 @@
       }
     }
 
+    function playShuffleAll(tracks) {
+      if (!tracks || tracks.length === 0) return;
+      const shuffled = tracks.slice().sort(() => Math.random() - 0.5);
+      playlist = shuffled;
+      originalPlaylist = [...tracks];
+      isShuffle = true;
+      const btn = document.getElementById('shuffle-btn');
+      if (btn) btn.classList.add('active');
+      playlistVersion++;
+      renderQueueList();
+      refreshCarouselImages();
+      playTrack(0);
+      switchTab('playing');
+    }
+
     // ---- TEMPORIZADOR DE SUEÑO (Sleep Timer) ----
     let sleepTimerId = null;
     let sleepTimerMinutes = 0;
@@ -7538,6 +7575,20 @@
       container.innerHTML = '';
       const catLabel = tCategory(category);
       const fragment = document.createDocumentFragment();
+
+      if (category === 'Songs' && data.Items.length > 0) {
+        const shuffleDiv = document.createElement('div');
+        shuffleDiv.className = 'list-item list-item-shuffle';
+        shuffleDiv.innerHTML = `
+          <div class="list-item-shuffle-icon"><span class="material-icons">shuffle</span></div>
+          <div class="list-item-info">
+            <div class="list-item-title">${t('shuffle')}</div>
+            <div class="list-item-sub">${t('shuffleAll')} ${data.Items.length}</div>
+          </div>
+        `;
+        shuffleDiv.onclick = () => playShuffleAll(data.Items);
+        fragment.appendChild(shuffleDiv);
+      }
 
       data.Items.forEach((item, index) => {
         const div = document.createElement('div');
