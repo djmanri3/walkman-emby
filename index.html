@@ -25,7 +25,7 @@
   <meta name="apple-touch-fullscreen" content="yes">
 
   <!-- Content Security Policy -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' blob: https:; connect-src 'self' https://lrclib.net https://api.memory.translated.net https://plex.tv http: https:; frame-src 'none';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com https://cdnjs.cloudflare.com https://api.deezer.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' blob: https:; connect-src 'self' https://lrclib.net https://api.memory.translated.net https://plex.tv http: https:; frame-src 'none';">
 
   <!-- ColorThief para el color dinámico -->
   <script src="https://unpkg.com/colorthief@3/dist/umd/color-thief.global.js"></script>
@@ -4925,6 +4925,133 @@
     const audio = document.getElementById('audio-player');
     const defaultPlaceholder = "data:image/svg+xml;base64," + btoa(`<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="#282828"/><circle cx="150" cy="130" r="60" fill="none" stroke="#535353" stroke-width="4"/><circle cx="150" cy="130" r="20" fill="#535353"/><path d="M165 130 L165 70 Q165 55 180 50 L180 60 Q170 65 170 70 L170 125" fill="#535353"/><rect x="130" y="210" width="40" height="6" rx="3" fill="#535353"/><rect x="110" y="222" width="80" height="6" rx="3" fill="#404040"/></svg>`);
 
+    // --- Fallback de imagen de artista: si Emby/Jellyfin no tiene foto, la
+    // buscamos en Deezer vía JSONP (Deezer no envía CORS, pero sí JSONP;
+    // iTunes devuelve 403 en muchos entornos, así que no lo usamos). ---
+    const artistImageCache = {};
+    // Cola limitada: Deezer limita el número de peticiones por instante, así
+    // que lanzamos como máximo 4 búsquedas a la vez y reintentamos una vez
+    // si una falla (por tiempo de espera, tasa limitada o error temporal).
+    const _extQueue = [];
+    let _extActive = 0;
+    const _extMaxConcurrent = 4;
+    const _extInFlight = {};
+
+    function jsonp(url) {
+      return new Promise((resolve, reject) => {
+        const cb = 'dz_cb_' + Date.now() + '_' + Math.floor(Math.random() * 1e6);
+        const script = document.createElement('script');
+        const cleanup = () => {
+          delete window[cb];
+          clearTimeout(timer);
+          script.remove();
+        };
+        const timer = setTimeout(() => { cleanup(); reject(new Error('JSONP timeout')); }, 8000);
+        window[cb] = (data) => { cleanup(); resolve(data); };
+        script.onerror = () => { cleanup(); reject(new Error('JSONP error: ' + url)); };
+        script.src = url + (url.includes('?') ? '&' : '?') + 'callback=' + cb;
+        document.head.appendChild(script);
+      });
+    }
+
+    function _extNext() {
+      while (_extActive < _extMaxConcurrent && _extQueue.length) {
+        const task = _extQueue.shift();
+        _extActive++;
+        task().then(() => { _extActive--; _extNext(); }, () => { _extActive--; _extNext(); });
+      }
+    }
+
+    function _queryDeezerImage(key) {
+      return jsonp(`https://api.deezer.com/search/artist?q=${encodeURIComponent(key)}&limit=10&output=jsonp`)
+        .then(ddata => {
+          const artists = ddata && ddata.data;
+          if (!Array.isArray(artists) || !artists.length) return '';
+          const exact = artists.find(a => String(a.name || '').trim().toLowerCase() === key);
+          const chosen = exact || artists[0];
+          return chosen.picture_big || chosen.picture_xl || chosen.picture_medium || '';
+        });
+    }
+
+    function _extTask(key) {
+      return async () => {
+        let url = '';
+        try { url = await _queryDeezerImage(key); } catch (e) {}
+        if (!url) {
+          await new Promise(r => setTimeout(r, 1500));
+          try { url = await _queryDeezerImage(key); } catch (e) {}
+        }
+        artistImageCache[key] = url || '';
+        delete _extInFlight[key];
+        return url;
+      };
+    }
+
+    function fetchExternalArtistImage(name) {
+      const key = String(name || '').trim().toLowerCase();
+      if (!key) return Promise.resolve('');
+      if (key in artistImageCache) return Promise.resolve(artistImageCache[key]);
+      if (_extInFlight[key]) return _extInFlight[key];
+      const p = new Promise(resolve => {
+        _extQueue.push(() => _extTask(key)().then(resolve, resolve));
+        _extNext();
+      });
+      _extInFlight[key] = p;
+      return p;
+    }
+
+    async function handleImageFallback(el, item) {
+      if (!el) return;
+      el.onerror = null;
+      if (!item) { el.src = defaultPlaceholder; return; }
+      if (item.Type !== 'MusicArtist' || el.dataset.extTried) {
+        el.src = defaultPlaceholder;
+        return;
+      }
+      el.dataset.extTried = '1';
+      el.referrerPolicy = 'no-referrer';
+      const name = String(item.Name || item.AlbumArtist || '').trim();
+      const url = await fetchExternalArtistImage(name);
+      el.src = url || defaultPlaceholder;
+    }
+
+    function hasServerImage(item) {
+      if (!item) return false;
+      if (embyConfig.serverType === 'local' || item.IsLocal) {
+        return !!item.coverUrl;
+      }
+      if (embyConfig.serverType === 'plex') {
+        return !!(item._plexThumb || item._plexGrandparentThumb);
+      }
+      return !!(item.ImageTags && item.ImageTags.Primary) || !!item.PrimaryImageTag;
+    }
+
+    // Imagen de artista: si Emby/Jellyfin ya tiene foto, se respeta y no se
+    // toca. Solo si el servidor no tiene imagen usamos la externa de Deezer
+    // (un artista sin foto devuelve un placeholder 200, por lo que el onerror
+    // no se dispara; por eso comprobamos ImageTags en vez de esperar el error).
+    function applyArtistImageFallback(imgEl, item) {
+      if (!imgEl || !item) return;
+      if (item.Type !== 'MusicArtist') {
+        imgEl.onerror = () => { imgEl.onerror = null; imgEl.src = defaultPlaceholder; };
+        return;
+      }
+      if (hasServerImage(item)) {
+        imgEl.onerror = () => handleImageFallback(imgEl, item);
+        return;
+      }
+      imgEl.referrerPolicy = 'no-referrer';
+      const name = String(item.Name || item.AlbumArtist || '').trim();
+      fetchExternalArtistImage(name).then(url => {
+        if (url && imgEl) {
+          imgEl.dataset.extTried = '1';
+          imgEl.onerror = () => { imgEl.onerror = null; imgEl.src = defaultPlaceholder; };
+          imgEl.src = url;
+        }
+      }).catch(() => {});
+      imgEl.onerror = () => handleImageFallback(imgEl, item);
+    }
+
     // WEB AUDIO API - ECUALIZADOR, CLEAR BASS, VPT REVERB Y ANALYZER DE VISUALIZADOR
     // En iOS el AudioContext se suspende al minimizar la app, cortando el sonido
     // (ya que el audio va enrutado a través de él). Para poder reproducir en
@@ -7206,13 +7333,15 @@
             const imgUrl = getEmbyImageUrl(item);
             
             div.innerHTML = `
-              <img src="${imgUrl}" onerror="this.onerror=null;this.src='${defaultPlaceholder}';">
+              <img src="${imgUrl}">
               <div class="list-item-info">
                 <div class="list-item-title">${item.Name}</div>
                 <div class="list-item-sub">${item.Type} • ${item.AlbumArtist || item.Artists ? (item.Artists || []).join(', ') : ''}</div>
               </div>
               <button class="list-item-more"><span class="material-icons">more_vert</span></button>
             `;
+            const imgEl = div.querySelector('img');
+            applyArtistImageFallback(imgEl, item);
 
             div.onclick = () => {
               toggleSearchOverlay();
@@ -7661,13 +7790,15 @@
         const imgUrl = getEmbyImageUrl(item);
         
         div.innerHTML = `
-          <img loading="lazy" src="${imgUrl}" onerror="this.onerror=null;this.src='${defaultPlaceholder}';">
+          <img loading="lazy" src="${imgUrl}">
           <div class="list-item-info">
             <div class="list-item-title">${item.Name}${(item._hasHiRes || isHiResAudio(item)) ? hiresIconHtml() : ''}</div>
             <div class="list-item-sub">${item.AlbumArtist || (item.Artists ? item.Artists.join(', ') : catLabel)}</div>
           </div>
           <button class="list-item-more"><span class="material-icons">more_vert</span></button>
         `;
+        const imgEl = div.querySelector('img');
+        applyArtistImageFallback(imgEl, item);
 
         div.onclick = () => {
           if (category === 'Songs') {
