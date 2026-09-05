@@ -1276,7 +1276,19 @@
       width: 100%;
       height: 100%;
       opacity: 0;
-      transition: opacity 1.2s ease;
+      transform: scale(0.96) translateX(5%);
+      transition: opacity 0.9s ease, transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+      will-change: opacity, transform;
+    }
+
+    .featured-slide.active {
+      opacity: 1;
+      transform: scale(1) translateX(0);
+    }
+
+    .featured-slide.leaving {
+      opacity: 0;
+      transform: scale(0.96) translateX(-5%);
     }
 
     .featured-slide-bg {
@@ -1289,6 +1301,18 @@
       background-position: center;
       background-repeat: no-repeat;
       filter: blur(14px) saturate(1.3);
+      transform: scale(1.15);
+      will-change: transform;
+      transition: transform 1.2s ease;
+    }
+
+    .featured-slide.active .featured-slide-bg {
+      animation: featuredKenBurns 10s ease-in-out forwards;
+    }
+
+    @keyframes featuredKenBurns {
+      0%   { transform: scale(1.15) translate3d(-1.2%, -1%, 0); }
+      100% { transform: scale(1.28) translate3d(1.2%, 1%, 0); }
     }
 
     .featured-slide-art {
@@ -1303,10 +1327,34 @@
       background-position: center;
       background-repeat: no-repeat;
       background-size: contain;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+      will-change: opacity, transform;
     }
 
-    .featured-slide.active {
+    .featured-slide.active .featured-slide-art {
       opacity: 1;
+      transform: translateY(0);
+    }
+
+    .featured-slide-title,
+    .featured-slide-artist {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+
+    .featured-slide.active .featured-slide-title {
+      animation: featuredFadeUp 0.8s ease 0.35s forwards;
+    }
+
+    .featured-slide.active .featured-slide-artist {
+      animation: featuredFadeUp 0.8s ease 0.5s forwards;
+    }
+
+    @keyframes featuredFadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
 
     .featured-slide-overlay {
@@ -1348,16 +1396,45 @@
     .featured-dot {
       width: 6px;
       height: 6px;
-      border-radius: 50%;
+      border-radius: 3px;
       background: rgba(255,255,255,0.4);
       background-clip: padding-box;
-      transition: background 0.3s;
+      transition: width 0.35s ease, background 0.35s ease;
       cursor: pointer;
       padding: 4px;
     }
 
     .featured-dot.active {
+      width: 14px;
       background: #fff;
+    }
+
+    .featured-progress {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      z-index: 7;
+      background: rgba(255,255,255,0.15);
+    }
+
+    .featured-progress-fill {
+      height: 100%;
+      width: 100%;
+      transform: scaleX(0);
+      transform-origin: left;
+      background: rgba(255,255,255,0.9);
+      box-shadow: 0 0 6px rgba(255,255,255,0.6);
+    }
+
+    .featured-slideshow.playing .featured-progress-fill {
+      animation: featuredProgress 4s linear forwards;
+    }
+
+    @keyframes featuredProgress {
+      from { transform: scaleX(0); }
+      to   { transform: scaleX(1); }
     }
 
     .featured-arrow {
@@ -7651,6 +7728,13 @@ let audioQuality = null;
       nextBtn.oncontextmenu = (e) => e.stopPropagation();
       container.appendChild(nextBtn);
 
+      const progress = document.createElement('div');
+      progress.className = 'featured-progress';
+      const progressFill = document.createElement('div');
+      progressFill.className = 'featured-progress-fill';
+      progress.appendChild(progressFill);
+      container.appendChild(progress);
+
       container.style.cursor = 'pointer';
       container.onclick = () => playFeaturedAlbum(featuredIndex);
 
@@ -7665,6 +7749,21 @@ let audioQuality = null;
       featuredIndex = 0;
       if (featuredTimer) clearInterval(featuredTimer);
       featuredTimer = setInterval(featuredNext, 4000);
+      if (featuredSlides.length >= 2) startFeaturedProgress();
+    }
+
+    function startFeaturedProgress() {
+      const container = document.getElementById('featured-slideshow');
+      if (!container) return;
+      const fill = container.querySelector('.featured-progress-fill');
+      if (fill) {
+        fill.style.animation = 'none';
+        void fill.offsetWidth;
+        fill.style.animation = '';
+      }
+      container.classList.remove('playing');
+      void container.offsetWidth;
+      container.classList.add('playing');
     }
 
     function featuredNext() {
@@ -7673,10 +7772,14 @@ let audioQuality = null;
       const dots = document.querySelectorAll('#featured-slideshow .featured-dot');
       if (!slides.length) return;
       slides[featuredIndex].classList.remove('active');
+      slides[featuredIndex].classList.add('leaving');
       if (dots[featuredIndex]) dots[featuredIndex].classList.remove('active');
       featuredIndex = (featuredIndex + 1) % featuredSlides.length;
-      slides[featuredIndex].classList.add('active');
+      const next = slides[featuredIndex];
+      next.classList.remove('leaving');
+      next.classList.add('active');
       if (dots[featuredIndex]) dots[featuredIndex].classList.add('active');
+      startFeaturedProgress();
     }
 
     function goToFeatured(i) {
@@ -7685,13 +7788,23 @@ let audioQuality = null;
       const slides = document.querySelectorAll('#featured-slideshow .featured-slide');
       const dots = document.querySelectorAll('#featured-slideshow .featured-dot');
       if (!slides.length) return;
+      if (i === featuredIndex) {
+        if (featuredTimer) clearInterval(featuredTimer);
+        featuredTimer = setInterval(featuredNext, 4000);
+        if (featuredSlides.length >= 2) startFeaturedProgress();
+        return;
+      }
       slides[featuredIndex].classList.remove('active');
+      slides[featuredIndex].classList.add('leaving');
       if (dots[featuredIndex]) dots[featuredIndex].classList.remove('active');
       featuredIndex = i;
-      slides[featuredIndex].classList.add('active');
+      const next = slides[featuredIndex];
+      next.classList.remove('leaving');
+      next.classList.add('active');
       if (dots[featuredIndex]) dots[featuredIndex].classList.add('active');
       if (featuredTimer) clearInterval(featuredTimer);
       featuredTimer = setInterval(featuredNext, 4000);
+      startFeaturedProgress();
     }
 
     function renderFeaturedAlbums(albums) {
