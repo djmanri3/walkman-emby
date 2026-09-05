@@ -4,7 +4,6 @@ const SHELL_ASSETS = [
   './index.html',
   './manifest.json',
   './icons/Walkman.png',
-  './screenshots/Player.png',
   'https://unpkg.com/colorthief@3/dist/umd/color-thief.global.js',
   'https://fonts.googleapis.com/icon?family=Material+Icons'
 ];
