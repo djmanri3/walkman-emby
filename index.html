@@ -1153,15 +1153,43 @@
     .progress-bar {
       flex: 1;
       -webkit-appearance: none;
+      appearance: none;
+      height: 20px;            /* Área interactiva amplia para facilitar el clic/toque */
+      background: transparent;
+      outline: none;
+      cursor: pointer;
+      margin: 0;
+    }
+
+    /* Pista visual fina centrada dentro del área interactiva */
+    .progress-bar::-webkit-slider-runnable-track {
       height: 3px;
       background: rgba(255, 255, 255, 0.3);
-      outline: none;
+      border-radius: 0;
     }
 
     .progress-bar::-webkit-slider-thumb {
       -webkit-appearance: none;
+      appearance: none;
       width: 12px;
       height: 12px;
+      margin-top: -4.5px;      /* (20 - 3) / 2 - (12 - 3) / 2 */
+      border-radius: 50%;
+      background: #fff;
+      cursor: pointer;
+      box-shadow: 0 0 5px rgba(255,255,255,0.8);
+    }
+
+    .progress-bar::-moz-range-track {
+      height: 3px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 0;
+    }
+
+    .progress-bar::-moz-range-thumb {
+      width: 12px;
+      height: 12px;
+      border: none;
       border-radius: 50%;
       background: #fff;
       cursor: pointer;
@@ -3524,7 +3552,7 @@
 
       <div class="progress-container">
         <span id="time-current">00:00</span>
-        <input type="range" id="progress-bar" class="progress-bar" value="0" max="100" onchange="seekTrack(this.value)" aria-label="Progreso de la canción">
+        <input type="range" id="progress-bar" class="progress-bar" value="0" max="100" oninput="seekTrack(this.value)" onchange="seekTrack(this.value)" aria-label="Progreso de la canción">
         <span id="time-total">00:00</span>
       </div>
 
