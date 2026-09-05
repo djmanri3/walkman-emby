@@ -1,4 +1,4 @@
-const CACHE_NAME = 'walkman-v12';
+const CACHE_NAME = 'walkman-v13';
 const SHELL_ASSETS = [
   './',
   './index.html',
@@ -40,7 +40,9 @@ self.addEventListener('fetch', (e) => {
   if (BYPASS_PATTERNS.some((p) => url.includes(p))) return;
 
   if (e.request.mode === 'navigate') {
-    e.respondWith(fetch(e.request).catch(() => caches.match('./index.html')));
+    // Revalidar siempre contra la red: evita que el navegador sirva un
+    // index.html viejo (cache del HTTP o del SW) tras cada desplegue.
+    e.respondWith(fetch(e.request, { cache: 'no-cache' }).catch(() => caches.match('./index.html')));
     return;
   }
 
