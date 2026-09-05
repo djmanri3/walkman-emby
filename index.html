@@ -457,11 +457,13 @@
       position: absolute;
       width: calc(330px * var(--carousel-size));
       height: calc(330px * var(--carousel-size));
-      transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+      transition: all 0.6s cubic-bezier(0.34, 1.3, 0.64, 1);
       box-shadow: 0 12px 35px rgba(0, 0, 0, 0.85);
       border-radius: 2px;
       overflow: hidden;
       background: #111;
+      backface-visibility: hidden;
+      will-change: transform, opacity;
     }
 
     .art-card img {
@@ -498,7 +500,7 @@
       transform: translateX(0) scale(1);
       z-index: 3;
       opacity: 1;
-      transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+      transition: all 0.6s cubic-bezier(0.34, 1.3, 0.64, 1);
     }
 
     .art-card.next {
@@ -507,7 +509,7 @@
       opacity: 0.5;
       cursor: pointer;
       filter: brightness(0.7);
-      transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+      transition: all 0.6s cubic-bezier(0.34, 1.3, 0.64, 1);
     }
 
     .art-card.prev {
@@ -516,7 +518,54 @@
       opacity: 0.5;
       cursor: pointer;
       filter: brightness(0.7);
-      transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+      transition: all 0.6s cubic-bezier(0.34, 1.3, 0.64, 1);
+    }
+
+    .art-card.next:hover, .art-card.prev:hover {
+      opacity: 0.72;
+      filter: brightness(0.95);
+    }
+
+    /* Barrido de luz de la carátula: solo se activa al cambiar de canción */
+    .art-card.current::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: 4;
+      pointer-events: none;
+      background: linear-gradient(115deg, transparent 32%, rgba(255,255,255,0.18) 50%, transparent 68%);
+      background-size: 250% 100%;
+      background-position: 130% 0;
+      mix-blend-mode: screen;
+    }
+
+    @keyframes artCardSheen {
+      0%   { background-position: 130% 0; }
+      55%  { background-position: -30% 0; }
+      100% { background-position: -30% 0; }
+    }
+
+    /* Destello (pop + resplandor) al cambiar a una canción nueva */
+    .art-card.current.card-pop {
+      animation: artCardEffect 0.6s cubic-bezier(0.34, 1.3, 0.64, 1);
+    }
+
+    .art-card.current.card-pop::after {
+      animation: artCardSheen 1.3s ease 0.1s forwards;
+    }
+
+    @keyframes artCardEffect {
+      0% {
+        transform: scale(0.9);
+        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.85), 0 0 0 rgba(255, 255, 255, 0);
+      }
+      50% {
+        box-shadow: 0 14px 44px rgba(0, 0, 0, 0.92), 0 0 30px rgba(255, 255, 255, 0.4);
+      }
+      100% {
+        transform: scale(1);
+        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.85);
+      }
     }
 
     @media (max-width: 400px) {
@@ -3017,6 +3066,13 @@
       </div>
     </div>
 
+    <div class="settings-group">
+      <div class="settings-btn" id="card-flare-btn" onclick="toggleCardFlare()">
+        <span class="material-icons">flare</span>
+        <span id="card-flare-btn-label" data-i18n="cardFlare">Brillo de carátula al cambiar de canción</span>
+      </div>
+    </div>
+
   </div>
 
 <div class="settings-submenu" id="settings-submenu-effects">
@@ -3721,6 +3777,7 @@
         loadingSongs: 'Loading songs...', refreshSlideshow: 'Refresh slideshow',
         quotaExceeded: 'Translation temporarily unavailable (daily free limit reached)',
         followLyrics: 'Follow the song', customization: 'Customization', effects: 'Effects', soundControl: 'Sound control',
+        cardFlare: 'Cover glow on track change',
         httpWarning: 'Warning: all HTTP traffic will be allowed, but it is very insecure, since everything may become visible to other users on the network.'
       },
       es: {
@@ -3768,6 +3825,7 @@
         loadingSongs: 'Cargando canciones...', refreshSlideshow: 'Recargar side show',
         quotaExceeded: 'Traducción no disponible temporalmente (límite gratuito diario alcanzado)',
         followLyrics: 'Seguir la canción', customization: 'Personalización', effects: 'Efectos', soundControl: 'Control del sonido',
+        cardFlare: 'Brillo de carátula al cambiar de canción',
         httpWarning: 'Aviso: todo el tráfico que sea http a partir de ahora será permitido, pero es muy inseguro, ya que todo puede llegar a ser visible para otros usuarios de la red.'
       },
       fr: {
@@ -3804,6 +3862,7 @@
         loadingSongs: 'Chargement des chansons...', refreshSlideshow: 'Actualiser le diaporama',
         quotaExceeded: 'Traduction temporairement indisponible (limite gratuite quotidienne atteinte)',
         followLyrics: 'Suivre la chanson', customization: 'Personnalisation', effects: 'Effets', soundControl: 'Contrôle du son',
+        cardFlare: 'Lueur de la pochette au changement de chanson',
         httpWarning: 'Attention : tout le trafic HTTP sera autorisé, mais c\'est très peu sûr, car tout peut devenir visible pour d\'autres utilisateurs du réseau.'
       },
       de: {
@@ -3839,6 +3898,7 @@
         loadingSongs: 'Songs werden geladen...', refreshSlideshow: 'Diashow aktualisieren',
         quotaExceeded: 'Übersetzung vorübergehend nicht verfügbar (tägliches kostenloses Limit erreicht)',
         followLyrics: 'Dem Lied folgen', customization: 'Anpassung', effects: 'Effekte', soundControl: 'Tonsteuerung',
+        cardFlare: 'Cover-Lichtwechsel beim Liedwechsel',
         httpWarning: 'Warnung: Der gesamte HTTP-Verkehr wird erlaubt, aber das ist sehr unsicher, da alles für andere Benutzer im Netzwerk sichtbar werden kann.'
       },
       it: {
@@ -3874,6 +3934,7 @@
         loadingSongs: 'Caricamento canzoni...', refreshSlideshow: 'Aggiorna presentazione',
         quotaExceeded: 'Traduzione temporaneamente non disponibile (limite gratuito giornaliero raggiunto)',
         followLyrics: 'Segui la canzone', customization: 'Personalizzazione', effects: 'Effetti', soundControl: 'Controllo del suono',
+        cardFlare: 'Luce della copertina al cambio di canzone',
         httpWarning: 'Avviso: tutto il traffico HTTP sarà consentito, ma è molto insicuro, poiché tutto può diventare visibile ad altri utenti della rete.'
       },
       pt: {
@@ -3909,6 +3970,7 @@
         loadingSongs: 'A carregar músicas...', refreshSlideshow: 'Atualizar apresentação',
         quotaExceeded: 'Tradução temporariamente indisponível (limite gratuito diário atingido)',
         followLyrics: 'Seguir a música', customization: 'Personalização', effects: 'Efeitos', soundControl: 'Controle de som',
+        cardFlare: 'Brilho da capa ao mudar de música',
         httpWarning: 'Aviso: todo o tráfego HTTP será permitido, mas é muito inseguro, já que tudo pode tornar-se visível para outros utilizadores da rede.'
       }
     };
@@ -7642,6 +7704,20 @@ let audioQuality = null;
       }
     }
 
+    function isCardFlareEnabled() {
+      return loadLS('walkman_card_flare') !== 'off';
+    }
+
+    function applyCardFlareState() {
+      const btn = document.getElementById('card-flare-btn');
+      if (btn) btn.classList.toggle('on', isCardFlareEnabled());
+    }
+
+    function toggleCardFlare() {
+      saveLS('walkman_card_flare', isCardFlareEnabled() ? 'off' : 'on');
+      applyCardFlareState();
+    }
+
     function applyFeaturedZoom() {
       const num = Math.max(55, Math.min(175, Number(getFeaturedZoom()) || 100));
       try {
@@ -8698,6 +8774,18 @@ let audioQuality = null;
         }
       }
 
+      // Pequeño "pop" de la carátula al cambiar de canción
+      function triggerCardPop() {
+        if (!isCardFlareEnabled()) return;
+        cardCurrent.classList.remove('card-pop');
+        void cardCurrent.offsetWidth;
+        cardCurrent.classList.add('card-pop');
+        clearTimeout(cardCurrent._popTimer);
+        cardCurrent._popTimer = setTimeout(() => {
+          cardCurrent.classList.remove('card-pop');
+        }, 1400);
+      }
+
       if (playlistVersion !== lastSeenPlaylistVersion) {
         trackHasLoaded = false;
         lastSeenPlaylistVersion = playlistVersion;
@@ -8761,12 +8849,15 @@ let audioQuality = null;
           setBaseStyles();
           void cardCurrent.offsetWidth;
           allCards.forEach(c => { c.style.transition = ''; });
+
+          triggerCardPop();
         };
 
         cardCurrent.addEventListener('transitionend', cleanup, { once: true });
         setTimeout(cleanup, 600);
       } else {
         applyImages();
+        triggerCardPop();
       }
 
       trackHasLoaded = true;
@@ -9083,6 +9174,7 @@ let audioQuality = null;
       initZoom();
       initCarouselZoom();
       initFeaturedZoom();
+      applyCardFlareState();
       applyFeaturedVisibility();
       initVolume();
       setupMediaSession();
