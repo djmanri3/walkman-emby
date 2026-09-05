@@ -1360,6 +1360,36 @@
       background: #fff;
     }
 
+    .featured-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 6;
+      width: 34px;
+      height: 34px;
+      border: none;
+      border-radius: 50%;
+      background: rgba(0,0,0,0);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .featured-arrow:hover {
+      background: rgba(0,0,0,0.10);
+    }
+    .featured-arrow .material-icons {
+      font-size: 20px;
+    }
+    .featured-arrow-prev {
+      left: 8px;
+    }
+    .featured-arrow-next {
+      right: 8px;
+    }
+
     .items-list {
       display: flex;
       flex-direction: column;
@@ -7393,6 +7423,28 @@
         dots.appendChild(d);
       });
       container.appendChild(dots);
+
+      const prevBtn = document.createElement('button');
+      prevBtn.className = 'featured-arrow featured-arrow-prev';
+      prevBtn.setAttribute('aria-label', 'Anterior');
+      prevBtn.innerHTML = '<span class="material-icons">chevron_left</span>';
+      prevBtn.onclick = (e) => {
+        e.stopPropagation();
+        goToFeatured(featuredIndex - 1);
+      };
+      prevBtn.oncontextmenu = (e) => e.stopPropagation();
+      container.appendChild(prevBtn);
+
+      const nextBtn = document.createElement('button');
+      nextBtn.className = 'featured-arrow featured-arrow-next';
+      nextBtn.setAttribute('aria-label', 'Siguiente');
+      nextBtn.innerHTML = '<span class="material-icons">chevron_right</span>';
+      nextBtn.onclick = (e) => {
+        e.stopPropagation();
+        goToFeatured(featuredIndex + 1);
+      };
+      nextBtn.oncontextmenu = (e) => e.stopPropagation();
+      container.appendChild(nextBtn);
 
       container.style.cursor = 'pointer';
       container.onclick = () => playFeaturedAlbum(featuredIndex);
